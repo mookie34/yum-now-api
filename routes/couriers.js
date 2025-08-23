@@ -6,4 +6,6 @@ const courierController = require('../controllers/couriersController');
 router.post('/', courierController.addCourier);
 // Listar mensajeros
 router.get('/', courierController.getCouriers);
+// Eliminar un mensajero
+router.delete('/:id', courierController.deleteCourier);
 module.exports = router;
