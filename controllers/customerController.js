@@ -23,7 +23,7 @@ const addCustomer = async (req,res)=>{
     }
 };
 
-const getCustomers = async (req, res) => {
+const getCustomers = async (req,res) => {
     try {
         const result = await pool.query('SELECT * FROM customers ORDER BY id ASC');
         res.json(result.rows);
@@ -33,4 +33,99 @@ const getCustomers = async (req, res) => {
     }
 };
 
-module.exports = { addCustomer, getCustomers };
+const updateCustomer = async(req,res) => {
+    console.log('update request ID:', req.params.id);
+    const {id} = req.params;
+    const {name,email,phone}=req.body;
+    try {
+         const result = await pool.query(
+            'UPDATE customers SET name=$1, email=$2, phone=$3 WHERE id=$4 RETURNING *',
+            [name, email, phone,id]
+         );
+
+         if (result.rows.length ===0) {
+            return res.status(404).json({ error: 'Cliente no encontrado' });     
+        }
+
+        res.status(200).json({
+            mensaje: 'Cliente actualizado exitosamente',
+            cliente: result.rows[0]
+        });
+
+
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).json({ error: 'Error al actualizar un cliente' });
+    }  
+};
+
+const updateCustomerPartial = async (req, res) => {
+    const { id } = req.params;
+    const { name, email, phone } = req.body;
+
+    try {
+        const fields = [];
+        const values = [];
+        let counter = 1;
+
+        if (name) {
+            fields.push(`name=$${counter++}`);
+            values.push(name);
+        }
+        if (email) {
+            fields.push(`email=$${counter++}`);
+            values.push(email);
+        }
+        if (phone) {
+            fields.push(`phone=$${counter++}`);
+            values.push(phone);
+        }
+
+        if (fields.length === 0) {
+            return res.status(400).json({ error: 'No se proporcionaron campos para actualizar' });
+        }
+
+        values.push(id);
+
+        const query = `UPDATE customers SET ${fields.join(', ')} WHERE id=$${counter} RETURNING *`;
+        const result = await pool.query(query, values);
+
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'Cliente no encontrado' });
+        }
+
+        res.status(200).json({
+            mensaje: 'Cliente actualizado exitosamente',
+            cliente: result.rows[0]
+        });
+
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).json({ error: 'Error al actualizar un cliente' });
+    }
+};
+
+const deleteCustomer = async(req,res) => {
+    //console.log('DELETE request ID:', req.params.id);
+    const { id } = req.params;
+    try{
+        const result= await pool.query(
+            'DELETE FROM customers WHERE id=$1 RETURNING *',
+            [id]
+        );
+
+        if (result.rows.length ===0) {
+            return res.status(404).json({ error: 'Cliente no encontrado' });     
+        }
+
+        res.status(200).json({
+            mensaje: 'Cliente eliminado exitosamente',
+            cliente: result.rows[0]
+        });
+    } catch (err){
+        console.error(err.message);
+        res.status(500).json({ error: 'Error al eliminar un cliente' });
+    }
+};
+
+module.exports = { addCustomer, getCustomers,deleteCustomer,updateCustomer, updateCustomerPartial };
