@@ -8,6 +8,9 @@ router.post('/', customerController.addCustomer);
 // Listar clientes (opcional)
 router.get('/', customerController.getCustomers);
 
+// Listar cliente por telefono
+router.get('/phone/:phone', customerController.getCustomerForPhone);
+
 // Actualizar un cliente
 router.put('/:id', customerController.updateCustomer);
 

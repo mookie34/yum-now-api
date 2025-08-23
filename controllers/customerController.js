@@ -33,6 +33,22 @@ const getCustomers = async (req,res) => {
     }
 };
 
+const getCustomerForPhone = async (req,res) => {
+    const {phone} = req.params;
+    try {
+        const result = await pool.query('SELECT * FROM customers WHERE phone = $1', [phone.trim()]);
+
+        if (result.rows.length ===0) {
+            return res.status(404).json({ error: 'Cliente no encontrado' });     
+        }
+
+        res.json(result.rows[0]);
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).json({ error: 'Error al obtener los clientes' });
+    }
+};
+
 const updateCustomer = async(req,res) => {
     console.log('update request ID:', req.params.id);
     const {id} = req.params;
@@ -128,4 +144,4 @@ const deleteCustomer = async(req,res) => {
     }
 };
 
-module.exports = { addCustomer, getCustomers,deleteCustomer,updateCustomer, updateCustomerPartial };
+module.exports = { addCustomer, getCustomers,deleteCustomer,updateCustomer, updateCustomerPartial,getCustomerForPhone };
