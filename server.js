@@ -11,7 +11,9 @@ app.use(bodyParser.json());
 
 // Rutas
 app.use('/api/customers', customerRoutes);
-app.use('/api/couriers',couriesRoutes);    
+app.use('/api/couriers',couriesRoutes);   
+app.use('/api/products', productsRoutes);
+
 
 // Iniciar servidor
 app.listen(PORT, () => {
