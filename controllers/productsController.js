@@ -40,7 +40,7 @@ const getProductForFilter = async (req, res) => {
         let query = 'SELECT * FROM products WHERE 1=1';
 
         if (name) {
-            params.push(`%${name}%`);
+            params.push(`%${name}%`); // agrega los %
             query += ` AND name ILIKE $${params.length}`;
         }
         if (min_price) {
@@ -121,7 +121,7 @@ const updateProduct = async (req, res) => {
     }
 };
 
-const updateCourierPartial = async (req, res) => {
+const updateProductPartial = async (req, res) => {
     const { id } = req.params;
     const { name, description, price } = req.body;
 
@@ -170,4 +170,4 @@ const updateCourierPartial = async (req, res) => {
     }
 };
 
-module.exports = {addProduct, getProducts,getProductById, getProductForFilter, deleteProduct, updateProduct, updateCourierPartial};
+module.exports = {addProduct, getProducts,getProductById, getProductForFilter, deleteProduct, updateProduct, updateProductPartial};
