@@ -3,6 +3,7 @@ const bodyParser = require('body-parser');
 const customerRoutes = require('./routes/customers');
 const couriersRoutes = require('./routes/couriers');
 const productsRoutes = require('./routes/products');
+const addressesRoutes = require('./routes/addresses');
 
 const app = express();
 const PORT = 3000;
@@ -14,6 +15,7 @@ app.use(bodyParser.json());
 app.use('/api/customers', customerRoutes);
 app.use('/api/couriers',couriersRoutes);   
 app.use('/api/products', productsRoutes);
+app.use('/api/addresses', addressesRoutes);
 
 
 // Iniciar servidor
