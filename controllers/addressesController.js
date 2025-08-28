@@ -1,15 +1,15 @@
 const pool = require('../db');
 
 const addAddress = async (req, res) => {
-    const { customer_id,  label, address_text, reference, latitude, longitude } = req.body;
+    const { customer_id,  label, address_text, reference, latitude, longitude,is_primary } = req.body;
     if (!customer_id || !label || !address_text) {
         return res.status(400).json({ error: 'Faltan datos: customer_id, label o address_text' });
     }
 
     try {
         const result = await pool.query(
-            'INSERT INTO addresses (customer_id,label, address_text, reference,latitude,longitude) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
-            [customer_id, label, address_text, reference, latitude, longitude]
+            'INSERT INTO addresses (customer_id,label, address_text, reference,latitude,longitude,is_primary) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *',
+            [customer_id, label, address_text, reference, latitude, longitude,is_primary]
         );
 
         res.status(201).json({
@@ -18,6 +18,11 @@ const addAddress = async (req, res) => {
         });
     } catch (err) {
         console.error(err.message);
+        if (err.code === '23505') { // PostgreSQL unique_violation
+            return res.status(400).json({ 
+                error: 'Ya existe una dirección primaria para este cliente. Solo puede haber una.' 
+            });
+        }
         res.status(500).json({ error: 'Error al guardar la dirección en la base de datos' });
     }
 
@@ -67,7 +72,25 @@ const deleteAddress = async (req, res) => {
 
 const updateAddressPartial = async (req, res) => {
     const { id } = req.params;
-    const {  label, address_text, reference, latitude, longitude } = req.body;
+    const { label, address_text, reference, latitude, longitude, is_primary } = req.body;
+
+    // Si se va a establecer como primaria, desmarcar la primaria anterior
+    if (is_primary) {
+        try {
+            await pool.query(
+                `UPDATE addresses
+                 SET is_primary = FALSE
+                 WHERE customer_id = (
+                     SELECT customer_id FROM addresses WHERE id = $1
+                 )
+                 AND is_primary = TRUE`,
+                [id]
+            );
+        } catch (err) {
+            console.error('Error al desmarcar la dirección primaria anterior:', err.message);
+            return res.status(500).json({ error: 'Error al actualizar la dirección primaria' });
+        }
+    }
 
     // Construir la consulta dinámicamente
     let query = 'UPDATE addresses SET ';
@@ -99,6 +122,11 @@ const updateAddressPartial = async (req, res) => {
         params.push(longitude);
         paramIndex++;
     }
+    if (is_primary !== undefined) {
+        query += `is_primary = $${paramIndex}, `;
+        params.push(is_primary);
+        paramIndex++;
+    }
 
     // Remover la última coma y espacio
     query = query.slice(0, -2);
@@ -118,9 +146,34 @@ const updateAddressPartial = async (req, res) => {
             address: result.rows[0]
         });
     } catch (err) {
-        console.error(err.message);
+        console.error('Error al actualizar dirección:', err.message);
+
+        // Captura extra de unique_violation por si algo falla
+        if (err.code === '23505') {
+            return res.status(400).json({
+                error: 'Ya existe una dirección primaria para este cliente. Solo puede haber una.'
+            });
+        }
+
         res.status(500).json({ error: 'Error al actualizar la dirección' });
+    }
+};
+
+const getPrimaryAddressByCustomerId = async (req, res) => {
+    const { customer_id } = req.params;
+    try {
+        const result = await pool.query('SELECT * FROM addresses WHERE customer_id = $1 AND is_primary = TRUE', [customer_id]);
+
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'No se encontraron una direccion principal asociadas al cliente.' });
+        }
+
+        res.json(result.rows[0]);
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).json({ error: 'Error al obtener las direcciones del cliente' });
     }
 }
 
-module.exports = {addAddress, getAddresses, getAddressByCustomerId, deleteAddress, updateAddressPartial};
+
+module.exports = {addAddress, getAddresses, getAddressByCustomerId, deleteAddress, updateAddressPartial, getPrimaryAddressByCustomerId};

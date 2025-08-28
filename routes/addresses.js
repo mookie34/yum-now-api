@@ -12,6 +12,8 @@ router.get('/:customer_id', addressesController.getAddressByCustomerId);
 router.delete('/:id', addressesController.deleteAddress);
 // Actualizar una dirección partialmente
 router.patch('/:id', addressesController.updateAddressPartial);
+//Obtener dirección primaria por ID de cliente
+router.get('/primary/:customer_id', addressesController.getPrimaryAddressByCustomerId);
 
 module.exports = router;
 
