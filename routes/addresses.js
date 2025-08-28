@@ -6,6 +6,12 @@ const addressesController = require('../controllers/addressesController');
 router.post('/', addressesController.addAddress);
 // Listar direcciones
 router.get('/', addressesController.getAddresses);
+// Obtener direcciones por ID de cliente
+router.get('/:customer_id', addressesController.getAddressByCustomerId);
+// Eliminar una dirección
+router.delete('/:id', addressesController.deleteAddress);
+// Actualizar una dirección partialmente
+router.patch('/:id', addressesController.updateAddressPartial);
 
 module.exports = router;
 
