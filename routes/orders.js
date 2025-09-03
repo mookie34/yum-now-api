@@ -6,5 +6,7 @@ const controllers = require('../controllers/ordersController');
 router.post('/', controllers.addOrder);
 // Listar órdenes
 router.get('/', controllers.getOrders);
+// Obtener una orden por ID
+router.get('/:id', controllers.getOrderById);
 
 module.exports = router;
