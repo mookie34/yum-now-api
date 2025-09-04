@@ -4,6 +4,7 @@ const customerRoutes = require('./routes/customers');
 const couriersRoutes = require('./routes/couriers');
 const productsRoutes = require('./routes/products');
 const addressesRoutes = require('./routes/addresses');
+const ordersRoutes = require('./routes/orders');
 
 const app = express();
 const PORT = 3000;
@@ -16,6 +17,7 @@ app.use('/api/customers', customerRoutes);
 app.use('/api/couriers',couriersRoutes);   
 app.use('/api/products', productsRoutes);
 app.use('/api/addresses', addressesRoutes);
+app.use('/api/orders', ordersRoutes);
 
 
 // Iniciar servidor
