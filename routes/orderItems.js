@@ -7,6 +7,6 @@ router.post('/', orderItemsController.addOrderItem);
 // Obtener todos los items de orden
 router.get('/', orderItemsController.getAllOrderItems);
 // Obtener items de orden por ID de orden
-router.get('/order/:orderId', orderItemsController.getOrderItemByOrderId);
+router.get('/orderItems/:orderId', orderItemsController.getOrderItemByOrderId);
 
 module.exports = router;
