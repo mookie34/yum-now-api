@@ -23,4 +23,29 @@ const addOrderItem = async (req, res) => {
     }
 }
 
-module.exports = {addOrderItem};
+const getAllOrderItems = async (req, res) => {
+    try {
+        const result = await pool.query('SELECT * FROM order_items');
+        res.status(200).json(result.rows);
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).json({ error: 'Error al obtener los items de orden desde la base de datos' });
+    }
+}
+
+const getOrderItemByOrderId = async (req, res) => {
+    const { orderId } = req.params;
+
+    try {
+        const result = await pool.query('SELECT * FROM order_items WHERE order_id = $1', [orderId]);
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'No se encontraron items de orden para el ID de orden proporcionado' });
+        }
+        res.status(200).json(result.rows);
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).json({ error: 'Error al obtener los items de orden desde la base de datos' });
+    }
+}
+
+module.exports = {addOrderItem, getAllOrderItems, getOrderItemByOrderId};
