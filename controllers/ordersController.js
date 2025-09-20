@@ -1,16 +1,27 @@
 const pool = require('../db');
 
 const addOrder = async (req, res) => {
-    const { customer_id, address_id, total, payment_method, status } = req.body;
+    const { customer_id, address_id, payment_method, status } = req.body;
 
-    if (!customer_id || !address_id || !total || !payment_method) {
+    if (!customer_id || !address_id || !payment_method) {
         return res.status(400).json({ error: 'Faltan datos obligatorios' });
     }
 
     try {
+
+        const customerResult = await pool.query('SELECT id FROM customers WHERE id = $1', [customer_id]);
+        if (customerResult.rows.length === 0) {
+            return res.status(404).json({ error: 'Cliente no encontrado' });
+        }
+
+        const addressResult = await pool.query('SELECT id FROM addresses WHERE id = $1', [address_id]);
+        if (addressResult.rows.length === 0) {
+            return res.status(404).json({ error: 'Dirección no encontrada' });
+        }
+
         const result = await pool.query(
-            'INSERT INTO orders (customer_id, address_id, total, payment_method, status) VALUES ($1, $2, $3, $4, $5) RETURNING *',
-            [customer_id, address_id, total, payment_method, status || 'pending']
+            'INSERT INTO orders (customer_id, address_id, total, payment_method, status) VALUES ($1, $2, 0, $3, $4) RETURNING *',
+            [customer_id, address_id, payment_method, status || 'pending']
         );
 
         res.status(201).json({
@@ -22,6 +33,31 @@ const addOrder = async (req, res) => {
         res.status(500).json({ error: 'Error al guardar la orden en la base de datos' });
     }
 };
+
+const updateTotalOrder = async (req,res) =>{
+    const { id } = req.params;
+    try {
+        const totalResult = await pool.query(
+            `UPDATE orders 
+             SET total = (SELECT COALESCE(SUM(price * quantity), 0) FROM order_items WHERE order_id = $1)
+             WHERE id = $1
+             RETURNING *`,
+            [id]
+        );
+
+        if (totalResult.rows.length === 0) {
+            return res.status(404).json({ error: 'Orden no encontrada' });
+        }
+
+        res.json({
+            message: 'Total de la orden actualizado exitosamente',
+            order: totalResult.rows[0]
+        });
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).json({ error: 'Error al actualizar el total de la orden en la base de datos' });
+    }
+}
 
 const getOrders = async (req, res) => {
     try {
@@ -136,4 +172,4 @@ const updateStatusOrder = async (req, res) => {
     }
 }
 
-module.exports = {addOrder, getOrders, getOrderByCustomerId, getOrderById, deleteOrder, updateOrderPartial,updateStatusOrder};
+module.exports = {addOrder, getOrders, getOrderByCustomerId, getOrderById, deleteOrder, updateOrderPartial,updateStatusOrder, updateTotalOrder};

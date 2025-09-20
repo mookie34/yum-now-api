@@ -16,4 +16,6 @@ router.delete('/:id', controllers.deleteOrder);
 router.patch('/:id', controllers.updateOrderPartial);
 //Actualizar estado de la orden
 router.patch('/:id/status', controllers.updateStatusOrder);
+// Actualizar el total de la orden
+router.patch('/:id/total', controllers.updateTotalOrder);
 module.exports = router;

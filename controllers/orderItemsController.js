@@ -86,7 +86,7 @@ const deleteItemInOrderByIdProduct = async (req, res) => {
     }
 }
 
-const updateQuantityOrPriceInOrderItem = async (req, res) => {
+const updateQuantityInOrderItem = async (req, res) => {
     const { orderId, productId } = req.params;
     const { quantity, price } = req.body;
 
