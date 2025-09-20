@@ -20,6 +20,7 @@ app.use('/api/products', productsRoutes);
 app.use('/api/addresses', addressesRoutes);
 app.use('/api/orders', ordersRoutes);
 app.use('/api/order-items', orderItemsRoutes);
+app.use('/api/assign-orders', require('./routes/assignOrders')); 
 
 
 // Iniciar servidor
