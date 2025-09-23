@@ -51,5 +51,27 @@ describe('POST /api/customers (mock)',()=>{
         expect(res.body.error).toBe('Error al obtener los clientes');
     });
 
-} 
-);
+    it('Debe consultar cliente por telefono (mock)', async()=>{
+         pool.query.mockResolvedValueOnce({
+            rows: [{id:1,name:'prueba',email:'juan@example.com',phone:'1234567890'}]
+        });
+
+        const res = await request(app)
+        .get('/api/customers/phone/1234567890');
+
+        expect(res.status).toBe(200);
+        expect(res.body.name).toBe('prueba');
+        expect(res.body.phone).toBe('1234567890');
+    });
+
+    it('Debe fallar si no encuentra cliente por telefono (mock)', async()=>{
+        pool.query.mockResolvedValueOnce({ rows: [] });
+
+        const res = await request(app)
+        .get('/api/customers/phone/0000000000');
+
+        expect(res.status).toBe(404);
+        expect(res.body.error).toBe('Cliente no encontrado');
+    });
+        
+});
