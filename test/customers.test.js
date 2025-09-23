@@ -22,12 +22,34 @@ describe('POST /api/customers (mock)',()=>{
     });
 
     it('Debe fallar si falta algún dato (mock)', async()=>{
-
         const res = await request(app)
         .post('/api/customers')
         .send({name:'prueba'});
 
         expect(res.status).toBe(400);
         expect(res.body.error).toBe('Faltan datos: nombre, email o teléfono');
-});
-} );
+    });
+
+    it('Debe consultar clientes (mock)', async()=>{
+        pool.query.mockResolvedValueOnce({
+            rows: [{id:1,name:'prueba',email:'juan@example.com',phone:'1234567890'}]
+        });
+
+        const res = await request(app)
+        .get('/api/customers');
+
+        expect(res.status).toBe(200);
+        expect(res.body[0].name).toBe('prueba');
+    });
+
+    it('Debe fallar en la consulta de clientes (mock)', async()=>{
+        pool.query.mockRejectedValueOnce(new Error('DB error'));
+
+        const res = await request(app).get('/api/customers');
+        
+        expect(res.status).toBe(500);
+        expect(res.body.error).toBe('Error al obtener los clientes');
+    });
+
+} 
+);
