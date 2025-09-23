@@ -73,5 +73,30 @@ describe('POST /api/customers (mock)',()=>{
         expect(res.status).toBe(404);
         expect(res.body.error).toBe('Cliente no encontrado');
     });
+
+    it('Debe actualizar un cliente (mock)', async()=>{
+        pool.query.mockResolvedValueOnce({
+            rows: [{id:1,name:'actualizado',email:'pruebas@gg.com',phone:'0987654321'}]
+        });
+
+        const res = await request(app)
+        .put('/api/customers/1')
+        .send({name:'actualizado',email:'pruebas@gg.com',phone:'0987654321'});
+
+        expect(res.status).toBe(200);
+        expect(res.body.mensaje).toBe('Cliente actualizado exitosamente');
+        expect(res.body.cliente.name).toBe('actualizado');
+    });
+
+    it('Debe fallar si no encuentra cliente para actualizar (mock)', async()=>{
+        pool.query.mockResolvedValueOnce({ rows: [] });
+
+        const res = await request(app)
+        .put('/api/customers/999')
+        .send({name:'noexiste',email:'',phone:'232223'});
+
+        expect(res.status).toBe(404);
+        expect(res.body.error).toBe('Cliente no encontrado');
+    });
         
 });
