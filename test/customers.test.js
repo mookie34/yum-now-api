@@ -130,5 +130,23 @@ describe('POST /api/customers (mock)',()=>{
         expect(res.status).toBe(400);
         expect(res.body.error).toBe('No se proporcionaron campos para actualizar');   
     });
+
+    it('Debe eliminar un cliente (mock)', async()=>{
+        pool.query.mockResolvedValueOnce({ rows: [{id:1}] });
+
+        const res = await request(app)
+        .delete('/api/customers/1');
+        expect(res.status).toBe(200);
+        expect(res.body.mensaje).toBe('Cliente eliminado exitosamente');
+    });
+
+    it('Debe fallar si no encuentra cliente para eliminar (mock)', async()=>{
+        pool.query.mockResolvedValueOnce({ rows: [] });
+
+        const res = await request(app)
+        .delete('/api/customers/999');
+        expect(res.status).toBe(404);
+        expect(res.body.error).toBe('Cliente no encontrado');
+    });
         
 });
