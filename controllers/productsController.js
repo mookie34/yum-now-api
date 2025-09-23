@@ -166,7 +166,7 @@ const updateProductPartial = async (req, res) => {
         });
     } catch (err) {
         console.error(err.message);
-        res.status(500).json({ error: 'Error al actualizar el producto en la base de datos' });
+        res.status(500).json({ error: 'Error al actualizar el producto en la base de datos.' });
     }
 };
 
