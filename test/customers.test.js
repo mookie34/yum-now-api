@@ -20,4 +20,14 @@ describe('POST /api/customers (mock)',()=>{
         expect(res.body.mensaje).toBe('Cliente creado exitosamente');
         expect(res.body.cliente.name).toBe('prueba');
     });
-})
+
+    it('Debe fallar si falta algún dato (mock)', async()=>{
+
+        const res = await request(app)
+        .post('/api/customers')
+        .send({name:'prueba'});
+
+        expect(res.status).toBe(400);
+        expect(res.body.error).toBe('Faltan datos: nombre, email o teléfono');
+});
+} );
