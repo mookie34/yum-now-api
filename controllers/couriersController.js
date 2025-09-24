@@ -19,11 +19,11 @@ const pool = require('../db');
          });
      } catch (err) {
          console.error(err.message);
-         res.status(500).json({ error: 'Error al guardar el Domiciliario en la base de datos' });
+         res.status(500).json({ error: 'Error al guardar el domiciliario en la base de datos' });
      }
  };
 
- const getCouriers = async (req, res) => {
+ const getCouriers = async (req,res) => {
      try {
          const result = await pool.query('SELECT * FROM couriers ORDER BY id ASC');
          res.json(result.rows);
@@ -65,14 +65,11 @@ const pool = require('../db');
             }
 
             const result = await pool.query(query, params);
-            if (result.rows.length === 0) {
-                return res.status(404).json({ error: 'Domiciliarios no encontrados' });
-            }
-            res.json(result.rows);
+            return res.status(200).json(result.rows);
 
         } catch (err) {
             console.error(err.message);
-            res.status(500).json({ error: 'Error al obtener el Domiciliario' });
+            res.status(500).json({ error: 'Error al obtener los Domiciliarios por filtro' });
         }
  }
 
@@ -155,12 +152,12 @@ const pool = require('../db');
         const result = await pool.query(query, values);
 
         if (result.rows.length === 0) {
-            return res.status(404).json({ error: 'Cliente no encontrado' });
+            return res.status(404).json({ error: 'Domiciliario no encontrado' });
         }
 
         res.status(200).json({
-            mensaje: 'Domiciliario actualizado exitosamente',
-            cliente: result.rows[0]
+            message: 'Domiciliario actualizado exitosamente',
+            courier: result.rows[0]
         });
 
      } catch (err) {

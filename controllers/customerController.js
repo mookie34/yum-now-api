@@ -50,7 +50,6 @@ const getCustomerForPhone = async (req,res) => {
 };
 
 const updateCustomer = async(req,res) => {
-    console.log('update request ID:', req.params.id);
     const {id} = req.params;
     const {name,email,phone}=req.body;
     try {
@@ -122,7 +121,6 @@ const updateCustomerPartial = async (req, res) => {
 };
 
 const deleteCustomer = async(req,res) => {
-    //console.log('DELETE request ID:', req.params.id);
     const { id } = req.params;
     try{
         const result= await pool.query(

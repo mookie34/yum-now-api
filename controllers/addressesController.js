@@ -17,7 +17,7 @@ const addAddress = async (req, res) => {
             address: result.rows[0]
         });
     } catch (err) {
-        console.error(err.message);
+        console.error(err.message || err);
         if (err.code === '23505') { // PostgreSQL unique_violation
             return res.status(400).json({ 
                 error: 'Ya existe una dirección primaria para este cliente. Solo puede haber una.' 
@@ -165,13 +165,13 @@ const getPrimaryAddressByCustomerId = async (req, res) => {
         const result = await pool.query('SELECT * FROM addresses WHERE customer_id = $1 AND is_primary = TRUE', [customer_id]);
 
         if (result.rows.length === 0) {
-            return res.status(404).json({ error: 'No se encontraron una direccion principal asociadas al cliente.' });
+            return res.status(404).json({ error: 'No se encontró una dirección primaria para este cliente.' });
         }
 
         res.json(result.rows[0]);
     } catch (err) {
         console.error(err.message);
-        res.status(500).json({ error: 'Error al obtener las direcciones del cliente' });
+        res.status(500).json({ error: 'Error al obtener la dirección primaria del cliente' });
     }
 }
 
