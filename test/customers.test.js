@@ -148,5 +148,14 @@ describe('POST /api/customers (mock)',()=>{
         expect(res.status).toBe(404);
         expect(res.body.error).toBe('Cliente no encontrado');
     });
+
+    it('Debe fallar si hay error al eliminar cliente (mock)', async()=>{
+        pool.query.mockRejectedValueOnce(new Error('DB error'));
+
+        const res = await request(app)
+        .delete('/api/customers/1');
+        expect(res.status).toBe(500);
+        expect(res.body.error).toBe('Error al eliminar un cliente');
+    });
         
 });
