@@ -8,6 +8,10 @@ const addOrderItem = async (req, res) => {
     }
 
     try {
+        const existOrderId=await pool.query('SELECT id FROM orders WHERE id = $1', [order_id]);
+        if(existOrderId.rows.length===0){
+            return res.status(404).json({ error: 'Orden no encontrada' });
+        }
 
         const productResult = await pool.query('SELECT price FROM products WHERE id = $1', [product_id]);
 
@@ -71,10 +75,20 @@ const deleteAllItemsInOrder = async (req, res) => {
     }
 }
 
-const deleteItemInOrderByIdProduct = async (req, res) => {
+    const deleteItemInOrderByIdProduct = async (req, res) => {
     const { orderId, productId } = req.params;
 
     try {
+        const existOrderId=await pool.query('SELECT id FROM orders WHERE id = $1', [orderId]);
+        if(existOrderId.rows.length===0){
+            return res.status(404).json({ error: 'Orden no encontrada' });
+        }
+
+        const existProductId=await pool.query('SELECT id FROM products WHERE id = $1', [productId]);
+        if(existProductId.rows.length===0){
+            return res.status(404).json({ error: 'Producto no encontrado' });
+        }
+
         const result = await pool.query('DELETE FROM order_items WHERE order_id = $1 AND product_id = $2 RETURNING *', [orderId, productId]);
         if (result.rows.length === 0) {
             return res.status(404).json({ error: 'No se encontraron items de orden para el ID de orden y producto proporcionados' });
@@ -114,6 +128,16 @@ const updateQuantityOrPriceInOrderItem = async (req, res) => {
     values.push(orderId, productId);
 
     try {
+        existOrderId=await pool.query('SELECT id FROM orders WHERE id = $1', [orderId]);
+        if(existOrderId.rows.length===0){
+            return res.status(404).json({ error: 'Orden no encontrada' });
+        }
+
+        existProductId=await pool.query('SELECT id FROM products WHERE id = $1', [productId]);
+        if(existProductId.rows.length===0){
+            return res.status(404).json({ error: 'Producto no encontrado' });
+        }
+        
         const result = await pool.query(query, values);
         if (result.rows.length === 0) {
             return res.status(404).json({ error: 'No se encontraron items de orden para el ID de orden y producto proporcionados' });
