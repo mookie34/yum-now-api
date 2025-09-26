@@ -3,17 +3,22 @@ const pool = require('../db');
 const addAssignOrder = async (req, res) => {
     const { order_id, courier_id } = req.body;
     try {
+
+        if (!order_id || !courier_id) {
+            return res.status(400).json({ error: 'order_id y courier_id son requeridos.' });
+        }
+
         const existOrder = await pool.query('SELECT * FROM YuNowDataBase.orders WHERE id = $1', [order_id]);
         if (existOrder.rows.length === 0) {
             return res.status(404).json({ error: 'No existe la orden.' });
         }
         const existCourier = await pool.query('SELECT * FROM YuNowDataBase.couriers WHERE id = $1', [courier_id]);
         if (existCourier.rows.length === 0) {
-            return res.status(404).json({ error: 'Repartidor no encontrado' });
+            return res.status(404).json({ error: 'Repartidor no encontrado.' });
         }
         const existAssignment = await pool.query('SELECT * FROM YuNowDataBase.assignment_order WHERE order_id = $1', [order_id]);
         if (existAssignment.rows.length > 0) {
-            return res.status(400).json({ error: 'La orden ya ha sido asignada a un repartidor' });
+            return res.status(400).json({ error: 'La orden ya ha sido asignada a un repartidor.' });
         }
 
         const result = await pool.query(
@@ -22,8 +27,8 @@ const addAssignOrder = async (req, res) => {
         );
 
         res.status(201).json({
-            mensaje: 'orden asignada exitosamente',
-            cliente: result.rows[0]
+            mensaje: 'Orden asignada exitosamente.',
+            assignOrder: result.rows[0]
         });
     } catch (error) {
         console.error('Error asignando una orden a un repatidor:', error);
@@ -50,6 +55,10 @@ const getAssignOrders = async (req, res) => {
             ORDER BY ao.assigned_at DESC
         `);
 
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'No hay asignaciones de órdenes disponibles.' });
+        }
+
         res.status(200).json(result.rows);
     } catch (error) {
         console.error('Error obteniendo las asignaciones de orden:', error);
@@ -63,7 +72,7 @@ const getAssignOrderByCourierId = async (req, res) => {
     try {
         const existCourier = await pool.query('SELECT * FROM YuNowDataBase.couriers WHERE id = $1', [courier_id]);
         if (existCourier.rows.length === 0) {
-            return res.status(404).json({ error: 'Repartidor no encontrado' });
+            return res.status(404).json({ error: 'Repartidor no encontrado.' });
         }
 
         const result = await pool.query(`
@@ -141,7 +150,7 @@ const updateAssignOrderCourier = async (req, res) => {
         }
         const existCourier = await pool.query('SELECT * FROM YuNowDataBase.couriers WHERE id = $1', [courier_id]);
         if (existCourier.rows.length === 0) {
-            return res.status(404).json({ error: 'Repartidor no encontrado' });
+            return res.status(404).json({ error: 'Repartidor no encontrado.' });
         }
         const result = await pool.query(
             'UPDATE YuNowDataBase.assignment_order SET courier_id = $1 WHERE order_id = $2 RETURNING *',
@@ -153,8 +162,8 @@ const updateAssignOrderCourier = async (req, res) => {
         }
 
         res.status(200).json({
-            mensaje: 'Asignación de orden actualizada exitosamente',
-            assignment: result.rows[0]
+            mensaje: 'Asignación de orden actualizada exitosamente.',
+            assignOrder: result.rows[0]
         });
     } catch (error) {
         console.error('Error actualizando la asignación de orden:', error);
@@ -176,12 +185,12 @@ const deleteAssignOrder = async (req, res) => {
         );
 
         if (result.rows.length === 0) {
-            return res.status(404).json({ error: 'asignamiento no encontrada' });
+            return res.status(404).json({ error: 'Asignamiento no encontrado.' });
         }
 
         res.status(200).json({
             mensaje: 'Asignación de orden eliminada exitosamente',
-            assignment: result.rows[0]
+            assignOrder: result.rows[0]
         });
     } catch (error) {
         console.error('Error eliminando la asignación de orden:', error);
