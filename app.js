@@ -20,4 +20,6 @@ app.use('/api/couriers', couriersRouter);
 app.use('/api/assign-orders', assignOrdersRouter);
 app.use('/api/addresses', addressessRouter);
 
+console.log("DB host:", process.env.DB_HOST);
+
 module.exports = app;
