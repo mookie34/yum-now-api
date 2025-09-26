@@ -8,8 +8,12 @@ const addOrderItem = async (req, res) => {
     }
 
     try {
+        const existOrderId=await pool.query('SELECT id FROM YuNowDataBase.orders WHERE id = $1', [order_id]);
+        if(existOrderId.rows.length===0){
+            return res.status(404).json({ error: 'Orden no encontrada' });
+        }
 
-        const productResult = await pool.query('SELECT price FROM products WHERE id = $1', [product_id]);
+        const productResult = await pool.query('SELECT price FROM YuNowDataBase.products WHERE id = $1', [product_id]);
 
         if (productResult.rows.length === 0) {
             return res.status(404).json({ error: 'Producto no encontrado' });
@@ -17,7 +21,7 @@ const addOrderItem = async (req, res) => {
         const price = productResult.rows[0].price;
 
         const result = await pool.query(
-            'INSERT INTO order_items (order_id, product_id, quantity, price) VALUES ($1, $2, $3, $4) RETURNING *',
+            'INSERT INTO YuNowDataBase.order_items (order_id, product_id, quantity, price) VALUES ($1, $2, $3, $4) RETURNING *',
             [order_id, product_id, quantity, price]
         );
 
@@ -33,7 +37,7 @@ const addOrderItem = async (req, res) => {
 
 const getAllOrderItems = async (req, res) => {
     try {
-        const result = await pool.query('SELECT * FROM order_items');
+        const result = await pool.query('SELECT * FROM YuNowDataBase.order_items');
         res.status(200).json(result.rows);
     } catch (err) {
         console.error(err.message);
@@ -45,7 +49,7 @@ const getOrderItemByOrderId = async (req, res) => {
     const { orderId } = req.params;
 
     try {
-        const result = await pool.query('SELECT * FROM order_items WHERE order_id = $1', [orderId]);
+        const result = await pool.query('SELECT * FROM YuNowDataBase.order_items WHERE order_id = $1', [orderId]);
         if (result.rows.length === 0) {
             return res.status(404).json({ error: 'No se encontraron items de orden para el ID de orden proporcionado' });
         }
@@ -60,7 +64,7 @@ const deleteAllItemsInOrder = async (req, res) => {
     const { orderId } = req.params;
 
     try {
-        const result = await pool.query('DELETE FROM order_items WHERE order_id = $1 RETURNING *', [orderId]);
+        const result = await pool.query('DELETE FROM YuNowDataBase.order_items WHERE order_id = $1 RETURNING *', [orderId]);
         if (result.rows.length === 0) {
             return res.status(404).json({ error: 'No se encontraron items de orden para el ID de orden proporcionado' });
         }
@@ -71,11 +75,21 @@ const deleteAllItemsInOrder = async (req, res) => {
     }
 }
 
-const deleteItemInOrderByIdProduct = async (req, res) => {
+    const deleteItemInOrderByIdProduct = async (req, res) => {
     const { orderId, productId } = req.params;
 
     try {
-        const result = await pool.query('DELETE FROM order_items WHERE order_id = $1 AND product_id = $2 RETURNING *', [orderId, productId]);
+        const existOrderId=await pool.query('SELECT id FROM YuNowDataBase.orders WHERE id = $1', [orderId]);
+        if(existOrderId.rows.length===0){
+            return res.status(404).json({ error: 'Orden no encontrada' });
+        }
+
+        const existProductId=await pool.query('SELECT id FROM YuNowDataBase.products WHERE id = $1', [productId]);
+        if(existProductId.rows.length===0){
+            return res.status(404).json({ error: 'Producto no encontrado' });
+        }
+
+        const result = await pool.query('DELETE FROM YuNowDataBase.order_items WHERE order_id = $1 AND product_id = $2 RETURNING *', [orderId, productId]);
         if (result.rows.length === 0) {
             return res.status(404).json({ error: 'No se encontraron items de orden para el ID de orden y producto proporcionados' });
         }
@@ -94,7 +108,7 @@ const updateQuantityOrPriceInOrderItem = async (req, res) => {
         return res.status(400).json({ error: 'Faltan datos: quantity o price' });
     }
 
-    let query = 'UPDATE order_items SET ';
+    let query = 'UPDATE YuNowDataBase.order_items SET ';
     const values = [];
     let index = 1;
 
@@ -114,6 +128,16 @@ const updateQuantityOrPriceInOrderItem = async (req, res) => {
     values.push(orderId, productId);
 
     try {
+        existOrderId=await pool.query('SELECT id FROM YuNowDataBase.orders WHERE id = $1', [orderId]);
+        if(existOrderId.rows.length===0){
+            return res.status(404).json({ error: 'Orden no encontrada' });
+        }
+
+        existProductId=await pool.query('SELECT id FROM YuNowDataBase.products WHERE id = $1', [productId]);
+        if(existProductId.rows.length===0){
+            return res.status(404).json({ error: 'Producto no encontrado' });
+        }
+        
         const result = await pool.query(query, values);
         if (result.rows.length === 0) {
             return res.status(404).json({ error: 'No se encontraron items de orden para el ID de orden y producto proporcionados' });

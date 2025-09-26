@@ -9,7 +9,7 @@ const addCustomer = async (req,res)=>{
 
     try{
         const result= await pool.query(
-            'INSERT INTO customers (name, email, phone) VALUES ($1, $2, $3) RETURNING *',
+            'INSERT INTO YuNowDataBase.customers (name, email, phone) VALUES ($1, $2, $3) RETURNING *',
             [name, email, phone]
         );
 
@@ -25,7 +25,7 @@ const addCustomer = async (req,res)=>{
 
 const getCustomers = async (req,res) => {
     try {
-        const result = await pool.query('SELECT * FROM customers ORDER BY id ASC');
+        const result = await pool.query('SELECT * FROM YuNowDataBase.customers ORDER BY id ASC');
         res.json(result.rows);
     } catch (err) {
         console.error(err.message);
@@ -36,7 +36,7 @@ const getCustomers = async (req,res) => {
 const getCustomerForPhone = async (req,res) => {
     const {phone} = req.params;
     try {
-        const result = await pool.query('SELECT * FROM customers WHERE phone = $1', [phone.trim()]);
+        const result = await pool.query('SELECT * FROM YuNowDataBase.customers WHERE phone = $1', [phone.trim()]);
 
         if (result.rows.length ===0) {
             return res.status(404).json({ error: 'Cliente no encontrado' });     
@@ -54,7 +54,7 @@ const updateCustomer = async(req,res) => {
     const {name,email,phone}=req.body;
     try {
          const result = await pool.query(
-            'UPDATE customers SET name=$1, email=$2, phone=$3 WHERE id=$4 RETURNING *',
+            'UPDATE YuNowDataBase.customers SET name=$1, email=$2, phone=$3 WHERE id=$4 RETURNING *',
             [name, email, phone,id]
          );
 
@@ -102,7 +102,7 @@ const updateCustomerPartial = async (req, res) => {
 
         values.push(id);
 
-        const query = `UPDATE customers SET ${fields.join(', ')} WHERE id=$${counter} RETURNING *`;
+        const query = `UPDATE YuNowDataBase.customers SET ${fields.join(', ')} WHERE id=$${counter} RETURNING *`;
         const result = await pool.query(query, values);
 
         if (result.rows.length === 0) {
@@ -124,7 +124,7 @@ const deleteCustomer = async(req,res) => {
     const { id } = req.params;
     try{
         const result= await pool.query(
-            'DELETE FROM customers WHERE id=$1 RETURNING *',
+            'DELETE FROM YuNowDataBase.customers WHERE id=$1 RETURNING *',
             [id]
         );
 

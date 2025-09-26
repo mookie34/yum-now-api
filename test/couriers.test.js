@@ -121,8 +121,8 @@ describe('POST /api/couriers (mock)',()=>{
     it('Debe retornar lista vacía si no hay Domiciliarios que coincidan con el filtro (mock)', async()=>{
         pool.query.mockResolvedValueOnce({ rows: [] });
         const res = await request(app).get('/api/couriers/filter').query({name:'NoExiste'});
-        expect(res.status).toBe(200);
-        expect(res.body.length).toBe(0);
+        expect(res.status).toBe(404);
+        expect(res.body.message).toBe('No se encontraron domiciliarios con esos filtros');
     });
 
     it('Debe eliminar un Domiciliario existente (mock)', async()=>{
