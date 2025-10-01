@@ -210,72 +210,54 @@ describe('POST /api/customer-preferences (mock)',()=>{
         expect(res.body.preferencia.preference_value).toBe('daviplata');
     });
 
-    it('Deberia validar que el customer_id es obligatorio al actualizar una preferencia', async () => {
-        const res = await request(app)
-            .put('/api/customer-preferences/customer/1/preference_key/default_payment_method')
-            .send({ preference_key: 'default_payment_method', preference_value: 'daviplata' });
+    it('Debería validar que preference_value es obligatorio al actualizar una preferencia', async () => {
+    const res = await request(app)
+        .put('/api/customer-preferences/customer/1/preference_key/default_payment_method')
+        .send({}); // sin preference_value
 
-        expect(res.status).toBe(500);
-        expect(res.body.message).toBe('Debe proporcionar customer_id, preference_key y preference_value');
-    });
+    expect(res.status).toBe(400);
+    expect(res.body.message).toBe('Debe proporcionar preference_value');
+});
 
-    it('Deberia validar que el customer_id exista en la tabla customers al actualizar una preferencia', async () => {
-        pool.query.mockResolvedValueOnce({ rows: [] });
+    it('Debería validar que el customer_id exista en la tabla customers al actualizar una preferencia', async () => {
+        pool.query.mockResolvedValueOnce({ rows: [] }); // no existe el customer
 
         const res = await request(app)
             .put('/api/customer-preferences/customer/999/preference_key/default_payment_method')
-            .send({ customer_id: 999, preference_key: 'default_payment_method', preference_value: 'daviplata' });
+            .send({ preference_value: 'daviplata' });
 
         expect(res.status).toBe(404);
         expect(res.body.message).toBe('No existe un cliente con el customer_id proporcionado');
     });
 
-    it('Deberia validar que preference_key y preference_value son obligatorios al actualizar una preferencia', async () => {
+    it('Debería validar que preference_value no esté vacío al actualizar una preferencia', async () => {
         const res = await request(app)
             .put('/api/customer-preferences/customer/1/preference_key/default_payment_method')
-            .send({ customer_id: 1 });
+            .send({ preference_value: '' });
 
-        expect(res.status).toBe(500);
-        expect(res.body.message).toBe('Debe proporcionar customer_id, preference_key y preference_value');
+        expect(res.status).toBe(400);
+        expect(res.body.message).toBe('Debe proporcionar preference_value');
     });
 
-    it('Deberia validar que preference_value no este vacio al actualizar una preferencia', async () => {
-        const res = await request(app)
-            .put('/api/customer-preferences/customer/1/preference_key/default_payment_method')
-            .send({ customer_id: 1, preference_key: 'default_payment_method', preference_value: '' });
-
-        expect(res.status).toBe(500);
-        expect(res.body.message).toBe('Debe proporcionar customer_id, preference_key y preference_value');
-    });
-
-    it('Deberia validar que preference_key no este vacio al actualizar una preferencia', async () => {
-        const res = await request(app)
-            .put('/api/customer-preferences/customer/1/preference_key/default_payment_method')
-            .send({ customer_id: 1, preference_key: '', preference_value: 'daviplata' });
-
-        expect(res.status).toBe(500);
-        expect(res.body.message).toBe('Debe proporcionar customer_id, preference_key y preference_value');
-    });
-
-    it('Deberia devolver error cuando no existe la preferencia especifica para el cliente al actualizar', async () => {
+    it('Debería devolver error cuando no existe la preferencia específica para el cliente al actualizar', async () => {
         pool.query
-         .mockResolvedValueOnce({ rows: [{ id: 1}] }) // Mock para verificar customer_id
-        .mockResolvedValueOnce({ rows: [] }); // Mock para verificar existencia de preferencia
+            .mockResolvedValueOnce({ rows: [{ id: 1 }] }) // mock: customer existe
+            .mockResolvedValueOnce({ rows: [] });         // mock: preferencia no existe
 
         const res = await request(app)
             .put('/api/customer-preferences/customer/1/preference_key/non_existent_key')
-            .send({ customer_id: 1, preference_key: 'non_existent_key', preference_value: 'daviplata' });
+            .send({ preference_value: 'daviplata' });
 
         expect(res.status).toBe(404);
         expect(res.body.message).toBe('No se encontró la preferencia especificada para este cliente.');
     });
 
-    it('Deberia manejar errores internos del servidor al actualizar una preferencia', async () => {
+    it('Debería manejar errores internos del servidor al actualizar una preferencia', async () => {
         pool.query.mockRejectedValueOnce(new Error('Error de base de datos'));
 
         const res = await request(app)
             .put('/api/customer-preferences/customer/1/preference_key/default_payment_method')
-            .send({ customer_id: 1, preference_key: 'default_payment_method', preference_value: 'daviplata' });
+            .send({ preference_value: 'daviplata' });
 
         expect(res.status).toBe(500);
         expect(res.body.message).toBe('Error interno del servidor');
