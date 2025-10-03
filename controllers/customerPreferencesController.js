@@ -1,4 +1,4 @@
-const pool = require('../db');
+const db = require('../db');
 
 const createCustomerPreference = async (req, res) => {
     const { customer_id, preference_key, preference_value } = req.body;
@@ -7,12 +7,12 @@ const createCustomerPreference = async (req, res) => {
             return res.status(500).json({ message: 'Debe proporcionar customer_id, preference_key y preference_value' });
         }
 
-        const customerCheck = await pool.query('SELECT * FROM YuNowDataBase.customers WHERE id = $1', [customer_id]);
+        const customerCheck = await db.query('SELECT * FROM YuNowDataBase.customers WHERE id = $1', [customer_id]);
         if (customerCheck.rows.length === 0) {
             return res.status(404).json({ message: 'No existe un cliente con el customer_id proporcionado' });
         }
 
-        const result = await pool.query(
+        const result = await db.query(
             'INSERT INTO YuNowDataBase.customer_preferences (customer_id, preference_key, preference_value) VALUES ($1, $2, $3) RETURNING *',
             [customer_id, preference_key, preference_value]
         );
@@ -26,12 +26,12 @@ const createCustomerPreference = async (req, res) => {
 const getCustomerPreferences = async (req, res) => {
     const { customer_id } = req.params;
     try {
-        const customerCheck = await pool.query('SELECT * FROM YuNowDataBase.customers WHERE id = $1', [customer_id]);
+        const customerCheck = await db.query('SELECT * FROM YuNowDataBase.customers WHERE id = $1', [customer_id]);
         if (customerCheck.rows.length === 0) {
             return res.status(404).json({ message: 'No existe un cliente con el customer_id proporcionado' });
         }
 
-        const result = await pool.query('SELECT * FROM YuNowDataBase.customer_preferences WHERE customer_id = $1', [customer_id]);
+        const result = await db.query('SELECT * FROM YuNowDataBase.customer_preferences WHERE customer_id = $1', [customer_id]);
         if (result.rows.length === 0) {
             return res.status(200).json({ message: 'No se encontraron preferencias para este cliente.',  data: [] });
         }
@@ -46,12 +46,12 @@ const getCustomerPreferences = async (req, res) => {
 const getCustomerEspecificPreference = async (req, res) => {
     const { customer_id, preference_key } = req.params;
     try {
-        const customerCheck = await pool.query('SELECT * FROM YuNowDataBase.customers WHERE id = $1', [customer_id]);
+        const customerCheck = await db.query('SELECT * FROM YuNowDataBase.customers WHERE id = $1', [customer_id]);
         if (customerCheck.rows.length === 0) {
             return res.status(404).json({ message: 'No existe un cliente con el customer_id proporcionado' });
         }
 
-        const result = await pool.query(
+        const result = await db.query(
             'SELECT * FROM YuNowDataBase.customer_preferences WHERE customer_id = $1 AND preference_key = $2',
             [customer_id, preference_key]
         );
@@ -75,12 +75,12 @@ const updateCustomerPreference = async (req, res) => {
             return res.status(400).json({ message: 'Debe proporcionar preference_value' });
         }
 
-        const customerCheck = await pool.query('SELECT * FROM YuNowDataBase.customers WHERE id = $1', [customer_id]);
+        const customerCheck = await db.query('SELECT * FROM YuNowDataBase.customers WHERE id = $1', [customer_id]);
         if (customerCheck.rows.length === 0) {
             return res.status(404).json({ message: 'No existe un cliente con el customer_id proporcionado' });
         }
 
-        const preferenceCheck = await pool.query(
+        const preferenceCheck = await db.query(
             'SELECT * FROM YuNowDataBase.customer_preferences WHERE customer_id = $1 AND preference_key = $2',
             [customer_id, preference_key]
         );
@@ -88,7 +88,7 @@ const updateCustomerPreference = async (req, res) => {
             return res.status(404).json({ message: 'No se encontró la preferencia especificada para este cliente.' });
         }
 
-        const result = await pool.query(
+        const result = await db.query(
             'UPDATE YuNowDataBase.customer_preferences SET preference_value = $1 WHERE customer_id = $2 AND preference_key = $3 RETURNING *',
             [preference_value, customer_id, preference_key]
         );
@@ -104,12 +104,12 @@ const updateCustomerPreference = async (req, res) => {
 const deleteCustomerPreference = async (req, res) => {
     const { customer_id, preference_key } = req.params;
     try {
-        const customerCheck = await pool.query('SELECT * FROM YuNowDataBase.customers WHERE id = $1', [customer_id]);
+        const customerCheck = await db.query('SELECT * FROM YuNowDataBase.customers WHERE id = $1', [customer_id]);
         if (customerCheck.rows.length === 0) {
             return res.status(404).json({ message: 'No existe un cliente con el customer_id proporcionado' });
         }
 
-        const preferenceCheck = await pool.query(
+        const preferenceCheck = await db.query(
             'SELECT * FROM YuNowDataBase.customer_preferences WHERE customer_id = $1 AND preference_key = $2',
             [customer_id, preference_key]
         );
@@ -117,7 +117,7 @@ const deleteCustomerPreference = async (req, res) => {
             return res.status(404).json({ message: 'No se encontró la preferencia especificada para este cliente.' });
         }
 
-        await pool.query(
+        await db.query(
             'DELETE FROM YuNowDataBase.customer_preferences WHERE customer_id = $1 AND preference_key = $2',
             [customer_id, preference_key]
         );
@@ -131,12 +131,12 @@ const deleteCustomerPreference = async (req, res) => {
 const deleteAllCustomerPreferences = async (req,res) => {
     const { customer_id } = req.params;
     try {
-        const customerCheck = await pool.query('SELECT * FROM YuNowDataBase.customers WHERE id = $1', [customer_id]);
+        const customerCheck = await db.query('SELECT * FROM YuNowDataBase.customers WHERE id = $1', [customer_id]);
         if (customerCheck.rows.length === 0) {
             return res.status(404).json({ message: 'No existe un cliente con el customer_id proporcionado' });
         }
 
-        const preferencesCheck = await pool.query(
+        const preferencesCheck = await db.query(
             'SELECT * FROM YuNowDataBase.customer_preferences WHERE customer_id = $1',
             [customer_id]
         );
@@ -144,7 +144,7 @@ const deleteAllCustomerPreferences = async (req,res) => {
             return res.status(404).json({ message: 'No se encontraron preferencias para este cliente.' });
         }
 
-        await pool.query(
+        await db.query(
             'DELETE FROM YuNowDataBase.customer_preferences WHERE customer_id = $1',
             [customer_id]
         );

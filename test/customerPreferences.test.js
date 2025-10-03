@@ -1,14 +1,16 @@
 jest.mock('../db', () => ({
-    query: jest.fn()
+    query: jest.fn(),
+    end: jest.fn(),
+    pool: {}
 }));
 
-const pool = require('../db');
+const db = require('../db');
 const request = require('supertest');
-const app = require('../app');
+const app = require('../app'); 
 
 describe('POST /api/customer-preferences (mock)',()=>{
     it('Deberia crear una nueva preferencia de cliente', async () => {
-        pool.query
+        db.query
         .mockResolvedValueOnce({ rows: [{ id: 1}] }) // Mock para verificar customer_id
         .mockResolvedValueOnce({rows: [{ customer_id: 1, preference_key: 'default_payment_method', preference_value: 'nequi' }]
         });
@@ -33,7 +35,7 @@ describe('POST /api/customer-preferences (mock)',()=>{
     });
 
     it('Deberia validar que el customer_id exista en la tabla customers', async () => {
-        pool.query.mockResolvedValueOnce({ rows: [] });
+        db.query.mockResolvedValueOnce({ rows: [] });
 
         const res = await request(app)
             .post('/api/customer-preferences')
@@ -44,7 +46,7 @@ describe('POST /api/customer-preferences (mock)',()=>{
     });
 
     it('Deberia manejar errores internos del servidor', async () => {
-        pool.query.mockRejectedValueOnce(new Error('Error de base de datos'));
+        db.query.mockRejectedValueOnce(new Error('Error de base de datos'));
 
         const res = await request(app)
             .post('/api/customer-preferences')
@@ -82,7 +84,7 @@ describe('POST /api/customer-preferences (mock)',()=>{
     });
 
     it('Deberia obtener todas las preferencias de un cliente', async () => {
-        pool.query
+        db.query
          .mockResolvedValueOnce({ rows: [{ id: 1}] })
         .mockResolvedValueOnce({rows: [
             { customer_id: 1, preference_key: 'default_payment_method', preference_value: 'nequi' },
@@ -101,7 +103,7 @@ describe('POST /api/customer-preferences (mock)',()=>{
     });
 
     it('Deberia devolver error cuando no existe el customer_id al obtener preferencias', async () => {
-        pool.query.mockResolvedValueOnce({ rows: [] });
+        db.query.mockResolvedValueOnce({ rows: [] });
 
         const res = await request(app)
             .get('/api/customer-preferences/999');
@@ -111,7 +113,7 @@ describe('POST /api/customer-preferences (mock)',()=>{
     });
 
     it('Deberia devolver mensaje cuando el resultado es vacio al obtener preferencias', async () => {
-        pool.query
+        db.query
          .mockResolvedValueOnce({ rows: [{ id: 1}] })
         .mockResolvedValueOnce({rows: [] });
 
@@ -124,7 +126,7 @@ describe('POST /api/customer-preferences (mock)',()=>{
     });
 
     it('Deberia manejar errores internos del servidor al obtener preferencias', async () => {
-        pool.query.mockRejectedValueOnce(new Error('Error de base de datos'));
+        db.query.mockRejectedValueOnce(new Error('Error de base de datos'));
 
         const res = await request(app)
             .get('/api/customer-preferences/1');
@@ -134,7 +136,7 @@ describe('POST /api/customer-preferences (mock)',()=>{
     });
 
     it('Deberia obtener una preferencia especifica de un cliente', async () => {
-        pool.query
+        db.query
          .mockResolvedValueOnce({ rows: [{ id: 1}] })
         .mockResolvedValueOnce({rows: [
             { customer_id: 1, preference_key: 'default_payment_method', preference_value: 'nequi' }
@@ -150,7 +152,7 @@ describe('POST /api/customer-preferences (mock)',()=>{
     });
 
     it('Deberia devolver error cuando no existe el customer_id al obtener una preferencia especifica', async () => {
-        pool.query.mockResolvedValueOnce({ rows: [] });
+        db.query.mockResolvedValueOnce({ rows: [] });
 
         const res = await request(app)
             .get('/api/customer-preferences/customer/999/preference_key/default_payment_method');
@@ -160,7 +162,7 @@ describe('POST /api/customer-preferences (mock)',()=>{
     });
 
    it('Deberia devolver error cuando no existe la preferencia especifica para el cliente', async () => {
-        pool.query
+        db.query
          .mockResolvedValueOnce({ rows: [{ id: 1}] })
         .mockResolvedValueOnce({rows: [] });
 
@@ -172,7 +174,7 @@ describe('POST /api/customer-preferences (mock)',()=>{
     }); 
 
     it('Deberia manejar errores internos del servidor al obtener una preferencia especifica', async () => {
-        pool.query.mockRejectedValueOnce(new Error('Error de base de datos'));
+        db.query.mockRejectedValueOnce(new Error('Error de base de datos'));
 
         const res = await request(app)
             .get('/api/customer-preferences/customer/1/preference_key/default_payment_method');
@@ -196,7 +198,7 @@ describe('POST /api/customer-preferences (mock)',()=>{
     });
 
     it('Deberia actualizar una preferencia existente de un cliente', async () => {
-        pool.query
+        db.query
          .mockResolvedValueOnce({ rows: [{ id: 1}] }) // Mock para verificar customer_id
         .mockResolvedValueOnce({ rows: [{ customer_id: 1, preference_key: 'default_payment_method', preference_value: 'nequi' }] }) // Mock para verificar existencia de preferencia
         .mockResolvedValueOnce({ rows: [{ customer_id: 1, preference_key: 'default_payment_method', preference_value: 'daviplata' }] }); // Mock para la actualización
@@ -220,7 +222,7 @@ describe('POST /api/customer-preferences (mock)',()=>{
 });
 
     it('Debería validar que el customer_id exista en la tabla customers al actualizar una preferencia', async () => {
-        pool.query.mockResolvedValueOnce({ rows: [] }); // no existe el customer
+        db.query.mockResolvedValueOnce({ rows: [] }); // no existe el customer
 
         const res = await request(app)
             .put('/api/customer-preferences/customer/999/preference_key/default_payment_method')
@@ -240,7 +242,7 @@ describe('POST /api/customer-preferences (mock)',()=>{
     });
 
     it('Debería devolver error cuando no existe la preferencia específica para el cliente al actualizar', async () => {
-        pool.query
+        db.query
             .mockResolvedValueOnce({ rows: [{ id: 1 }] }) // mock: customer existe
             .mockResolvedValueOnce({ rows: [] });         // mock: preferencia no existe
 
@@ -253,7 +255,7 @@ describe('POST /api/customer-preferences (mock)',()=>{
     });
 
     it('Debería manejar errores internos del servidor al actualizar una preferencia', async () => {
-        pool.query.mockRejectedValueOnce(new Error('Error de base de datos'));
+        db.query.mockRejectedValueOnce(new Error('Error de base de datos'));
 
         const res = await request(app)
             .put('/api/customer-preferences/customer/1/preference_key/default_payment_method')
@@ -264,7 +266,7 @@ describe('POST /api/customer-preferences (mock)',()=>{
     });
 
     it('Deberia eliminar una preferencia existente de un cliente', async () => {
-        pool.query
+        db.query
          .mockResolvedValueOnce({ rows: [{ id: 1}] }) // Mock para verificar customer_id
         .mockResolvedValueOnce({ rows: [{ customer_id: 1, preference_key: 'default_payment_method', preference_value: 'nequi' }] }) // Mock para verificar existencia de preferencia
         .mockResolvedValueOnce({ rows: [] }); // Mock para la eliminación
@@ -277,7 +279,7 @@ describe('POST /api/customer-preferences (mock)',()=>{
     });
 
     it('Deberia validar que el customer_id exista en la tabla customers al eliminar una preferencia', async () => {
-        pool.query.mockResolvedValueOnce({ rows: [] });
+        db.query.mockResolvedValueOnce({ rows: [] });
 
         const res = await request(app)
             .delete('/api/customer-preferences/customer/999/preference_key/default_payment_method');
@@ -287,7 +289,7 @@ describe('POST /api/customer-preferences (mock)',()=>{
     });
 
     it('Deberia devolver error cuando no existe la preferencia especifica para el cliente al eliminar', async () => {
-        pool.query
+        db.query
          .mockResolvedValueOnce({ rows: [{ id: 1}] }) // Mock para verificar customer_id
         .mockResolvedValueOnce({ rows: [] }); // Mock para verificar existencia de preferencia
 
@@ -299,7 +301,7 @@ describe('POST /api/customer-preferences (mock)',()=>{
     });
 
     it('Deberia manejar errores internos del servidor al eliminar una preferencia', async () => {
-        pool.query.mockRejectedValueOnce(new Error('Error de base de datos'));
+        db.query.mockRejectedValueOnce(new Error('Error de base de datos'));
 
         const res = await request(app)
             .delete('/api/customer-preferences/customer/1/preference_key/default_payment_method');
@@ -309,7 +311,7 @@ describe('POST /api/customer-preferences (mock)',()=>{
     });
 
     it('Deberia eliminar todas las preferencias de un cliente', async () => {
-        pool.query
+        db.query
          .mockResolvedValueOnce({ rows: [{ id: 1}] }) // Mock para verificar customer_id
         .mockResolvedValueOnce({ rows: [{ customer_id: 1, preference_key: 'default_payment_method', preference_value: 'nequi' }] }) // Mock para verificar existencia de preferencias
         .mockResolvedValueOnce({ rows: [] }); // Mock para la eliminación
@@ -322,7 +324,7 @@ describe('POST /api/customer-preferences (mock)',()=>{
     });
 
     it('Deberia validar que el customer_id exista en la tabla customers al eliminar todas las preferencias', async () => {
-        pool.query.mockResolvedValueOnce({ rows: [] });
+        db.query.mockResolvedValueOnce({ rows: [] });
 
         const res = await request(app)
             .delete('/api/customer-preferences/customer/999');
@@ -332,7 +334,7 @@ describe('POST /api/customer-preferences (mock)',()=>{
     });
 
     it('Deberia devolver mensaje cuando no existen preferencias para el cliente al eliminar todas', async () => {
-        pool.query
+        db.query
          .mockResolvedValueOnce({ rows: [{ id: 1}] }) // Mock para verificar customer_id
         .mockResolvedValueOnce({ rows: [] }); // Mock para verificar existencia de preferencias
 
@@ -344,7 +346,7 @@ describe('POST /api/customer-preferences (mock)',()=>{
     });
 
     it('Deberia manejar errores internos del servidor al eliminar todas las preferencias', async () => {
-        pool.query.mockRejectedValueOnce(new Error('Error de base de datos'));
+        db.query.mockRejectedValueOnce(new Error('Error de base de datos'));
 
         const res = await request(app)
             .delete('/api/customer-preferences/customer/1');

@@ -1,4 +1,4 @@
-const pool = require('../db'); 
+const db = require('../db'); 
 
  const addCourier = async (req, res) => {
  const { name, phone, vehicle, license_plate, available } = req.body;
@@ -8,7 +8,7 @@ const pool = require('../db');
      }
 
      try {
-         const result = await pool.query(
+         const result = await db.query(
              'INSERT INTO YuNowDataBase.couriers (name, phone, vehicle, available, license_plate) VALUES ($1, $2, $3, $4, $5) RETURNING *',
              [name, phone, vehicle, available, license_plate]
          );
@@ -25,7 +25,7 @@ const pool = require('../db');
 
  const getCouriers = async (req,res) => {
      try {
-         const result = await pool.query('SELECT * FROM YuNowDataBase.couriers ORDER BY id ASC');
+         const result = await db.query('SELECT * FROM YuNowDataBase.couriers ORDER BY id ASC');
          res.json(result.rows);
      } catch (err) {
          console.error(err.message);
@@ -35,7 +35,7 @@ const pool = require('../db');
 
  const getCouriesAvailable = async (req, res) => {
         try {
-            const result = await pool.query('SELECT * FROM YuNowDataBase.couriers WHERE available = true ORDER BY id ASC');
+            const result = await db.query('SELECT * FROM YuNowDataBase.couriers WHERE available = true ORDER BY id ASC');
             if (result.rows.length === 0) {
                 return res.status(404).json({ error: 'No hay Domiciliarios disponibles' });
             }
@@ -64,7 +64,7 @@ const pool = require('../db');
                 query += ` AND license_plate ILIKE $${params.length}`;
             }
 
-            const result = await pool.query(query, params);
+            const result = await db.query(query, params);
             if (result.rows.length === 0) {
                 return res.status(404).json({ message: 'No se encontraron domiciliarios con esos filtros' });
             }
@@ -80,7 +80,7 @@ const pool = require('../db');
  const deleteCourier = async (req, res) => {
      const { id } = req.params;
      try {
-         const result = await pool.query('DELETE FROM YuNowDataBase.couriers WHERE id = $1 RETURNING *', [id]);
+         const result = await db.query('DELETE FROM YuNowDataBase.couriers WHERE id = $1 RETURNING *', [id]);
 
          if (result.rows.length === 0) {
              return res.status(404).json({ error: 'Domiciliario no encontrado' });
@@ -98,7 +98,7 @@ const pool = require('../db');
         const { name, phone, vehicle, license_plate, available } = req.body;
     
         try {
-            const result = await pool.query(
+            const result = await db.query(
                 'UPDATE YuNowDataBase.couriers SET name = $1, phone = $2, vehicle = $3, license_plate = $4, available = $5 WHERE id = $6 RETURNING *',
                 [name, phone, vehicle, license_plate, available, id]
             );
@@ -153,7 +153,7 @@ const pool = require('../db');
         values.push(id);
 
         const query = `UPDATE YuNowDataBase.couriers SET ${fields.join(', ')} WHERE id=$${counter} RETURNING *`;
-        const result = await pool.query(query, values);
+        const result = await db.query(query, values);
 
         if (result.rows.length === 0) {
             return res.status(404).json({ error: 'Domiciliario no encontrado' });

@@ -1,14 +1,16 @@
 jest.mock('../db', () => ({
-    query: jest.fn()
+    query: jest.fn(),
+    end: jest.fn(),
+    pool: {}
 }));
 
-const pool = require('../db');
+const db = require('../db');
 const request = require('supertest');
 const app = require('../app');
 
 describe('POST /api/addresses (mock)',()=>{
     it('Debe crear una dirección válida (mock)', async()=>{
-        pool.query.mockResolvedValueOnce({
+        db.query.mockResolvedValueOnce({
             rows: [{id:1,customer_id:1,label:'Casa',address_text:'Calle Falsa 123',reference:'Cerca del parque',latitude:40.7128,longitude:-74.0060,is_primary:true}]
         });
         
@@ -31,7 +33,7 @@ describe('POST /api/addresses (mock)',()=>{
     });
 
     it('Debe fallar si ya existe una dirección primaria para el cliente (mock)', async()=>{
-        pool.query.mockRejectedValueOnce({
+        db.query.mockRejectedValueOnce({
             code: '23505',
             message: 'duplicate key value violates unique constraint' // <-- agregado
         });
@@ -55,7 +57,7 @@ describe('POST /api/addresses (mock)',()=>{
     });    
 
     it('Debe manejar errores de base de datos (mock)', async()=>{
-        pool.query.mockRejectedValueOnce(new Error('DB error'));
+        db.query.mockRejectedValueOnce(new Error('DB error'));
 
         const res = await request(app)
         .post('/api/addresses')
@@ -66,7 +68,7 @@ describe('POST /api/addresses (mock)',()=>{
     });
 
     it('Debe traer todas las direcciones (mock)', async()=>{
-        pool.query.mockResolvedValueOnce({
+        db.query.mockResolvedValueOnce({
             rows: [
                 {id:1,customer_id:1,label:'Casa',address_text:'Calle Falsa 123',reference:'Cerca del parque',latitude:40.7128,longitude:-74.0060,is_primary:true},
                 {id:2,customer_id:2,label:'Trabajo',address_text:'Avenida Siempre Viva 742',reference:'Frente al banco',latitude:34.0522,longitude:-118.2437,is_primary:false}
@@ -81,7 +83,7 @@ describe('POST /api/addresses (mock)',()=>{
     });
 
     it('Debe manejar errores al traer direcciones (mock)', async()=>{
-        pool.query.mockRejectedValueOnce(new Error('DB error'));
+        db.query.mockRejectedValueOnce(new Error('DB error'));
 
         const res = await request(app)
         .get('/api/addresses');
@@ -91,7 +93,7 @@ describe('POST /api/addresses (mock)',()=>{
     });
 
     it('Debe traer direcciones por customer_id (mock)', async()=>{
-        pool.query.mockResolvedValueOnce({
+        db.query.mockResolvedValueOnce({
             rows: [
                 {id:1,customer_id:1,label:'Casa',address_text:'Calle Falsa 123',reference:'Cerca del parque',latitude:40.7128,longitude:-74.0060,is_primary:true}
             ]
@@ -106,7 +108,7 @@ describe('POST /api/addresses (mock)',()=>{
     });
 
     it('Debe manejar no encontrar direcciones por customer_id (mock)', async()=>{
-        pool.query.mockResolvedValueOnce({ rows: [] });
+        db.query.mockResolvedValueOnce({ rows: [] });
 
         const res = await request(app)
         .get('/api/addresses/999');
@@ -116,7 +118,7 @@ describe('POST /api/addresses (mock)',()=>{
     });
 
     it('Debe manejar errores al traer direcciones por customer_id (mock)', async()=>{
-        pool.query.mockRejectedValueOnce(new Error('DB error'));
+        db.query.mockRejectedValueOnce(new Error('DB error'));
 
         const res = await request(app)
         .get('/api/addresses/1');
@@ -126,7 +128,7 @@ describe('POST /api/addresses (mock)',()=>{
     });
 
     it('Debe eliminar una dirección (mock)', async()=>{
-        pool.query.mockResolvedValueOnce({
+        db.query.mockResolvedValueOnce({
             rows: [{id:1,customer_id:1,label:'Casa',address_text:'Calle Falsa 123',reference:'Cerca del parque',latitude:40.7128,longitude:-74.0060,is_primary:true}]
         });
 
@@ -139,7 +141,7 @@ describe('POST /api/addresses (mock)',()=>{
     });
 
     it('Debe manejar no encontrar dirección al eliminar (mock)', async()=>{
-        pool.query.mockResolvedValueOnce({ rows: [] });
+        db.query.mockResolvedValueOnce({ rows: [] });
 
         const res = await request(app)
         .delete('/api/addresses/999');
@@ -149,7 +151,7 @@ describe('POST /api/addresses (mock)',()=>{
     });
 
     it('Debe manejar errores al eliminar dirección (mock)', async()=>{
-        pool.query.mockRejectedValueOnce(new Error('DB error'));
+        db.query.mockRejectedValueOnce(new Error('DB error'));
 
         const res = await request(app)
         .delete('/api/addresses/1');
@@ -159,7 +161,7 @@ describe('POST /api/addresses (mock)',()=>{
     });
 
     it('Debe actualizar parcialmente una dirección (mock)', async()=>{
-        pool.query
+        db.query
         .mockResolvedValueOnce({}) // Para desmarcar primaria anterior
         .mockResolvedValueOnce({
             rows: [{id:1,customer_id:1,label:'Casa Actualizada',address_text:'Calle Falsa 123',reference:'Cerca del parque',latitude:40.7128,longitude:-74.0060,is_primary:true}]
@@ -175,7 +177,7 @@ describe('POST /api/addresses (mock)',()=>{
     });
 
     it('Debe manejar no encontrar dirección al actualizar (mock)', async()=>{
-        pool.query.mockResolvedValueOnce({ rows: [] });
+        db.query.mockResolvedValueOnce({ rows: [] });
 
         const res = await request(app)
         .patch('/api/addresses/999')
@@ -186,7 +188,7 @@ describe('POST /api/addresses (mock)',()=>{
     });
 
     it('Debe manejar errores al actualizar dirección (mock)', async()=>{
-        pool.query.mockRejectedValueOnce(new Error('DB error'));
+        db.query.mockRejectedValueOnce(new Error('DB error'));
 
         const res = await request(app)
         .patch('/api/addresses/1')
@@ -197,7 +199,7 @@ describe('POST /api/addresses (mock)',()=>{
     });
 
     it('Debe manejar errores al desmarcar primaria anterior (mock)', async()=>{
-        pool.query.mockRejectedValueOnce(new Error('DB error'));
+        db.query.mockRejectedValueOnce(new Error('DB error'));
 
         const res = await request(app)
         .patch('/api/addresses/1')
@@ -208,7 +210,7 @@ describe('POST /api/addresses (mock)',()=>{
     });
 
     it('Debe manejar el caso cuando ya existe una dirección primaria al actualizar (mock)', async()=>{
-        pool.query
+        db.query
         .mockResolvedValueOnce({}) // Para desmarcar primaria anterior
         .mockRejectedValueOnce({
             code: '23505',
@@ -226,7 +228,7 @@ describe('POST /api/addresses (mock)',()=>{
     });
 
     it('Debe manejar el caso cuando debe traer la dirección primaria por customer_id (mock)', async()=>{
-        pool.query.mockResolvedValueOnce({
+        db.query.mockResolvedValueOnce({
             rows: [{id:1,customer_id:1,label:'Casa',address_text:'Calle Falsa 123',reference:'Cerca del parque',latitude:40.7128,longitude:-74.0060,is_primary:true}]
         });
 
@@ -239,7 +241,7 @@ describe('POST /api/addresses (mock)',()=>{
     });
 
     it('Debe manejar no encontrar dirección primaria por customer_id (mock)', async()=>{
-        pool.query.mockResolvedValueOnce({ rows: [] });
+        db.query.mockResolvedValueOnce({ rows: [] });
 
         const res = await request(app)
         .get('/api/addresses/primary/999');
@@ -249,7 +251,7 @@ describe('POST /api/addresses (mock)',()=>{
     });
 
     it('Debe manejar errores al traer dirección primaria por customer_id (mock)', async()=>{
-        pool.query.mockRejectedValueOnce(new Error('DB error'));
+        db.query.mockRejectedValueOnce(new Error('DB error'));
 
         const res = await request(app)
         .get('/api/addresses/primary/1');

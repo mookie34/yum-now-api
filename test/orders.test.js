@@ -1,15 +1,16 @@
 jest.mock('../db', () => ({
-  query: jest.fn(),
+    query: jest.fn(),
+    end: jest.fn(),
+    pool: {}
 }));
 
 const db = require('../db');
 const request = require('supertest');
 const app = require('../app'); 
-const pool = require('../db');
 
 describe('POST /api/orders (mock)', () => {
     it('Deberia crear una nueva orden con exito', async () => {
-        pool.query
+        db.query
         .mockResolvedValueOnce({ rows: [{ id: 1 }] })
         .mockResolvedValueOnce({ rows: [{ id: 1 }] })
         .mockResolvedValueOnce({ rows: [{customer_id:1,address_id:1,payment_method:'Credit card',status:'Pending'}]
@@ -32,7 +33,7 @@ describe('POST /api/orders (mock)', () => {
     });
 
     it('Deberia devolver error cuando no existe el usuario', async () => {
-        pool.query
+        db.query
         .mockResolvedValueOnce({ rows: [] });
         const res = await request(app)
             .post('/api/orders')
@@ -47,7 +48,7 @@ describe('POST /api/orders (mock)', () => {
     });
 
     it('Deberia devolver error cuando no existe la direccion', async () => {
-        pool.query
+        db.query
         .mockResolvedValueOnce({ rows: [{ id: 1 }] })
         .mockResolvedValueOnce({ rows: [] });
         const res = await request(app)
@@ -75,7 +76,7 @@ describe('POST /api/orders (mock)', () => {
     });
 
     it('Deberia manejar error de base de datos', async () => {
-        pool.query.mockRejectedValueOnce(new Error('DB error'));
+        db.query.mockRejectedValueOnce(new Error('DB error'));
         const res = await request(app)  
             .post('/api/orders')
             .send({
@@ -89,7 +90,7 @@ describe('POST /api/orders (mock)', () => {
     }); 
 
     it('Deberia actualizar el total de la orden con exito', async () => {
-        pool.query.mockResolvedValueOnce({ rows: [{ id: 1, total: 100 }] });
+        db.query.mockResolvedValueOnce({ rows: [{ id: 1, total: 100 }] });
 
         const res = await request(app)
             .patch('/api/orders/1/total');
@@ -101,7 +102,7 @@ describe('POST /api/orders (mock)', () => {
     });
 
     it('Deberia devolver error cuando no existe la orden al actualizar total', async () => {
-        pool.query
+        db.query
         .mockResolvedValueOnce({ rows: [] });
         const res = await request(app)
             .patch('/api/orders/999/total');
@@ -110,7 +111,7 @@ describe('POST /api/orders (mock)', () => {
     });
 
     it('Deberia manejar error de base de datos al actualizar total', async () => {
-        pool.query.mockRejectedValueOnce(new Error('DB error'));
+        db.query.mockRejectedValueOnce(new Error('DB error'));
         const res = await request(app)
             .patch('/api/orders/1/total');
         expect(res.status).toEqual(500);
@@ -118,7 +119,7 @@ describe('POST /api/orders (mock)', () => {
     });
 
     it('Deberia traer todas las ordenes', async () => {
-        pool.query.mockResolvedValueOnce({ rows: [
+        db.query.mockResolvedValueOnce({ rows: [
             { id: 1, customer_id: 1, address_id: 1, total: 100, payment_method: 'Credit card', status: 'Pending' },
             { id: 2, customer_id: 1, address_id: 1, total: 100, payment_method: 'Credit card', status: 'Pending' }
         ] });
@@ -131,7 +132,7 @@ describe('POST /api/orders (mock)', () => {
     });
 
     it('Deberia manejar error de base de datos al traer todas las ordenes', async () => {
-        pool.query.mockRejectedValueOnce(new Error('DB error'));
+        db.query.mockRejectedValueOnce(new Error('DB error'));
         const res = await request(app)
             .get('/api/orders');
         expect(res.status).toEqual(500);
@@ -139,7 +140,7 @@ describe('POST /api/orders (mock)', () => {
     });
 
     it('Deberia traer una orden por ID', async () => {
-        pool.query.mockResolvedValueOnce({ rows: [
+        db.query.mockResolvedValueOnce({ rows: [
             { id: 1, customer_id: 1, address_id: 1, total: 100, payment_method: 'Credit card', status: 'Pending' }
         ] });
         const res = await request(app)
@@ -149,7 +150,7 @@ describe('POST /api/orders (mock)', () => {
     });
 
     it('Deberia devolver error cuando no existe la orden al buscar por ID', async () => {
-        pool.query
+        db.query
         .mockResolvedValueOnce({ rows: [] });
         const res = await request(app)
             .get('/api/orders/999');
@@ -158,7 +159,7 @@ describe('POST /api/orders (mock)', () => {
     });
 
     it('Deberia manejar error de base de datos al buscar orden por ID', async () => {
-        pool.query.mockRejectedValueOnce(new Error('DB error'));
+        db.query.mockRejectedValueOnce(new Error('DB error'));
         const res = await request(app)
             .get('/api/orders/1');
         expect(res.status).toEqual(500);
@@ -166,7 +167,7 @@ describe('POST /api/orders (mock)', () => {
     });
 
     it('Deberia traer ordenes por ID de cliente', async () => {
-        pool.query.mockResolvedValueOnce({ rows: [
+        db.query.mockResolvedValueOnce({ rows: [
             { id: 1, customer_id: 1, address_id: 1, total: 100, payment_method: 'Credit card', status: 'Pending' },
             { id: 2, customer_id: 1, address_id: 1, total: 100, payment_method: 'Credit card', status: 'Pending' }
         ] });
@@ -178,7 +179,7 @@ describe('POST /api/orders (mock)', () => {
     });
 
     it('Deberia devolver error cuando no existen ordenes para el cliente', async () => {
-        pool.query
+        db.query
         .mockResolvedValueOnce({ rows: [] });
         const res = await request(app)
             .get('/api/orders/customer/999');
@@ -187,7 +188,7 @@ describe('POST /api/orders (mock)', () => {
     });
 
     it('Deberia manejar error de base de datos al buscar ordenes por ID de cliente', async () => {
-        pool.query.mockRejectedValueOnce(new Error('DB error'));
+        db.query.mockRejectedValueOnce(new Error('DB error'));
         const res = await request(app)
             .get('/api/orders/customer/1');
         expect(res.status).toEqual(500);
@@ -195,7 +196,7 @@ describe('POST /api/orders (mock)', () => {
     });
 
     it('Deberia eliminar una orden por ID', async () => {
-        pool.query.mockResolvedValueOnce({ rows: [
+        db.query.mockResolvedValueOnce({ rows: [
             { id: 1, customer_id: 1, address_id: 1, total: 100, payment_method: 'Credit card', status: 'Pending' }
         ] });
         const res = await request(app)
@@ -206,7 +207,7 @@ describe('POST /api/orders (mock)', () => {
     });
 
     it('Deberia devolver error cuando no existe la orden al eliminar', async () => {
-        pool.query
+        db.query
         .mockResolvedValueOnce({ rows: [] });
         const res = await request(app)
             .delete('/api/orders/999');
@@ -215,7 +216,7 @@ describe('POST /api/orders (mock)', () => {
     });
 
     it('Deberia manejar error de base de datos al eliminar orden', async () => {
-        pool.query.mockRejectedValueOnce(new Error('DB error'));
+        db.query.mockRejectedValueOnce(new Error('DB error'));
         const res = await request(app)
             .delete('/api/orders/1');
         expect(res.status).toEqual(500);
@@ -223,7 +224,7 @@ describe('POST /api/orders (mock)', () => {
     });
 
     it('Deberia actualizar parcialmente una orden sus status', async () => {
-        pool.query
+        db.query
         .mockResolvedValueOnce({ rows: [{ id: 1 }] })
         .mockResolvedValueOnce({ rows: [
             { id: 1, customer_id: 2, address_id: 1, total: 100, payment_method: 'Debit card', status: 'Shipped' }
@@ -240,7 +241,7 @@ describe('POST /api/orders (mock)', () => {
     });
 
     it('Deberia actualizar parcialmente una orden su customer_id', async () => {
-        pool.query
+        db.query
         .mockResolvedValueOnce({ rows: [{ id: 1 }] })
         .mockResolvedValueOnce({ rows: [
             { id: 1, customer_id: 3, address_id: 1, total: 100, payment_method: 'Credit card', status: 'Pending' }
@@ -254,7 +255,7 @@ describe('POST /api/orders (mock)', () => {
     });
 
     it('Deberia devolver error cuando no existe la orden al actualizar parcialmente', async () => {
-        pool.query
+        db.query
         .mockResolvedValueOnce({ rows: [] });
         const res = await request(app)
             .patch('/api/orders/999') 
@@ -264,7 +265,7 @@ describe('POST /api/orders (mock)', () => {
     });
 
     it('Deberia manejar error de base de datos al actualizar parcialmente una orden', async () => {
-        pool.query.mockRejectedValueOnce(new Error('DB error'));
+        db.query.mockRejectedValueOnce(new Error('DB error'));
         const res = await request(app)
             .patch('/api/orders/1') 
             .send({ customer_id: 2 });
@@ -273,7 +274,7 @@ describe('POST /api/orders (mock)', () => {
     });
 
     it('Deberia actualizar el estado de la orden', async () => {
-        pool.query
+        db.query
         .mockResolvedValueOnce({ rows: [{ id: 1 }] })
         .mockResolvedValueOnce({ rows: [
             { id: 1, customer_id: 1, address_id: 1, total: 100, payment_method: 'Credit card', status: 'Delivered' }
@@ -295,7 +296,7 @@ describe('POST /api/orders (mock)', () => {
     });
 
     it('Deberia devolver error cuando no existe la orden al actualizar estado', async () => {
-        pool.query
+        db.query
         .mockResolvedValueOnce({ rows: [] });
         const res = await request(app)
             .patch('/api/orders/999/status') 
@@ -305,7 +306,7 @@ describe('POST /api/orders (mock)', () => {
     });
 
     it('Deberia manejar error de base de datos al actualizar estado de la orden', async () => {
-        pool.query.mockRejectedValueOnce(new Error('DB error'));
+        db.query.mockRejectedValueOnce(new Error('DB error'));
         const res = await request(app)
             .patch('/api/orders/1/status') 
             .send({ status: 'Delivered' });

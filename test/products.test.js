@@ -1,14 +1,16 @@
 jest.mock('../db', () => ({
-    query: jest.fn()
+    query: jest.fn(),
+    end: jest.fn(),
+    pool: {}
 }));
 
-const pool = require('../db');
+const db = require('../db');
 const request = require('supertest');
-const app = require('../app');
+const app = require('../app'); 
 
 describe('POST /api/products (mock)',()=>{
     it('Debe crear un producto válido (mock)', async()=>{
-        pool.query.mockResolvedValueOnce({
+        db.query.mockResolvedValueOnce({
             rows: [{id:1,name:'Producto 1',description:'Descripción del producto 1',price:100.50}]
         });
         
@@ -31,7 +33,7 @@ describe('POST /api/products (mock)',()=>{
     });
 
     it('Debe manejar errores de base de datos (mock)', async()=>{
-        pool.query.mockRejectedValueOnce(new Error('DB error'));
+        db.query.mockRejectedValueOnce(new Error('DB error'));
 
         const res = await request(app)
         .post('/api/products')
@@ -42,7 +44,7 @@ describe('POST /api/products (mock)',()=>{
     });
 
     it('Debe obtener todos los productos (mock)', async()=>{
-        pool.query.mockResolvedValueOnce({
+        db.query.mockResolvedValueOnce({
             rows: [
                 {id:1,name:'Producto 1',description:'Descripción del producto 1',price:100.50},
                 {id:2,name:'Producto 2',description:'Descripción del producto 2',price:200.75}
@@ -58,7 +60,7 @@ describe('POST /api/products (mock)',()=>{
     });
 
     it('Debe manejar errores al obtener productos (mock)', async()=>{
-        pool.query.mockRejectedValueOnce(new Error('DB error'));
+        db.query.mockRejectedValueOnce(new Error('DB error'));
 
         const res = await request(app)
         .get('/api/products');
@@ -68,7 +70,7 @@ describe('POST /api/products (mock)',()=>{
     });
 
     it('Debe filtrar productos (mock)', async()=>{
-        pool.query.mockResolvedValueOnce({
+        db.query.mockResolvedValueOnce({
             rows: [
                 {id:2,name:'Producto 2',description:'Descripción del producto 2',price:200.75}
             ]
@@ -84,7 +86,7 @@ describe('POST /api/products (mock)',()=>{
     });
 
     it('Debe filtrar productos por nombre (mock)', async()=>{
-        pool.query.mockResolvedValueOnce({
+        db.query.mockResolvedValueOnce({
             rows: [
                 {id:1,name:'Producto 1',description:'Descripción del producto 1',price:100.50}
             ]
@@ -100,7 +102,7 @@ describe('POST /api/products (mock)',()=>{
     });
 
     it('Debe manejar errores al filtrar productos (mock)', async()=>{
-        pool.query.mockRejectedValueOnce(new Error('DB error'));
+        db.query.mockRejectedValueOnce(new Error('DB error'));
 
         const res = await request(app)
         .get('/api/products/filter')
@@ -111,7 +113,7 @@ describe('POST /api/products (mock)',()=>{
     });
 
     it('Debe obtener un producto por filtro pero no existe (mock)', async()=>{
-        pool.query.mockResolvedValueOnce({ rows: [] });
+        db.query.mockResolvedValueOnce({ rows: [] });
 
         const res = await request(app)
         .get('/api/products/filter')
@@ -122,7 +124,7 @@ describe('POST /api/products (mock)',()=>{
     });
 
     it('Debe obtener un producto por ID (mock)', async()=>{
-        pool.query.mockResolvedValueOnce({
+        db.query.mockResolvedValueOnce({
             rows: [{id:1,name:'Producto 1',description:'Descripción del producto 1',price:100.50}]
         });
 
@@ -136,7 +138,7 @@ describe('POST /api/products (mock)',()=>{
     });
 
     it('Debe manejar producto no encontrado por ID (mock)', async()=>{
-        pool.query.mockResolvedValueOnce({ rows: [] });
+        db.query.mockResolvedValueOnce({ rows: [] });
 
         const res = await request(app)
         .get('/api/products/999');
@@ -146,7 +148,7 @@ describe('POST /api/products (mock)',()=>{
     });
 
     it('Debe manejar errores al obtener producto por ID (mock)', async()=>{
-        pool.query.mockRejectedValueOnce(new Error('DB error'));
+        db.query.mockRejectedValueOnce(new Error('DB error'));
 
         const res = await request(app)
         .get('/api/products/1');
@@ -156,7 +158,7 @@ describe('POST /api/products (mock)',()=>{
     }); 
 
     it('Debe eliminar un producto por ID (mock)', async()=>{
-        pool.query.mockResolvedValueOnce({
+        db.query.mockResolvedValueOnce({
             rows: [{id:1,name:'Producto 1',description:'Descripción del producto 1',price:100.50}]
         });
 
@@ -169,7 +171,7 @@ describe('POST /api/products (mock)',()=>{
     });
 
     it('Debe manejar producto no encontrado al eliminar por ID (mock)', async()=>{
-        pool.query.mockResolvedValueOnce({ rows: [] });
+        db.query.mockResolvedValueOnce({ rows: [] });
 
         const res = await request(app)
         .delete('/api/products/999');
@@ -179,7 +181,7 @@ describe('POST /api/products (mock)',()=>{
     });
 
     it('Debe manejar errores al eliminar producto por ID (mock)', async()=>{
-        pool.query.mockRejectedValueOnce(new Error('DB error'));
+        db.query.mockRejectedValueOnce(new Error('DB error'));
 
         const res = await request(app)
         .delete('/api/products/1');
@@ -189,7 +191,7 @@ describe('POST /api/products (mock)',()=>{
     }); 
 
     it('Debe actualizar un producto por ID (mock)', async()=>{
-        pool.query.mockResolvedValueOnce({
+        db.query.mockResolvedValueOnce({
             rows: [{id:1,name:'Producto Actualizado',description:'Descripción actualizada',price:150.75}]
         });
 
@@ -212,7 +214,7 @@ describe('POST /api/products (mock)',()=>{
     });
 
     it('Debe manejar producto no encontrado al actualizar por ID (mock)', async()=>{
-        pool.query.mockResolvedValueOnce({ rows: [] });
+        db.query.mockResolvedValueOnce({ rows: [] });
 
         const res = await request(app)
         .put('/api/products/999')
@@ -223,7 +225,7 @@ describe('POST /api/products (mock)',()=>{
     });
 
     it('Debe manejar errores al actualizar producto por ID (mock)', async()=>{
-        pool.query.mockRejectedValueOnce(new Error('DB error'));
+        db.query.mockRejectedValueOnce(new Error('DB error'));
 
         const res = await request(app)
         .put('/api/products/1')
@@ -234,7 +236,7 @@ describe('POST /api/products (mock)',()=>{
     });
 
     it('Debe actualizar parcialmente un producto por ID (mock)', async()=>{
-        pool.query.mockResolvedValueOnce({
+        db.query.mockResolvedValueOnce({
             rows: [{id:1,name:'Producto Parcial',description:'Descripción parcial',price:120.00}]
         });
 
@@ -248,7 +250,7 @@ describe('POST /api/products (mock)',()=>{
     });
 
     it('Debe manejar producto no encontrado al actualizar parcialmente por ID (mock)', async()=>{
-        pool.query.mockResolvedValueOnce({ rows: [] });
+        db.query.mockResolvedValueOnce({ rows: [] });
 
         const res = await request(app)
         .patch('/api/products/999')
@@ -259,7 +261,7 @@ describe('POST /api/products (mock)',()=>{
     });
 
     it('Debe manejar errores al actualizar parcialmente producto por ID (mock)', async()=>{
-        pool.query.mockRejectedValueOnce(new Error('DB error'));
+        db.query.mockRejectedValueOnce(new Error('DB error'));
 
         const res = await request(app)
         .patch('/api/products/1')
