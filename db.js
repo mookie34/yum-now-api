@@ -1,5 +1,5 @@
 const { Pool } = require('pg');
-require('dotenv').config();
+require('dotenv').config({quiet: true});
 
 // ============================================
 // VALIDACIÓN DE VARIABLES DE ENTORNO
@@ -16,13 +16,14 @@ if(missingVars.length>0) {
 // ============================================
 const poolConfig = {
   host: process.env.DB_HOST,
-  port: process.env.DB_PORT,
+  port:  process.env.DB_PORT || 5432,
   database: process.env.DB_NAME,
   user: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
   max: 20, // número máximo de conexiones en el pool
   idleTimeoutMillis: 30000, // tiempo máximo de inactividad antes de cerrar una conexión
-  connectionTimeoutMillis: 2000, // tiempo máximo para establecer una conexión
+  connectionTimeoutMillis: 30000 , // tiempo máximo para establecer una conexión
+  allowExitOnIdle: false // ✅ Importante para evitar cierres inesperados
 };
 
 //SSL solo en producción
@@ -42,7 +43,6 @@ const pool = new Pool(poolConfig);
 
 pool.on('error', (err) => {
   console.error('❌ Error inesperado en PostgreSQL:', err);
-  process.exit(-1);
 });
 
 pool.on('connect', () => {

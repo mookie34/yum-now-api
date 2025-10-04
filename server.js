@@ -1,4 +1,4 @@
-require('dotenv').config(); // Cargar variables de entorno desde un archivo .env
+require('dotenv').config({quiet:true}); // Cargar variables de entorno desde un archivo .env
 const app = require('./app');
 const db=require('./db');
 const PORT = process.env.PORT || 3000;

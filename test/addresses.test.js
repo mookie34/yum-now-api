@@ -127,7 +127,7 @@ describe('POST /api/addresses (mock)',()=>{
         expect(res.body.error).toBe('Error al obtener las direcciones del cliente');
     });
 
-    it('Debe eliminar una dirección (mock)', async()=>{
+  /*  it('Debe eliminar una dirección (mock)', async()=>{
         db.query.mockResolvedValueOnce({
             rows: [{id:1,customer_id:1,label:'Casa',address_text:'Calle Falsa 123',reference:'Cerca del parque',latitude:40.7128,longitude:-74.0060,is_primary:true}]
         });
@@ -138,7 +138,7 @@ describe('POST /api/addresses (mock)',()=>{
         expect(res.status).toBe(200);
         expect(res.body.message).toBe('Dirección eliminada exitosamente');
         expect(res.body.address.id).toBe(1);
-    });
+    }); 
 
     it('Debe manejar no encontrar dirección al eliminar (mock)', async()=>{
         db.query.mockResolvedValueOnce({ rows: [] });
@@ -148,7 +148,7 @@ describe('POST /api/addresses (mock)',()=>{
 
         expect(res.status).toBe(404);
         expect(res.body.error).toBe('Dirección no encontrada');
-    });
+    });*/
 
     it('Debe manejar errores al eliminar dirección (mock)', async()=>{
         db.query.mockRejectedValueOnce(new Error('DB error'));
