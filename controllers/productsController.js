@@ -1,4 +1,4 @@
-const pool = require('../db'); // Importa tu pool de conexión a la base de datos
+const db = require('../db'); // Importa tu db de conexión a la base de datos
 
 const addProduct = async (req, res) => {
     const { name, description, price } = req.body;
@@ -8,7 +8,7 @@ const addProduct = async (req, res) => {
     }
 
     try {
-        const result = await pool.query(
+        const result = await db.query(
             'INSERT INTO YuNowDataBase.products (name, description, price) VALUES ($1, $2, $3) RETURNING *',
             [name, description, price]
         );
@@ -25,7 +25,7 @@ const addProduct = async (req, res) => {
 
 const getProducts = async (req, res) => {
     try {
-        const result = await pool.query('SELECT * FROM YuNowDataBase.products ORDER BY id ASC');
+        const result = await db.query('SELECT * FROM YuNowDataBase.products ORDER BY id ASC');
         res.json(result.rows);
     } catch (err) {
         console.error(err.message);
@@ -52,7 +52,7 @@ const getProductForFilter = async (req, res) => {
             query += ` AND price <= $${params.length}`;
         }
 
-        const result = await pool.query(query, params);
+        const result = await db.query(query, params);
 
         if (result.rows.length === 0) {
             return res.status(404).json({ error: 'No se encontraron productos con los filtros proporcionados' });
@@ -68,7 +68,7 @@ const getProductForFilter = async (req, res) => {
 const getProductById = async (req, res) => {
     const { id } = req.params;
     try {
-        const result = await pool.query('SELECT * FROM YuNowDataBase.products WHERE id = $1', [id]);
+        const result = await db.query('SELECT * FROM YuNowDataBase.products WHERE id = $1', [id]);
         if (result.rows.length === 0) {
             return res.status(404).json({ error: 'Producto no encontrado' });
         }
@@ -82,7 +82,7 @@ const getProductById = async (req, res) => {
 const deleteProduct = async (req, res) => {
     const { id } = req.params;
     try {
-        const result = await pool.query('DELETE FROM YuNowDataBase.products WHERE id = $1 RETURNING *', [id]);
+        const result = await db.query('DELETE FROM YuNowDataBase.products WHERE id = $1 RETURNING *', [id]);
         if (result.rows.length === 0) {
             return res.status(404).json({ error: 'Producto no encontrado' });
         }
@@ -102,7 +102,7 @@ const updateProduct = async (req, res) => {
     }
 
     try {
-        const result = await pool.query(
+        const result = await db.query(
             'UPDATE YuNowDataBase.products SET name = $1, description = $2, price = $3 WHERE id = $4 RETURNING *',
             [name, description, price, id]
         );
@@ -154,7 +154,7 @@ const updateProductPartial = async (req, res) => {
         query += fields.join(', ') + ` WHERE id = $${count} RETURNING *`;
         values.push(id);
 
-        const result = await pool.query(query, values);
+        const result = await db.query(query, values);
 
         if (result.rows.length === 0) {
             return res.status(404).json({ error: 'Producto no encontrado' });

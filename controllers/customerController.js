@@ -1,145 +1,128 @@
-const pool = require('../db'); // tu conexión a PostgreSQL
+const { customerService, ValidationError, NotFoundError, DuplicateError } = require('../services/customerService');
 
-const addCustomer = async (req,res)=>{
-    const {name,email,phone}=req.body;
-
-    if (!name || !email || !phone) {
-        return res.status(400).json({ error: 'Faltan datos: nombre, email o teléfono' });
-    }
-
-    try{
-        const result= await pool.query(
-            'INSERT INTO YuNowDataBase.customers (name, email, phone) VALUES ($1, $2, $3) RETURNING *',
-            [name, email, phone]
-        );
-
+const addCustomer = async (req, res) => {
+    try {
+        const customer = await customerService.addCustomer(req.body);
         res.status(201).json({
-            mensaje: 'Cliente creado exitosamente',
-            cliente: result.rows[0]
+            message: 'Cliente creado exitosamente',
+            customer
         });
-    }catch (err) {
-        console.error(err.message);
-        res.status(500).json({ error: 'Error al guardar el cliente en la base de datos' });
+    } catch (err) {
+        console.error('Error al crear cliente:', err.message);
+        
+        if (err instanceof ValidationError) {
+            return res.status(400).json({ error: err.message });
+        }
+        
+        if (err instanceof DuplicateError) {
+            return res.status(409).json({ error: err.message });
+        }
+        
+        res.status(500).json({ error: 'Error al crear el cliente' });
     }
 };
 
-const getCustomers = async (req,res) => {
+const getCustomers = async (req, res) => {
     try {
-        const result = await pool.query('SELECT * FROM YuNowDataBase.customers ORDER BY id ASC');
-        res.json(result.rows);
+        const customers = await customerService.getAllCustomers(req.query.limit);
+        res.json(customers);
     } catch (err) {
-        console.error(err.message);
+        console.error('Error al obtener clientes:', err.message);
         res.status(500).json({ error: 'Error al obtener los clientes' });
     }
 };
 
-const getCustomerForPhone = async (req,res) => {
-    const {phone} = req.params;
+const getCustomerForPhone = async (req, res) => {
     try {
-        const result = await pool.query('SELECT * FROM YuNowDataBase.customers WHERE phone = $1', [phone.trim()]);
-
-        if (result.rows.length ===0) {
-            return res.status(404).json({ error: 'Cliente no encontrado' });     
-        }
-
-        res.json(result.rows[0]);
+        const customer = await customerService.getCustomerByPhone(req.params.phone);
+        res.json(customer);
     } catch (err) {
-        console.error(err.message);
-        res.status(500).json({ error: 'Error al obtener los clientes' });
+        console.error('Error al buscar cliente:', err.message);
+        
+        if (err instanceof ValidationError) {
+            return res.status(400).json({ error: err.message });
+        }
+        
+        if (err instanceof NotFoundError) {
+            return res.status(404).json({ error: err.message });
+        }
+        
+        res.status(500).json({ error: 'Error al buscar el cliente' });
     }
 };
 
-const updateCustomer = async(req,res) => {
-    const {id} = req.params;
-    const {name,email,phone}=req.body;
+const updateCustomer = async (req, res) => {
     try {
-         const result = await pool.query(
-            'UPDATE YuNowDataBase.customers SET name=$1, email=$2, phone=$3 WHERE id=$4 RETURNING *',
-            [name, email, phone,id]
-         );
-
-         if (result.rows.length ===0) {
-            return res.status(404).json({ error: 'Cliente no encontrado' });     
-        }
-
-        res.status(200).json({
-            mensaje: 'Cliente actualizado exitosamente',
-            cliente: result.rows[0]
+        const customer = await customerService.updateCustomer(req.params.id, req.body);
+        res.json({
+            message: 'Cliente actualizado exitosamente',
+            customer
         });
-
-
     } catch (err) {
-        console.error(err.message);
-        res.status(500).json({ error: 'Error al actualizar un cliente' });
-    }  
+        console.error('Error al actualizar cliente:', err.message);
+        
+        if (err instanceof ValidationError) {
+            return res.status(400).json({ error: err.message });
+        }
+        
+        if (err instanceof NotFoundError) {
+            return res.status(404).json({ error: err.message });
+        }
+        
+        if (err instanceof DuplicateError) {
+            return res.status(409).json({ error: err.message });
+        }
+        
+        res.status(500).json({ error: 'Error al actualizar el cliente' });
+    }
 };
 
 const updateCustomerPartial = async (req, res) => {
-    const { id } = req.params;
-    const { name, email, phone } = req.body;
-
     try {
-        const fields = [];
-        const values = [];
-        let counter = 1;
-
-        if (name) {
-            fields.push(`name=$${counter++}`);
-            values.push(name);
-        }
-        if (email) {
-            fields.push(`email=$${counter++}`);
-            values.push(email);
-        }
-        if (phone) {
-            fields.push(`phone=$${counter++}`);
-            values.push(phone);
-        }
-
-        if (fields.length === 0) {
-            return res.status(400).json({ error: 'No se proporcionaron campos para actualizar' });
-        }
-
-        values.push(id);
-
-        const query = `UPDATE YuNowDataBase.customers SET ${fields.join(', ')} WHERE id=$${counter} RETURNING *`;
-        const result = await pool.query(query, values);
-
-        if (result.rows.length === 0) {
-            return res.status(404).json({ error: 'Cliente no encontrado' });
-        }
-
-        res.status(200).json({
-            mensaje: 'Cliente actualizado exitosamente',
-            cliente: result.rows[0]
+        const customer = await customerService.updateCustomerPartial(req.params.id, req.body);
+        res.json({
+            message: 'Cliente actualizado exitosamente',
+            customer
         });
-
     } catch (err) {
-        console.error(err.message);
-        res.status(500).json({ error: 'Error al actualizar un cliente' });
-    }
-};
-
-const deleteCustomer = async(req,res) => {
-    const { id } = req.params;
-    try{
-        const result= await pool.query(
-            'DELETE FROM YuNowDataBase.customers WHERE id=$1 RETURNING *',
-            [id]
-        );
-
-        if (result.rows.length ===0) {
-            return res.status(404).json({ error: 'Cliente no encontrado' });     
+        console.error('Error al actualizar cliente:', err.message);
+        
+        if (err instanceof ValidationError) {
+            return res.status(400).json({ error: err.message });
         }
-
-        res.status(200).json({
-            mensaje: 'Cliente eliminado exitosamente',
-            cliente: result.rows[0]
-        });
-    } catch (err){
-        console.error(err.message);
-        res.status(500).json({ error: 'Error al eliminar un cliente' });
+        
+        if (err instanceof NotFoundError) {
+            return res.status(404).json({ error: err.message });
+        }
+        
+        if (err instanceof DuplicateError) {
+            return res.status(409).json({ error: err.message });
+        }
+        
+        res.status(500).json({ error: 'Error al actualizar el cliente' });
     }
 };
 
-module.exports = { addCustomer, getCustomers,deleteCustomer,updateCustomer, updateCustomerPartial,getCustomerForPhone };
+const deleteCustomer = async (req, res) => {
+    try {
+        const customer = await customerService.deleteCustomerById(req.params.id);
+        res.json({
+            message: 'Cliente eliminado exitosamente',
+            customer
+        });
+    } catch (err) {
+        console.error('Error al eliminar cliente:', err.message);
+        
+        if (err instanceof ValidationError) {
+            return res.status(400).json({ error: err.message });
+        }
+        
+        if (err instanceof NotFoundError) {
+            return res.status(404).json({ error: err.message });
+        }
+        
+        res.status(500).json({ error: 'Error al eliminar el cliente' });
+    }
+};
+
+module.exports = {addCustomer,getCustomers,getCustomerForPhone,updateCustomer,updateCustomerPartial,deleteCustomer};

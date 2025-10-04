@@ -1,4 +1,4 @@
-const pool = require('../db');
+const db = require('../db');
 
 const addAddress = async (req, res) => {
     const { customer_id,  label, address_text, reference, latitude, longitude,is_primary } = req.body;
@@ -7,7 +7,7 @@ const addAddress = async (req, res) => {
     }
 
     try {
-        const result = await pool.query(
+        const result = await db.query(
             'INSERT INTO YuNowDataBase.addresses (customer_id,label, address_text, reference,latitude,longitude,is_primary) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *',
             [customer_id, label, address_text, reference, latitude, longitude,is_primary]
         );
@@ -30,7 +30,7 @@ const addAddress = async (req, res) => {
 
 const getAddresses = async (req, res) => {
     try {
-        const result = await pool.query('SELECT * FROM YuNowDataBase.addresses ORDER BY id ASC');
+        const result = await db.query('SELECT * FROM YuNowDataBase.addresses ORDER BY id ASC');
         res.json(result.rows);
     } catch (err) {
         console.error(err.message);
@@ -41,7 +41,7 @@ const getAddresses = async (req, res) => {
 const getAddressByCustomerId = async (req, res) => {
     const { customer_id } = req.params;
     try {
-        const result = await pool.query('SELECT * FROM YuNowDataBase.addresses WHERE customer_id = $1', [customer_id]);
+        const result = await db.query('SELECT * FROM YuNowDataBase.addresses WHERE customer_id = $1', [customer_id]);
 
         if (result.rows.length === 0) {
             return res.status(404).json({ error: 'No se encontraron direcciones asociadas al cliente.' });
@@ -57,7 +57,11 @@ const getAddressByCustomerId = async (req, res) => {
 const deleteAddress = async (req, res) => {
     const { id } = req.params;
     try {
-        const result = await pool.query('DELETE FROM YuNowDataBase.addresses WHERE id = $1 RETURNING *', [id]);
+        const addressIsPrimary = await db.query('SELECT is_primary FROM YuNowDataBase.addresses WHERE id = $1', [id]);
+        if (addressIsPrimary.rows.length ===1){
+            return res.status(404).json({ error: 'No se puede eliminar la dirección ya que es primaria.' });
+        }
+        const result = await db.query('DELETE FROM YuNowDataBase.addresses WHERE id = $1 RETURNING *', [id]);
 
         if (result.rows.length === 0) {
             return res.status(404).json({ error: 'Dirección no encontrada' });
@@ -77,7 +81,7 @@ const updateAddressPartial = async (req, res) => {
     // Si se va a establecer como primaria, desmarcar la primaria anterior
     if (is_primary) {
         try {
-            await pool.query(
+            await db.query(
                 `UPDATE YuNowDataBase.addresses
                  SET is_primary = FALSE
                  WHERE customer_id = (
@@ -135,7 +139,7 @@ const updateAddressPartial = async (req, res) => {
     params.push(id);
 
     try {
-        const result = await pool.query(query, params);
+        const result = await db.query(query, params);
 
         if (result.rows.length === 0) {
             return res.status(404).json({ error: 'Dirección no encontrada' });
@@ -162,7 +166,7 @@ const updateAddressPartial = async (req, res) => {
 const getPrimaryAddressByCustomerId = async (req, res) => {
     const { customer_id } = req.params;
     try {
-        const result = await pool.query('SELECT * FROM YuNowDataBase.addresses WHERE customer_id = $1 AND is_primary = TRUE', [customer_id]);
+        const result = await db.query('SELECT * FROM YuNowDataBase.addresses WHERE customer_id = $1 AND is_primary = TRUE', [customer_id]);
 
         if (result.rows.length === 0) {
             return res.status(404).json({ error: 'No se encontró una dirección primaria para este cliente.' });

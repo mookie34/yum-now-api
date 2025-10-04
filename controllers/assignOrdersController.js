@@ -1,4 +1,4 @@
-const pool = require('../db');
+const db = require('../db');
 
 const addAssignOrder = async (req, res) => {
     const { order_id, courier_id } = req.body;
@@ -8,20 +8,20 @@ const addAssignOrder = async (req, res) => {
             return res.status(400).json({ error: 'order_id y courier_id son requeridos.' });
         }
 
-        const existOrder = await pool.query('SELECT * FROM YuNowDataBase.orders WHERE id = $1', [order_id]);
+        const existOrder = await db.query('SELECT * FROM YuNowDataBase.orders WHERE id = $1', [order_id]);
         if (existOrder.rows.length === 0) {
             return res.status(404).json({ error: 'No existe la orden.' });
         }
-        const existCourier = await pool.query('SELECT * FROM YuNowDataBase.couriers WHERE id = $1', [courier_id]);
+        const existCourier = await db.query('SELECT * FROM YuNowDataBase.couriers WHERE id = $1', [courier_id]);
         if (existCourier.rows.length === 0) {
             return res.status(404).json({ error: 'Repartidor no encontrado.' });
         }
-        const existAssignment = await pool.query('SELECT * FROM YuNowDataBase.assignment_order WHERE order_id = $1', [order_id]);
+        const existAssignment = await db.query('SELECT * FROM YuNowDataBase.assignment_order WHERE order_id = $1', [order_id]);
         if (existAssignment.rows.length > 0) {
             return res.status(400).json({ error: 'La orden ya ha sido asignada a un repartidor.' });
         }
 
-        const result = await pool.query(
+        const result = await db.query(
             'INSERT INTO YuNowDataBase.assignment_order (order_id, courier_id) VALUES ($1, $2) RETURNING *',
             [order_id, courier_id]
         );
@@ -38,7 +38,7 @@ const addAssignOrder = async (req, res) => {
 
 const getAssignOrders = async (req, res) => {
     try {
-        const result = await pool.query(`
+        const result = await db.query(`
             SELECT 
                 ao.id AS assignment_id,
                 ao.assigned_at,
@@ -70,12 +70,12 @@ const getAssignOrders = async (req, res) => {
 const getAssignOrderByCourierId = async (req, res) => {
     const { courier_id } = req.params;
     try {
-        const existCourier = await pool.query('SELECT * FROM YuNowDataBase.couriers WHERE id = $1', [courier_id]);
+        const existCourier = await db.query('SELECT * FROM YuNowDataBase.couriers WHERE id = $1', [courier_id]);
         if (existCourier.rows.length === 0) {
             return res.status(404).json({ error: 'Repartidor no encontrado.' });
         }
 
-        const result = await pool.query(`
+        const result = await db.query(`
         SELECT 
             ao.id AS assignment_id,
             ao.assigned_at,
@@ -107,11 +107,11 @@ const getAssignOrderByCourierId = async (req, res) => {
 const getAssignOrderByOrderId = async (req, res) => {
     const { order_id } = req.params;
     try {
-        const existOrder = await pool.query('SELECT * FROM YuNowDataBase.orders WHERE id = $1', [order_id]);
+        const existOrder = await db.query('SELECT * FROM YuNowDataBase.orders WHERE id = $1', [order_id]);
         if (existOrder.rows.length === 0) {
             return res.status(404).json({ error: 'No existe la orden.' });
         }
-        const result = await pool.query(`
+        const result = await db.query(`
         SELECT 
             ao.id AS assignment_id,
             ao.assigned_at,
@@ -144,15 +144,15 @@ const updateAssignOrderCourier = async (req, res) => {
     const { order_id } = req.params;
     const { courier_id } = req.body;
     try {
-        const existOrder = await pool.query('SELECT * FROM YuNowDataBase.orders WHERE id = $1', [order_id]);
+        const existOrder = await db.query('SELECT * FROM YuNowDataBase.orders WHERE id = $1', [order_id]);
         if (existOrder.rows.length === 0) {
             return res.status(404).json({ error: 'No existe la orden.' });
         }
-        const existCourier = await pool.query('SELECT * FROM YuNowDataBase.couriers WHERE id = $1', [courier_id]);
+        const existCourier = await db.query('SELECT * FROM YuNowDataBase.couriers WHERE id = $1', [courier_id]);
         if (existCourier.rows.length === 0) {
             return res.status(404).json({ error: 'Repartidor no encontrado.' });
         }
-        const result = await pool.query(
+        const result = await db.query(
             'UPDATE YuNowDataBase.assignment_order SET courier_id = $1 WHERE order_id = $2 RETURNING *',
             [courier_id, order_id]
         );
@@ -174,12 +174,12 @@ const updateAssignOrderCourier = async (req, res) => {
 const deleteAssignOrder = async (req, res) => {
     const { order_id } = req.params;
     try {
-        const existOrder = await pool.query('SELECT * FROM YuNowDataBase.orders WHERE id = $1', [order_id]);
+        const existOrder = await db.query('SELECT * FROM YuNowDataBase.orders WHERE id = $1', [order_id]);
         if (existOrder.rows.length === 0) {
             return res.status(404).json({ error: 'No existe la orden.' });
         }
         
-        const result = await pool.query(
+        const result = await db.query(
             'DELETE FROM YuNowDataBase.assignment_order WHERE order_id = $1 RETURNING *',
             [order_id]
         );
