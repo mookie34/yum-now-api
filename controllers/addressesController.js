@@ -7,6 +7,12 @@ const addAddress = async (req, res) => {
     }
 
     try {
+
+        const existCustomer = await customerRepository.getCustomerById(customer_id);
+        if (!existCustomer) {
+            return res.status(404).json({ error: 'El cliente no existe.' });
+        }
+        
         const result = await db.query(
             'INSERT INTO YuNowDataBase.addresses (customer_id,label, address_text, reference,latitude,longitude,is_primary) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *',
             [customer_id, label, address_text, reference, latitude, longitude,is_primary]
