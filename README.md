@@ -13,7 +13,7 @@ y una **aplicación web en Angular** para administradores y domiciliarios.
 - **Base de datos:** PostgreSQL
 - **Mensajería:** Twilio o 360dialog (para WhatsApp)
 - **Despliegue:** VPS o Render
-- **Lenguaje:** TypeScript
+- **Lenguaje:** JavaScript
 
 ---
 

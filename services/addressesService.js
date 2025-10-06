@@ -169,10 +169,17 @@ class AddressesService {
                 }
                 // Validar datos
                 this.ValidateAddressData(customer_id, label, address_text, reference, latitude, longitude, is_primary, true);
+                
+                const existingAddress = await addressesRepository.getById(id);
+                if (!existingAddress) {
+                    throw new NotFoundError('Dirección no encontrada');
+                }
+
                 // Si is_primary es true, desmarcar otras direcciones primarias del mismo cliente
                 if (is_primary) {
-                    await addressesRepository.unsetPrimaryAddresses(customer_id);
+                    await addressesRepository.unsetPrimaryAddresses(existingAddress.customer_id);
                 }
+                
                 const updatedAddress = await addressesRepository.updatePartial(id, addressData);
                 if (!updatedAddress) {
                     throw new NotFoundError('Dirección no encontrada');
