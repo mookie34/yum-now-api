@@ -1,46 +1,17 @@
-jest.mock('../db', () => ({
-    query: jest.fn(),
-    end: jest.fn(),
-    pool: {}
-}));
-
-const db = require('../db');
+jest.mock('../services/addressesService');
 const request = require('supertest');
 const app = require('../app');
+const addressesService = require('../services/addressesService');
+const { ValidationError, NotFoundError, DuplicateError } = require('../errors/customErrors');
 
-describe('POST /api/addresses (mock)',()=>{
-    it('Debe crear una dirección válida (mock)', async()=>{
-        db.query.mockResolvedValueOnce({
-            rows: [{id:1,customer_id:1,label:'Casa',address_text:'Calle Falsa 123',reference:'Cerca del parque',latitude:40.7128,longitude:-74.0060,is_primary:true}]
-        });
-        
-        const res = await request(app)
-        .post('/api/addresses')
-        .send({customer_id:1,label:'Casa',address_text:'Calle Falsa 123',reference:'Cerca del parque',latitude:40.7128,longitude:-74.0060,is_primary:true});
-
-        expect(res.status).toBe(201);
-        expect(res.body.message).toBe('Dirección creada exitosamente');
-        expect(res.body.address.label).toBe('Casa');
+describe('POST /api/addresses', () => {
+    beforeEach(() => {
+        jest.clearAllMocks();
     });
 
-    it('Debe fallar si falta algún dato (mock)', async()=>{
-        const res = await request(app)
-        .post('/api/addresses')
-        .send({customer_id:1,label:'Casa'});
-
-        expect(res.status).toBe(400);
-        expect(res.body.error).toBe('Faltan datos: customer_id, label o address_text');
-    });
-
-    it('Debe fallar si ya existe una dirección primaria para el cliente (mock)', async()=>{
-        db.query.mockRejectedValueOnce({
-            code: '23505',
-            message: 'duplicate key value violates unique constraint' // <-- agregado
-        });
-    
-        const res = await request(app)
-        .post('/api/addresses')
-        .send({
+    it('Debe crear una dirección exitosamente', async () => {
+        const mockAddress = {
+            id: 1,
             customer_id: 1,
             label: 'Casa',
             address_text: 'Calle Falsa 123',
@@ -48,215 +19,387 @@ describe('POST /api/addresses (mock)',()=>{
             latitude: 40.7128,
             longitude: -74.0060,
             is_primary: true
-        });
-    
-        expect(res.status).toBe(400);
-        expect(res.body.error).toBe(
-            'Ya existe una dirección primaria para este cliente. Solo puede haber una.'
-        );
-    });    
-
-    it('Debe manejar errores de base de datos (mock)', async()=>{
-        db.query.mockRejectedValueOnce(new Error('DB error'));
-
+        };
+        
+        addressesService.addAddress.mockResolvedValueOnce(mockAddress);
+        
         const res = await request(app)
-        .post('/api/addresses')
-        .send({customer_id:1,label:'Casa',address_text:'Calle Falsa 123',reference:'Cerca del parque',latitude:40.7128,longitude:-74.0060,is_primary:true});
-
-        expect(res.status).toBe(500);
-        expect(res.body.error).toBe('Error al guardar la dirección en la base de datos');
+            .post('/api/addresses')
+            .send({
+                customer_id: 1,
+                label: 'Casa',
+                address_text: 'Calle Falsa 123',
+                reference: 'Cerca del parque',
+                latitude: 40.7128,
+                longitude: -74.0060,
+                is_primary: true
+            });
+        
+        expect(res.status).toBe(201);
+        expect(res.body.message).toBe('Dirección creada exitosamente');
+        expect(res.body.address).toEqual(mockAddress);
+        expect(addressesService.addAddress).toHaveBeenCalledTimes(1);
     });
 
-    it('Debe traer todas las direcciones (mock)', async()=>{
-        db.query.mockResolvedValueOnce({
-            rows: [
-                {id:1,customer_id:1,label:'Casa',address_text:'Calle Falsa 123',reference:'Cerca del parque',latitude:40.7128,longitude:-74.0060,is_primary:true},
-                {id:2,customer_id:2,label:'Trabajo',address_text:'Avenida Siempre Viva 742',reference:'Frente al banco',latitude:34.0522,longitude:-118.2437,is_primary:false}
-            ]
-        });
-
+    it('Debe fallar si falta customer_id', async () => {
+        addressesService.addAddress.mockRejectedValueOnce(
+            new ValidationError('ID de cliente inválido')
+        );
+        
         const res = await request(app)
-        .get('/api/addresses');
+            .post('/api/addresses')
+            .send({ label: 'Casa', address_text: 'Calle 123' });
+        
+        expect(res.status).toBe(400);
+        expect(res.body.error).toBe('ID de cliente inválido');
+    });
 
+    it('Debe fallar si falta label', async () => {
+        addressesService.addAddress.mockRejectedValueOnce(
+            new ValidationError('La etiqueta es obligatoria')
+        );
+        
+        const res = await request(app)
+            .post('/api/addresses')
+            .send({ customer_id: 1, address_text: 'Calle 123' });
+        
+        expect(res.status).toBe(400);
+        expect(res.body.error).toBe('La etiqueta es obligatoria');
+    });
+
+    it('Debe fallar si falta address_text', async () => {
+        addressesService.addAddress.mockRejectedValueOnce(
+            new ValidationError('La dirección es obligatoria')
+        );
+        
+        const res = await request(app)
+            .post('/api/addresses')
+            .send({ customer_id: 1, label: 'Casa' });
+        
+        expect(res.status).toBe(400);
+        expect(res.body.error).toBe('La dirección es obligatoria');
+    });
+
+    it('Debe fallar si el cliente no existe', async () => {
+        addressesService.addAddress.mockRejectedValueOnce(
+            new NotFoundError('Cliente no encontrado')
+        );
+        
+        const res = await request(app)
+            .post('/api/addresses')
+            .send({
+                customer_id: 999,
+                label: 'Casa',
+                address_text: 'Calle 123'
+            });
+        
+        expect(res.status).toBe(404);
+        expect(res.body.error).toBe('Cliente no encontrado');
+    });
+
+    it('Debe manejar errores internos del servidor', async () => {
+        addressesService.addAddress.mockRejectedValueOnce(
+            new Error('Database connection error')
+        );
+        
+        const res = await request(app)
+            .post('/api/addresses')
+            .send({
+                customer_id: 1,
+                label: 'Casa',
+                address_text: 'Calle 123'
+            });
+        
+        expect(res.status).toBe(500);
+        expect(res.body.error).toBe('Error interno del servidor');
+    });
+});
+
+describe('GET /api/addresses', () => {
+    beforeEach(() => {
+        jest.clearAllMocks();
+    });
+
+    it('Debe obtener todas las direcciones', async () => {
+        const mockAddresses = [
+            { id: 1, customer_id: 1, label: 'Casa', address_text: 'Calle 1' },
+            { id: 2, customer_id: 2, label: 'Oficina', address_text: 'Calle 2' }
+        ];
+        
+        addressesService.getAllAddresses.mockResolvedValueOnce(mockAddresses);
+        
+        const res = await request(app).get('/api/addresses');
+        
         expect(res.status).toBe(200);
+        expect(res.body).toEqual(mockAddresses);
         expect(res.body.length).toBe(2);
     });
 
-    it('Debe manejar errores al traer direcciones (mock)', async()=>{
-        db.query.mockRejectedValueOnce(new Error('DB error'));
-
-        const res = await request(app)
-        .get('/api/addresses');
-
-        expect(res.status).toBe(500);
-        expect(res.body.error).toBe('Error al obtener las direcciones');
-    });
-
-    it('Debe traer direcciones por customer_id (mock)', async()=>{
-        db.query.mockResolvedValueOnce({
-            rows: [
-                {id:1,customer_id:1,label:'Casa',address_text:'Calle Falsa 123',reference:'Cerca del parque',latitude:40.7128,longitude:-74.0060,is_primary:true}
-            ]
-        });
-
-        const res = await request(app)
-        .get('/api/addresses/1');
-
+    it('Debe obtener direcciones con límite personalizado', async () => {
+        const mockAddresses = [
+            { id: 1, customer_id: 1, label: 'Casa', address_text: 'Calle 1' }
+        ];
+        
+        addressesService.getAllAddresses.mockResolvedValueOnce(mockAddresses);
+        
+        const res = await request(app).get('/api/addresses?limit=50');
+        
         expect(res.status).toBe(200);
-        expect(res.body.length).toBe(1);
-        expect(res.body[0].customer_id).toBe(1);
+        expect(addressesService.getAllAddresses).toHaveBeenCalledWith(50);
     });
 
-    it('Debe manejar no encontrar direcciones por customer_id (mock)', async()=>{
-        db.query.mockResolvedValueOnce({ rows: [] });
+    it('Debe fallar con límite inválido', async () => {
+        addressesService.getAllAddresses.mockRejectedValueOnce(
+            new ValidationError('El límite debe ser un número positivo')
+        );
+        
+        const res = await request(app).get('/api/addresses?limit=-5');
+        
+        expect(res.status).toBe(400);
+        expect(res.body.error).toBe('El límite debe ser un número positivo');
+    });
+});
 
-        const res = await request(app)
-        .get('/api/addresses/999');
+describe('GET /api/addresses/customer/:customer_id', () => {
+    beforeEach(() => {
+        jest.clearAllMocks();
+    });
 
+    it('Debe obtener direcciones por customer_id', async () => {
+        const mockAddresses = [
+            { id: 1, customer_id: 1, label: 'Casa', address_text: 'Calle 1' },
+            { id: 2, customer_id: 1, label: 'Oficina', address_text: 'Calle 2' }
+        ];
+        
+        addressesService.getAddressesByCustomerId.mockResolvedValueOnce(mockAddresses);
+        
+        const res = await request(app).get('/api/addresses/customer/1');
+        
+        expect(res.status).toBe(200);
+        expect(res.body).toEqual(mockAddresses);
+        expect(res.body.length).toBe(2);
+    });
+
+    it('Debe fallar si no encuentra direcciones del cliente', async () => {
+        addressesService.getAddressesByCustomerId.mockRejectedValueOnce(
+            new NotFoundError('No se encontraron direcciones para este cliente')
+        );
+        
+        const res = await request(app).get('/api/addresses/customer/999');
+        
         expect(res.status).toBe(404);
-        expect(res.body.error).toBe('No se encontraron direcciones asociadas al cliente.');
+        expect(res.body.error).toBe('No se encontraron direcciones para este cliente');
     });
 
-    it('Debe manejar errores al traer direcciones por customer_id (mock)', async()=>{
-        db.query.mockRejectedValueOnce(new Error('DB error'));
+    it('Debe fallar con customer_id inválido', async () => {
+        addressesService.getAddressesByCustomerId.mockRejectedValueOnce(
+            new ValidationError('ID inválido')
+        );
+        
+        const res = await request(app).get('/api/addresses/customer/abc');
+        
+        expect(res.status).toBe(400);
+        expect(res.body.error).toBe('ID inválido');
+    });
+});
 
-        const res = await request(app)
-        .get('/api/addresses/1');
-
-        expect(res.status).toBe(500);
-        expect(res.body.error).toBe('Error al obtener las direcciones del cliente');
+describe('GET /api/addresses/primary/:customer_id', () => {
+    beforeEach(() => {
+        jest.clearAllMocks();
     });
 
-  /*  it('Debe eliminar una dirección (mock)', async()=>{
-        db.query.mockResolvedValueOnce({
-            rows: [{id:1,customer_id:1,label:'Casa',address_text:'Calle Falsa 123',reference:'Cerca del parque',latitude:40.7128,longitude:-74.0060,is_primary:true}]
-        });
-
-        const res = await request(app)
-        .delete('/api/addresses/1');
-
+    it('Debe obtener la dirección primaria del cliente', async () => {
+        const mockAddress = {
+            id: 1,
+            customer_id: 1,
+            label: 'Casa',
+            address_text: 'Calle 1',
+            is_primary: true
+        };
+        
+        addressesService.getPrimaryAddressByCustomerId.mockResolvedValueOnce(mockAddress);
+        
+        const res = await request(app).get('/api/addresses/primary/1');
+        
         expect(res.status).toBe(200);
-        expect(res.body.message).toBe('Dirección eliminada exitosamente');
-        expect(res.body.address.id).toBe(1);
-    }); 
+        expect(res.body).toEqual(mockAddress);
+        expect(res.body.is_primary).toBe(true);
+    });
 
-    it('Debe manejar no encontrar dirección al eliminar (mock)', async()=>{
-        db.query.mockResolvedValueOnce({ rows: [] });
+    it('Debe fallar si no encuentra dirección primaria', async () => {
+        addressesService.getPrimaryAddressByCustomerId.mockRejectedValueOnce(
+            new NotFoundError('No se encontró una dirección primaria para este cliente')
+        );
+        
+        const res = await request(app).get('/api/addresses/primary/999');
+        
+        expect(res.status).toBe(404);
+        expect(res.body.error).toContain('dirección primaria');
+    });
+});
 
-        const res = await request(app)
-        .delete('/api/addresses/999');
+describe('GET /api/addresses/:id', () => {
+    beforeEach(() => {
+        jest.clearAllMocks();
+    });
 
+    it('Debe obtener una dirección por ID', async () => {
+        const mockAddress = {
+            id: 1,
+            customer_id: 1,
+            label: 'Casa',
+            address_text: 'Calle 1'
+        };
+        
+        addressesService.getAddressById.mockResolvedValueOnce(mockAddress);
+        
+        const res = await request(app).get('/api/addresses/1');
+        
+        expect(res.status).toBe(200);
+        expect(res.body).toEqual(mockAddress);
+    });
+
+    it('Debe fallar si no encuentra la dirección', async () => {
+        addressesService.getAddressById.mockRejectedValueOnce(
+            new NotFoundError('Dirección no encontrada')
+        );
+        
+        const res = await request(app).get('/api/addresses/999');
+        
         expect(res.status).toBe(404);
         expect(res.body.error).toBe('Dirección no encontrada');
-    });*/
+    });
+});
 
-    it('Debe manejar errores al eliminar dirección (mock)', async()=>{
-        db.query.mockRejectedValueOnce(new Error('DB error'));
-
-        const res = await request(app)
-        .delete('/api/addresses/1');
-
-        expect(res.status).toBe(500);
-        expect(res.body.error).toBe('Error al eliminar la dirección');
+describe('PATCH /api/addresses/:id', () => {
+    beforeEach(() => {
+        jest.clearAllMocks();
     });
 
-    it('Debe actualizar parcialmente una dirección (mock)', async()=>{
-        db.query
-        .mockResolvedValueOnce({}) // Para desmarcar primaria anterior
-        .mockResolvedValueOnce({
-            rows: [{id:1,customer_id:1,label:'Casa Actualizada',address_text:'Calle Falsa 123',reference:'Cerca del parque',latitude:40.7128,longitude:-74.0060,is_primary:true}]
-        });
-
+    it('Debe actualizar parcialmente una dirección', async () => {
+        const mockUpdatedAddress = {
+            id: 1,
+            customer_id: 1,
+            label: 'Casa Actualizada',
+            address_text: 'Calle 1'
+        };
+        
+        addressesService.updateAddressPartial.mockResolvedValueOnce(mockUpdatedAddress);
+        
         const res = await request(app)
-        .patch('/api/addresses/1')
-        .send({label:'Casa Actualizada',is_primary:true});
-
+            .patch('/api/addresses/1')
+            .send({ label: 'Casa Actualizada' });
+        
         expect(res.status).toBe(200);
         expect(res.body.message).toBe('Dirección actualizada exitosamente');
         expect(res.body.address.label).toBe('Casa Actualizada');
     });
 
-    it('Debe manejar no encontrar dirección al actualizar (mock)', async()=>{
-        db.query.mockResolvedValueOnce({ rows: [] });
-
+    it('Debe fallar si no encuentra la dirección a actualizar', async () => {
+        addressesService.updateAddressPartial.mockRejectedValueOnce(
+            new NotFoundError('Dirección no encontrada')
+        );
+        
         const res = await request(app)
-        .patch('/api/addresses/999')
-        .send({label:'Casa Actualizada'});
-
+            .patch('/api/addresses/999')
+            .send({ label: 'Nueva etiqueta' });
+        
         expect(res.status).toBe(404);
         expect(res.body.error).toBe('Dirección no encontrada');
     });
 
-    it('Debe manejar errores al actualizar dirección (mock)', async()=>{
-        db.query.mockRejectedValueOnce(new Error('DB error'));
-
-        const res = await request(app)
-        .patch('/api/addresses/1')
-        .send({label:'Casa Actualizada'});
-
-        expect(res.status).toBe(500);
-        expect(res.body.error).toBe('Error al actualizar la dirección');
-    });
-
-    it('Debe manejar errores al desmarcar primaria anterior (mock)', async()=>{
-        db.query.mockRejectedValueOnce(new Error('DB error'));
-
-        const res = await request(app)
-        .patch('/api/addresses/1')
-        .send({is_primary:true});
-
-        expect(res.status).toBe(500);
-        expect(res.body.error).toBe('Error al actualizar la dirección primaria');
-    });
-
-    it('Debe manejar el caso cuando ya existe una dirección primaria al actualizar (mock)', async()=>{
-        db.query
-        .mockResolvedValueOnce({}) // Para desmarcar primaria anterior
-        .mockRejectedValueOnce({
-            code: '23505',
-            message: 'duplicate key value violates unique constraint' // <-- agregado
-        });
-
-        const res = await request(app)
-        .patch('/api/addresses/1')
-        .send({is_primary:true});
-
-        expect(res.status).toBe(400);
-        expect(res.body.error).toBe(
-            'Ya existe una dirección primaria para este cliente. Solo puede haber una.'
+    it('Debe fallar con datos inválidos', async () => {
+        addressesService.updateAddressPartial.mockRejectedValueOnce(
+            new ValidationError('La etiqueta no debe exceder los 50 caracteres')
         );
+        
+        const res = await request(app)
+            .patch('/api/addresses/1')
+            .send({ label: 'A'.repeat(51) });
+        
+        expect(res.status).toBe(400);
+        expect(res.body.error).toContain('50 caracteres');
+    });
+});
+
+describe('PUT /api/addresses/:id', () => {
+    beforeEach(() => {
+        jest.clearAllMocks();
     });
 
-    it('Debe manejar el caso cuando debe traer la dirección primaria por customer_id (mock)', async()=>{
-        db.query.mockResolvedValueOnce({
-            rows: [{id:1,customer_id:1,label:'Casa',address_text:'Calle Falsa 123',reference:'Cerca del parque',latitude:40.7128,longitude:-74.0060,is_primary:true}]
-        });
-
+    it('Debe actualizar completamente una dirección', async () => {
+        const mockUpdatedAddress = {
+            id: 1,
+            customer_id: 1,
+            label: 'Oficina',
+            address_text: 'Nueva Calle 123',
+            reference: 'Nueva referencia',
+            latitude: 10.5,
+            longitude: -70.2,
+            is_primary: false
+        };
+        
+        addressesService.updateAddress.mockResolvedValueOnce(mockUpdatedAddress);
+        
         const res = await request(app)
-        .get('/api/addresses/primary/1');
-
+            .put('/api/addresses/1')
+            .send({
+                customer_id: 1,
+                label: 'Oficina',
+                address_text: 'Nueva Calle 123',
+                reference: 'Nueva referencia',
+                latitude: 10.5,
+                longitude: -70.2,
+                is_primary: false
+            });
+        
         expect(res.status).toBe(200);
-        expect(res.body.customer_id).toBe(1);
-        expect(res.body.is_primary).toBe(true);
+        expect(res.body.message).toBe('Dirección actualizada exitosamente');
+        expect(res.body.address).toEqual(mockUpdatedAddress);
+    });
+});
+
+describe('DELETE /api/addresses/:id', () => {
+    beforeEach(() => {
+        jest.clearAllMocks();
     });
 
-    it('Debe manejar no encontrar dirección primaria por customer_id (mock)', async()=>{
-        db.query.mockResolvedValueOnce({ rows: [] });
+    it('Debe eliminar una dirección exitosamente', async () => {
+        const mockDeletedAddress = {
+            id: 1,
+            customer_id: 1,
+            label: 'Casa',
+            address_text: 'Calle 1'
+        };
+        
+        addressesService.deleteAddressById.mockResolvedValueOnce(mockDeletedAddress);
+        
+        const res = await request(app).delete('/api/addresses/1');
+        
+        expect(res.status).toBe(200);
+        expect(res.body.message).toBe('Dirección eliminada exitosamente');
+        expect(res.body.address).toEqual(mockDeletedAddress);
+    });
 
-        const res = await request(app)
-        .get('/api/addresses/primary/999');
+    it('Debe fallar al eliminar dirección primaria', async () => {
+        addressesService.deleteAddressById.mockRejectedValueOnce(
+            new ValidationError('No se puede eliminar una dirección primaria')
+        );
+        
+        const res = await request(app).delete('/api/addresses/1');
+        
+        expect(res.status).toBe(400);
+        expect(res.body.error).toContain('primaria');
+    });
 
+    it('Debe fallar si no encuentra la dirección a eliminar', async () => {
+        addressesService.deleteAddressById.mockRejectedValueOnce(
+            new NotFoundError('Dirección no encontrada')
+        );
+        
+        const res = await request(app).delete('/api/addresses/999');
+        
         expect(res.status).toBe(404);
-        expect(res.body.error).toBe('No se encontró una dirección primaria para este cliente.');
-    });
-
-    it('Debe manejar errores al traer dirección primaria por customer_id (mock)', async()=>{
-        db.query.mockRejectedValueOnce(new Error('DB error'));
-
-        const res = await request(app)
-        .get('/api/addresses/primary/1');
-
-        expect(res.status).toBe(500);
-        expect(res.body.error).toBe('Error al obtener la dirección primaria del cliente');
+        expect(res.body.error).toBe('Dirección no encontrada');
     });
 });
