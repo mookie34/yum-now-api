@@ -1,189 +1,169 @@
-const db = require('../db');
+const addressesService = require('../services/addressesService');
+const { ValidationError, NotFoundError, DuplicateError } = require('../errors/customErrors');
+
+
 
 const addAddress = async (req, res) => {
-    const { customer_id,  label, address_text, reference, latitude, longitude,is_primary } = req.body;
-    if (!customer_id || !label || !address_text) {
-        return res.status(400).json({ error: 'Faltan datos: customer_id, label o address_text' });
-    }
-
-    try {
-
-        const existCustomer = await customerRepository.getCustomerById(customer_id);
-        if (!existCustomer) {
-            return res.status(404).json({ error: 'El cliente no existe.' });
-        }
-        
-        const result = await db.query(
-            'INSERT INTO YuNowDataBase.addresses (customer_id,label, address_text, reference,latitude,longitude,is_primary) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *',
-            [customer_id, label, address_text, reference, latitude, longitude,is_primary]
-        );
-
+    try{
+        const newAddress  = await addressesService.addAddress(req.body);
         res.status(201).json({
             message: 'Dirección creada exitosamente',
-            address: result.rows[0]
+            address: newAddress 
         });
-    } catch (err) {
-        console.error(err.message || err);
-        if (err.code === '23505') { // PostgreSQL unique_violation
-            return res.status(400).json({ 
-                error: 'Ya existe una dirección primaria para este cliente. Solo puede haber una.' 
-            });
-        }
-        res.status(500).json({ error: 'Error al guardar la dirección en la base de datos' });
     }
-
+    catch (error) {      
+        if (error instanceof ValidationError) {
+            return res.status(400).json({ error: error.message });
+        } else if (error instanceof NotFoundError) {
+            return res.status(404).json({ error: error.message });
+        } else if (error instanceof DuplicateError) {
+            return res.status(400).json({ error: error.message });
+        }
+        console.error('Error al crear la dirección:', error);
+        res.status(500).json({ error: 'Error interno del servidor' });
+    }
 };
 
 const getAddresses = async (req, res) => {
     try {
-        const result = await db.query('SELECT * FROM YuNowDataBase.addresses ORDER BY id ASC');
-        res.json(result.rows);
-    } catch (err) {
-        console.error(err.message);
-        res.status(500).json({ error: 'Error al obtener las direcciones' });
+        const limit = req.query.limit ? parseInt(req.query.limit) : 100;
+        const addresses = await addressesService.getAllAddresses(limit);
+        res.json(addresses);
+    } catch (error) {
+        if (error instanceof ValidationError) {
+            return res.status(400).json({ error: error.message });
+        }
+        console.error('Error al obtener las direcciones:', error);
+        res.status(500).json({ error: 'Error interno del servidor' });
     }
 };
 
-const getAddressByCustomerId = async (req, res) => {
-    const { customer_id } = req.params;
-    try {
-        const result = await db.query('SELECT * FROM YuNowDataBase.addresses WHERE customer_id = $1', [customer_id]);
-
-        if (result.rows.length === 0) {
-            return res.status(404).json({ error: 'No se encontraron direcciones asociadas al cliente.' });
+const getAddressesByCustomerId = async (req, res) => {
+  try{
+    const customer_id = parseInt(req.params.customer_id);
+    const addresses = await addressesService.getAddressesByCustomerId(customer_id);
+    res.json(addresses);
+  }
+    catch (error) {
+        if (error instanceof ValidationError) {
+            return res.status(400).json({ error: error.message });
         }
-
-        res.json(result.rows);
-    } catch (err) {
-        console.error(err.message);
-        res.status(500).json({ error: 'Error al obtener las direcciones del cliente' });
-    }
-}
-
-const deleteAddress = async (req, res) => {
-    const { id } = req.params;
-    try {
-        const addressIsPrimary = await db.query('SELECT is_primary FROM YuNowDataBase.addresses WHERE id = $1', [id]);
-        if (addressIsPrimary.rows.length ===1){
-            return res.status(404).json({ error: 'No se puede eliminar la dirección ya que es primaria.' });
+        if (error instanceof NotFoundError) {
+            return res.status(404).json({ error: error.message });
         }
-        const result = await db.query('DELETE FROM YuNowDataBase.addresses WHERE id = $1 RETURNING *', [id]);
-
-        if (result.rows.length === 0) {
-            return res.status(404).json({ error: 'Dirección no encontrada' });
-        }
-
-        res.json({ message: 'Dirección eliminada exitosamente', address: result.rows[0] });
-    } catch (err) {
-        console.error(err.message);
-        res.status(500).json({ error: 'Error al eliminar la dirección' });
-    }
-};
-
-const updateAddressPartial = async (req, res) => {
-    const { id } = req.params;
-    const { label, address_text, reference, latitude, longitude, is_primary } = req.body;
-
-    // Si se va a establecer como primaria, desmarcar la primaria anterior
-    if (is_primary) {
-        try {
-            await db.query(
-                `UPDATE YuNowDataBase.addresses
-                 SET is_primary = FALSE
-                 WHERE customer_id = (
-                     SELECT customer_id FROM YuNowDataBase.addresses WHERE id = $1
-                 )
-                 AND is_primary = TRUE`,
-                [id]
-            );
-        } catch (err) {
-            console.error('Error al desmarcar la dirección primaria anterior:', err.message);
-            return res.status(500).json({ error: 'Error al actualizar la dirección primaria' });
-        }
-    }
-
-    // Construir la consulta dinámicamente
-    let query = 'UPDATE YuNowDataBase.addresses SET ';
-    const params = [];
-    let paramIndex = 1;
-
-    if (label) {
-        query += `label = $${paramIndex}, `;
-        params.push(label);
-        paramIndex++;
-    }
-    if (address_text) {
-        query += `address_text = $${paramIndex}, `;
-        params.push(address_text);
-        paramIndex++;
-    }
-    if (reference) {
-        query += `reference = $${paramIndex}, `;
-        params.push(reference);
-        paramIndex++;
-    }
-    if (latitude) {
-        query += `latitude = $${paramIndex}, `;
-        params.push(latitude);
-        paramIndex++;
-    }
-    if (longitude) {
-        query += `longitude = $${paramIndex}, `;
-        params.push(longitude);
-        paramIndex++;
-    }
-    if (is_primary !== undefined) {
-        query += `is_primary = $${paramIndex}, `;
-        params.push(is_primary);
-        paramIndex++;
-    }
-
-    // Remover la última coma y espacio
-    query = query.slice(0, -2);
-
-    query += ` WHERE id = $${paramIndex} RETURNING *`;
-    params.push(id);
-
-    try {
-        const result = await db.query(query, params);
-
-        if (result.rows.length === 0) {
-            return res.status(404).json({ error: 'Dirección no encontrada' });
-        }
-
-        res.json({
-            message: 'Dirección actualizada exitosamente',
-            address: result.rows[0]
-        });
-    } catch (err) {
-        console.error('Error al actualizar dirección:', err.message);
-
-        // Captura extra de unique_violation por si algo falla
-        if (err.code === '23505') {
-            return res.status(400).json({
-                error: 'Ya existe una dirección primaria para este cliente. Solo puede haber una.'
-            });
-        }
-
-        res.status(500).json({ error: 'Error al actualizar la dirección' });
+        console.error('Error al obtener las direcciones del cliente:', error);
+        res.status(500).json({ error: 'Error interno del servidor' });
     }
 };
 
 const getPrimaryAddressByCustomerId = async (req, res) => {
-    const { customer_id } = req.params;
-    try {
-        const result = await db.query('SELECT * FROM YuNowDataBase.addresses WHERE customer_id = $1 AND is_primary = TRUE', [customer_id]);
-
-        if (result.rows.length === 0) {
-            return res.status(404).json({ error: 'No se encontró una dirección primaria para este cliente.' });
-        }
-
-        res.json(result.rows[0]);
-    } catch (err) {
-        console.error(err.message);
-        res.status(500).json({ error: 'Error al obtener la dirección primaria del cliente' });
+    try{
+        const customer_id = parseInt(req.params.customer_id);
+        const address = await addressesService.getPrimaryAddressByCustomerId(customer_id);
+        res.json(address);
     }
-}
+    catch (error) {
+        if (error instanceof ValidationError) {
+            return res.status(400).json({ error: error.message });
+        }
+        if (error instanceof NotFoundError) {
+            return res.status(404).json({ error: error.message });
+        }
+        console.error('Error al obtener la dirección primaria del cliente:', error);
+        res.status(500).json({ error: 'Error interno del servidor' });
+    }
+};
+
+const deleteAddress = async (req, res) => {
+   try{
+        const id = parseInt(req.params.id);
+        const deletedAddress = await addressesService.deleteAddressById(id);
+        res.json({
+            message: 'Dirección eliminada exitosamente',
+            address: deletedAddress
+        });
+   }
+    catch (error) {
+        if (error instanceof ValidationError) {
+            return res.status(400).json({ error: error.message });
+        }
+        if (error instanceof NotFoundError) {
+            return res.status(404).json({ error: error.message });
+        }
+        console.error('Error al eliminar la dirección:', error);
+        res.status(500).json({ error: 'Error interno del servidor' });
+    }
+};
+
+const updateAddressPartial = async (req, res) => {
+    try{
+        const id = parseInt(req.params.id);
+        const updatedAddress = await addressesService.updateAddressPartial(id, req.body);
+        res.json({
+            message: 'Dirección actualizada exitosamente',
+            address: updatedAddress
+        });
+    }
+    catch (error) {
+        if (error instanceof ValidationError) {
+            return res.status(400).json({ error: error.message });
+        }
+        if (error instanceof NotFoundError) {
+            return res.status(404).json({ error: error.message });
+        }
+        console.error('Error al actualizar la dirección:', error);
+        res.status(500).json({ error: 'Error interno del servidor' });
+    }
+};
+
+const updateAddress = async (req, res) => {
+    try{
+        const id = parseInt(req.params.id);
+        const updatedAddress = await addressesService.updateAddress(id, req.body);
+        res.json({
+            message: 'Dirección actualizada exitosamente',
+            address: updatedAddress
+
+        });
+    }
+    catch (error) {
+        if (error instanceof ValidationError) {
+            return res.status(400).json({ error: error.message });
+        }
+        if (error instanceof NotFoundError) {
+            return res.status(404).json({ error: error.message });
+        }
+        console.error('Error al actualizar la dirección:', error);
+        res.status(500).json({ error: 'Error interno del servidor' });
+    }
+};
+
+const getAddressById = async (req, res) => {
+    try{
+        const id = parseInt(req.params.id);
+        const address = await addressesService.getAddressById(id);
+        res.json(address);
+    }
+    catch (error) {
+        if (error instanceof ValidationError) {
+            return res.status(400).json({ error: error.message });
+        }
+        if (error instanceof NotFoundError) {
+            return res.status(404).json({ error: error.message });
+        }
+        console.error('Error al obtener la dirección:', error);
+        res.status(500).json({ error: 'Error interno del servidor' });
+    }
+};
 
 
-module.exports = {addAddress, getAddresses, getAddressByCustomerId, deleteAddress, updateAddressPartial, getPrimaryAddressByCustomerId};
+module.exports = {
+    addAddress,
+    getAddresses,
+    getAddressesByCustomerId,
+    getPrimaryAddressByCustomerId,
+    deleteAddress,
+    updateAddressPartial,
+    updateAddress,
+    getAddressById
+};

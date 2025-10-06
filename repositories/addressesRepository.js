@@ -58,7 +58,16 @@ class AddressesRepository {
             values
         );
         return result.rows[0] || null;
-    }
+    };
+
+    async update(id, addressData) {
+        const { customer_id,  label, address_text, reference, latitude, longitude,is_primary } = addressData;
+        const result = await db.query(
+            'UPDATE YuNowDataBase.addresses SET customer_id = $1, label = $2, address_text = $3, reference = $4, latitude = $5, longitude = $6, is_primary = $7 WHERE id = $8 RETURNING *',
+            [customer_id, label, address_text, reference, latitude, longitude,is_primary, id]
+        );
+        return result.rows[0] || null;
+    };
 }
 
 module.exports = new AddressesRepository();

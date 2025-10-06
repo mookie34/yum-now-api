@@ -1,26 +1,5 @@
 const customerRepository = require('../repositories/customerRepository');
-
-// Clases de errores personalizados
-class ValidationError extends Error {
-    constructor(message) {
-        super(message);
-        this.name = 'ValidationError';
-    }
-}
-
-class NotFoundError extends Error {
-    constructor(message) {
-        super(message);
-        this.name = 'NotFoundError';
-    }
-}
-
-class DuplicateError extends Error {
-    constructor(message) {
-        super(message);
-        this.name = 'DuplicateError';
-    }
-}
+const {ValidationError, NotFoundError, DuplicateError} = require('../errors/customErrors');
 
 // Clase del servicio
 class CustomerService {
@@ -202,10 +181,4 @@ class CustomerService {
     };
 }
 
-// Exportar TODO
-module.exports = {
-    customerService: new CustomerService(),
-    ValidationError,
-    NotFoundError,
-    DuplicateError
-};
+module.exports = new CustomerService();
