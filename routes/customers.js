@@ -11,6 +11,9 @@ router.get('/', customerController.getCustomers);
 // Listar cliente por telefono
 router.get('/phone/:phone', customerController.getCustomerForPhone);
 
+// Listar cliente por ID
+router.get('/:id', customerController.getCustomerById);
+
 // Actualizar un cliente
 router.put('/:id', customerController.updateCustomer);
 

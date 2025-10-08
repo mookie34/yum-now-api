@@ -88,11 +88,8 @@ class CustomerService {
     };
 
     async getCustomerByPhone(phone) {
-        if (!phone || phone.trim().length < 7) {
-            throw new ValidationError('Teléfono inválido (mínimo 7 caracteres)');
-        }
         const customer = await customerRepository.getByPhone(phone.trim());
-        if (!customer) {
+        if (!customer || customer.length === 0) {
             throw new NotFoundError('Cliente no encontrado');
         }
         return customer;

@@ -11,7 +11,7 @@ class CustomerRepository {
 
     async getAll(limit) {
         const result = await db.query(
-            'SELECT id, name, phone, email, created_at FROM YuNowDataBase.customers ORDER BY created_at DESC LIMIT $1',
+            'SELECT id, name, phone, email, created_at FROM YuNowDataBase.customers ORDER BY id ASC LIMIT $1',
             [limit]
         );
         return result.rows;
@@ -19,11 +19,11 @@ class CustomerRepository {
 
     async getByPhone(phone) {
         const result = await db.query(
-              'SELECT id, name, phone, email, created_at FROM YuNowDataBase.customers WHERE phone = $1',
-              [phone]
+              'SELECT id, name, phone, email, created_at FROM YuNowDataBase.customers WHERE phone  ILIKE $1',
+               [`%${phone}%`] 
             );
 
-        return result.rows[0];
+        return result.rows;
     };
 
     async getById(id) {

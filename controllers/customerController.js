@@ -52,6 +52,21 @@ const getCustomerForPhone = async (req, res) => {
     }
 };
 
+const getCustomerById = async (req, res) => {
+    try {
+        const customer = await customerService.getCustomerById(req.params.id);
+        res.json(customer);
+    } catch (err) {
+        console.error('Error al buscar cliente:', err.message);
+        
+        if (err instanceof NotFoundError) {
+            return res.status(404).json({ error: err.message });
+        }
+        
+        res.status(500).json({ error: 'Error al buscar el cliente' });
+    }
+};
+
 const updateCustomer = async (req, res) => {
     try {
         const customer = await customerService.updateCustomer(req.params.id, req.body);
@@ -126,4 +141,4 @@ const deleteCustomer = async (req, res) => {
     }
 };
 
-module.exports = {addCustomer,getCustomers,getCustomerForPhone,updateCustomer,updateCustomerPartial,deleteCustomer};
+module.exports = {addCustomer,getCustomers,getCustomerForPhone,updateCustomer,updateCustomerPartial,deleteCustomer,getCustomerById};
