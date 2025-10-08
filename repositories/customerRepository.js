@@ -19,11 +19,11 @@ class CustomerRepository {
 
     async getByPhone(phone) {
         const result = await db.query(
-              'SELECT id, name, phone, email, created_at FROM YuNowDataBase.customers WHERE phone  like $1',
-              [phone]
+              'SELECT id, name, phone, email, created_at FROM YuNowDataBase.customers WHERE phone  ILIKE $1',
+               [`%${phone}%`] 
             );
 
-        return result.rows[0];
+        return result.rows;
     };
 
     async getById(id) {
