@@ -172,4 +172,17 @@ const updateStatusOrder = async (req, res) => {
     }
 }
 
-module.exports = {addOrder, getOrders, getOrderByCustomerId, getOrderById, deleteOrder, updateOrderPartial,updateStatusOrder, updateTotalOrder};
+const countOrdersForDay = async (req, res) => {
+  try {
+    const result = await db.query('SELECT COUNT(*) AS total_orders FROM YuNowDataBase.orders WHERE DATE(created_at) = CURRENT_DATE;');
+    const numOrders = parseInt(result.rows[0].total_orders, 10);
+
+    res.json({ numOrders });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).json({ error: 'Error al obtener el número de órdenes' });
+  }
+};
+
+
+module.exports = {addOrder, getOrders, getOrderByCustomerId, getOrderById, deleteOrder, updateOrderPartial,updateStatusOrder, updateTotalOrder,countOrdersForDay};

@@ -18,4 +18,7 @@ router.patch('/:id', controllers.updateOrderPartial);
 router.patch('/:id/status', controllers.updateStatusOrder);
 // Actualizar el total de la orden
 router.patch('/:id/total', controllers.updateTotalOrder);
+//Obtener ordenes del dia
+router.get('/count', controllers.countOrdersForDay);
+
 module.exports = router;
