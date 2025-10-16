@@ -165,6 +165,34 @@ class ProductService{
 
         return normalized;
     };
+
+    normalizeFilters(filters) {
+        const normalized = {};
+        
+        if (filters.name !== undefined && filters.name !== null && filters.name !== '') {
+            normalized.name = filters.name.trim();
+        }
+        
+        if (filters.min_price !== undefined && filters.min_price !== null && filters.min_price !== '') {
+            normalized.min_price = parseFloat(filters.min_price);
+        }
+        
+        if (filters.max_price !== undefined && filters.max_price !== null && filters.max_price !== '') {
+            normalized.max_price = parseFloat(filters.max_price);
+        }
+        
+        if (filters.is_active !== undefined && filters.is_active !== null && filters.is_active !== '') {
+            const value = filters.is_active;
+            if (value === 'true' || value === '1' || value === 1 || value === true) {
+                normalized.is_active = true;
+            } else if (value === 'false' || value === '0' || value === 0 || value === false) {
+                normalized.is_active = false;
+            }
+        }
+        
+        return normalized;
+    };
+
     async addProduct(productData){
         const { name, description, price, is_active } = productData;
         this.validateProductData(name,description,price,is_active,false);

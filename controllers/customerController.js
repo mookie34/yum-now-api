@@ -28,7 +28,7 @@ const getCustomers = async (req, res) => {
         const customers = await customerService.getAllCustomers(req.query.limit);
         res.json(customers);
     } catch (err) {
-        console.error('Error al obtener clientes:', err.message);
+        console.error('Error al obtener clientes: ', err.message);
         res.status(500).json({ error: 'Error al obtener los clientes' });
     }
 };
@@ -38,7 +38,7 @@ const getCustomerForPhone = async (req, res) => {
         const customer = await customerService.getCustomerByPhone(req.params.phone);
         res.json(customer);
     } catch (err) {
-        console.error('Error al buscar cliente:', err.message);
+        console.error('Error al buscar cliente: ', err.message);
         
         if (err instanceof ValidationError) {
             return res.status(400).json({ error: err.message });
