@@ -303,7 +303,6 @@ class ProductService{
                 throw new DuplicateError(`Ya existe un producto con el nombre "${normalizedData.name}"`);
             }
         }
-        
         return await productsRepository.updatePartial(id, normalizedData);
     };
 
