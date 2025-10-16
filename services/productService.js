@@ -229,7 +229,6 @@ class ProductService{
         if (!product) {
             throw new NotFoundError(`No se encontró un producto con el nombre "${name}"`);
         }
-        
         return product;
     };
 
