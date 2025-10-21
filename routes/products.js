@@ -10,6 +10,8 @@ router.get('/', productsController.getProducts);
 router.get('/filter', productsController.getProductForFilter);
 // Obtener un producto por ID
 router.get('/:id', productsController.getProductById);
+// Desactivar un producto (soft delete)
+router.patch('/:id/deactivate', productsController.deactivateProduct);
 // Eliminar un producto
 router.delete('/:id', productsController.deleteProduct);
 // Actualizar un producto

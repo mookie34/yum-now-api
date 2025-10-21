@@ -69,7 +69,7 @@ const getProductById = async (req, res) => {
 
 const deleteProduct = async (req, res) => {
     try {
-        const product = await productService.softDelete(req.params.id);
+        const product = await productService.hardDelete(req.params.id);
          res.json({
             message: 'Producto eliminado exitosamente',
             product
@@ -85,6 +85,27 @@ const deleteProduct = async (req, res) => {
         }
 
         res.status(500).json({ error: 'Error al eliminar el producto' });
+    }
+};
+
+const deactivateProduct = async (req, res) => {
+    try {
+        const product = await productService.softDelete(req.params.id);
+         res.json({
+            message: 'Producto desactivado exitosamente',
+            product
+        });
+    } catch (err) {
+        console.error('Error al desactivar producto: ', err.message);
+                if (err instanceof ValidationError) {
+            return res.status(400).json({ error: err.message });
+        }
+        
+        if (err instanceof NotFoundError) {
+            return res.status(404).json({ error: err.message });
+        }
+
+        res.status(500).json({ error: 'Error al desactivar el producto' });
     }
 };
 
@@ -138,4 +159,4 @@ const updateProductPartial = async (req, res) => {
     }
 };
 
-module.exports = {addProduct, getProducts,getProductById, getProductForFilter, deleteProduct, updateProduct, updateProductPartial};
+module.exports = {addProduct, getProducts,getProductById, getProductForFilter, deleteProduct, updateProduct, updateProductPartial,deactivateProduct};
