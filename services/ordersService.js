@@ -1,6 +1,6 @@
 const ordersRepository = require('../repositories/ordersRepository');
 const customerRepository = require('../repositories/customerRepository');
-const addressRepository = require('../repositories/addressRepository');
+const addressRepository = require('../repositories/addressesRepository');
 const { ValidationError, NotFoundError, DuplicateError } = require('../errors/customErrors');
 
 class OrdersService {

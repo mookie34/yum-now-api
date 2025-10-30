@@ -1,24 +1,15 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const controllers = require('../controllers/ordersController');
+const controllers = require("../controllers/ordersController");
 
-// Crear una orden
-router.post('/', controllers.addOrder);
-// Listar órdenes
-router.get('/', controllers.getOrders);
-// Obtener una orden por ID
-router.get('/:id', controllers.getOrderById);
-// Obtener órdenes por ID de cliente
-router.get('/customer/:customer_id', controllers.getOrderByCustomerId);
-// Eliminar una orden
-router.delete('/:id', controllers.deleteOrder);
-// Actualizar una orden
-router.patch('/:id', controllers.updateOrderPartial);
-//Actualizar estado de la orden
-router.patch('/:id/status', controllers.updateStatusOrder);
-// Actualizar el total de la orden
-router.patch('/:id/total', controllers.updateTotalOrder);
-//Obtener ordenes del dia
-router.get('/count', controllers.countOrdersForDay);
+router.get("/count", controllers.countOrdersForDay);
+router.get("/customer/:customer_id", controllers.getOrderByCustomerId);
+router.get("/:id", controllers.getOrderById);
+router.post("/", controllers.addOrder);
+router.get("/", controllers.getOrders);
+router.delete("/:id", controllers.deleteOrder);
+router.patch("/:id", controllers.updateOrderPartial);
+router.patch("/:id/status", controllers.updateStatusOrder);
+router.patch("/:id/total", controllers.updateTotalOrder);
 
 module.exports = router;
