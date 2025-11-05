@@ -2,12 +2,14 @@
 jest.mock("../repositories/ordersRepository");
 jest.mock("../repositories/customerRepository");
 jest.mock("../repositories/addressesRepository");
+jest.mock("../db"); 
 
 const request = require("supertest");
 const app = require("../app");
 const ordersRepository = require("../repositories/ordersRepository");
 const customerRepository = require("../repositories/customerRepository");
 const addressRepository = require("../repositories/addressesRepository");
+const db = require("../db");
 
 describe("Orders Controller Tests", () => {
   // Limpiar mocks después de cada test
@@ -18,23 +20,42 @@ describe("Orders Controller Tests", () => {
   describe("POST /api/orders", () => {
     it("Debería crear una nueva orden con éxito", async () => {
       // Arrange: Configurar mocks
-      customerRepository.getById.mockResolvedValue({ id: 1, name: "John Doe" });
-      addressRepository.getById.mockResolvedValue({ id: 1, street: "Main St" });
+      customerRepository.getById.mockResolvedValue({
+        id: 1,
+        name: "John Doe",
+      });
+      addressRepository.getById.mockResolvedValue({
+        id: 1,
+        customer_id: 1, 
+        address_text: "123 Main St",
+      });
+
+      db.query.mockImplementation((query) => {
+        if (query.includes("payment_methods")) {
+          return Promise.resolve({ rows: [{ id: 1 }] });
+        }
+        if (query.includes("order_statuses")) {
+          return Promise.resolve({ rows: [{ id: 1 }] });
+        }
+        return Promise.resolve({ rows: [] });
+      });
+
       ordersRepository.create.mockResolvedValue({
         id: 1,
         customer_id: 1,
         address_id: 1,
-        total: 0,
-        payment_method: "credit_card",
-        status: "pending",
+        total: 0, 
+        payment_method_id: 1,
+        status_id: 1,
+        created_at: new Date(),
       });
 
       // Act: Hacer request
       const res = await request(app).post("/api/orders").send({
         customer_id: 1,
         address_id: 1,
-        payment_method: "credit_card",
-        status: "pending",
+        payment_method_id: 1, 
+        status_id: 1, 
       });
 
       // Assert: Verificar respuesta
@@ -42,17 +63,19 @@ describe("Orders Controller Tests", () => {
       expect(res.body).toHaveProperty("message", "Orden creada exitosamente");
       expect(res.body.order).toHaveProperty("id", 1);
       expect(res.body.order).toHaveProperty("customer_id", 1);
-      expect(res.body.order).toHaveProperty("payment_method", "credit_card");
+      expect(res.body.order).toHaveProperty("total", 0); // ✅ Siempre 0 al crear
 
       // Verificar que los métodos fueron llamados correctamente
       expect(customerRepository.getById).toHaveBeenCalledWith(1);
       expect(addressRepository.getById).toHaveBeenCalledWith(1);
-      expect(ordersRepository.create).toHaveBeenCalledWith({
-        customer_id: 1,
-        address_id: 1,
-        payment_method: "credit_card",
-        status: "pending",
-      });
+      expect(ordersRepository.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          customer_id: 1,
+          address_id: 1,
+          payment_method_id: 1,
+          total: 0, 
+        })
+      );
     });
 
     it("Debería devolver error cuando no existe el cliente", async () => {
@@ -61,12 +84,12 @@ describe("Orders Controller Tests", () => {
       const res = await request(app).post("/api/orders").send({
         customer_id: 999,
         address_id: 1,
-        payment_method: "credit_card",
-        status: "pending",
+        payment_method_id: 1,
+        status_id: 1,
       });
 
-      expect(res.status).toBe(404);
-      expect(res.body).toHaveProperty("error", "Cliente no encontrado");
+      expect(res.status).toBe(400); 
+      expect(res.body.error).toContain("Cliente no encontrado");
       expect(customerRepository.getById).toHaveBeenCalledWith(999);
       expect(addressRepository.getById).not.toHaveBeenCalled();
       expect(ordersRepository.create).not.toHaveBeenCalled();
@@ -79,21 +102,46 @@ describe("Orders Controller Tests", () => {
       const res = await request(app).post("/api/orders").send({
         customer_id: 1,
         address_id: 999,
-        payment_method: "credit_card",
-        status: "pending",
+        payment_method_id: 1,
+        status_id: 1,
       });
 
-      expect(res.status).toBe(404);
-      expect(res.body).toHaveProperty("error", "Dirección no encontrada");
+      expect(res.status).toBe(400); 
+      expect(res.body.error).toContain("Dirección no encontrada");
       expect(addressRepository.getById).toHaveBeenCalledWith(999);
+      expect(ordersRepository.create).not.toHaveBeenCalled();
+    });
+
+    // 🔥 NUEVA PRUEBA: Validación crítica de seguridad
+    it("Debería devolver error cuando la dirección NO pertenece al cliente", async () => {
+      customerRepository.getById.mockResolvedValue({
+        id: 1,
+        name: "John Doe",
+      });
+      addressRepository.getById.mockResolvedValue({
+        id: 5,
+        customer_id: 10, // ✅ Dirección pertenece a otro cliente
+        address_text: "456 Other St",
+      });
+
+      const res = await request(app).post("/api/orders").send({
+        customer_id: 1,
+        address_id: 5, // Dirección del cliente 10
+        payment_method_id: 1,
+        status_id: 1,
+      });
+
+      expect(res.status).toBe(400);
+      expect(res.body.error).toContain(
+        "La dirección no pertenece al cliente especificado"
+      );
       expect(ordersRepository.create).not.toHaveBeenCalled();
     });
 
     it("Debería devolver error cuando faltan datos obligatorios (customer_id)", async () => {
       const res = await request(app).post("/api/orders").send({
         address_id: 1,
-        payment_method: "credit_card",
-        status: "pending",
+        payment_method_id: 1,
       });
 
       expect(res.status).toBe(400);
@@ -104,48 +152,84 @@ describe("Orders Controller Tests", () => {
     it("Debería devolver error cuando faltan datos obligatorios (address_id)", async () => {
       const res = await request(app).post("/api/orders").send({
         customer_id: 1,
-        payment_method: "credit_card",
-        status: "pending",
+        payment_method_id: 1,
       });
 
       expect(res.status).toBe(400);
       expect(res.body.error).toContain("address_id inválido");
     });
 
-    it("Debería devolver error cuando payment_method es inválido", async () => {
+    it("Debería devolver error cuando payment_method_id es inválido", async () => {
+      customerRepository.getById.mockResolvedValue({ id: 1 });
+      addressRepository.getById.mockResolvedValue({
+        id: 1,
+        customer_id: 1,
+      });
+
+      // ✅ Mock: payment_method no existe o no está activo
+      db.query.mockImplementation((query) => {
+        if (query.includes("payment_methods")) {
+          return Promise.resolve({ rows: [] }); // No existe
+        }
+        return Promise.resolve({ rows: [] });
+      });
+
       const res = await request(app).post("/api/orders").send({
         customer_id: 1,
         address_id: 1,
-        payment_method: "bitcoin", // No válido
-        status: "pending",
+        payment_method_id: 999, // ✅ ID inválido
       });
 
       expect(res.status).toBe(400);
-      expect(res.body.error).toContain("payment_method inválido");
+      expect(res.body.error).toContain("Método de pago no válido o inactivo");
     });
 
-    it("Debería devolver error cuando status es inválido", async () => {
+    it("Debería devolver error cuando status_id es inválido", async () => {
+      customerRepository.getById.mockResolvedValue({ id: 1 });
+      addressRepository.getById.mockResolvedValue({
+        id: 1,
+        customer_id: 1,
+      });
+
+      db.query.mockImplementation((query) => {
+        if (query.includes("payment_methods")) {
+          return Promise.resolve({ rows: [{ id: 1 }] });
+        }
+        if (query.includes("order_statuses")) {
+          return Promise.resolve({ rows: [] }); // Status no existe
+        }
+        return Promise.resolve({ rows: [] });
+      });
+
       const res = await request(app).post("/api/orders").send({
         customer_id: 1,
         address_id: 1,
-        payment_method: "credit_card",
-        status: "invalid_status", // No válido
+        payment_method_id: 1,
+        status_id: 999, // ✅ ID inválido
       });
 
       expect(res.status).toBe(400);
-      expect(res.body.error).toContain("status inválido");
+      expect(res.body.error).toContain("Estado del pedido no válido");
     });
 
     it("Debería manejar error de base de datos", async () => {
-      customerRepository.getById.mockResolvedValue({ id: 1 });
-      addressRepository.getById.mockResolvedValue({ id: 1 });
+      customerRepository.getById.mockResolvedValue({
+        id: 1,
+        name: "John Doe",
+      });
+      addressRepository.getById.mockResolvedValue({
+        id: 1,
+        customer_id: 1, 
+      });
+      db.query.mockResolvedValue({ rows: [{ id: 1 }] });
+
       ordersRepository.create.mockRejectedValue(new Error("DB error"));
 
       const res = await request(app).post("/api/orders").send({
         customer_id: 1,
         address_id: 1,
-        payment_method: "credit_card",
-        status: "pending",
+        payment_method_id: 1,
+        status_id: 1,
       });
 
       expect(res.status).toBe(500);
@@ -153,7 +237,7 @@ describe("Orders Controller Tests", () => {
     });
   });
 
-  describe("PATCH /api/orders/:id/total", () => {
+  describe("PUT /api/orders/:id/total", () => {
     it("Debería actualizar el total de la orden con éxito", async () => {
       ordersRepository.getById.mockResolvedValue({ id: 1, total: 0 });
       ordersRepository.calculateAndUpdateTotal.mockResolvedValue({
@@ -161,11 +245,11 @@ describe("Orders Controller Tests", () => {
         customer_id: 1,
         address_id: 1,
         total: 150.5,
-        payment_method: "credit_card",
-        status: "pending",
+        payment_method_id: 1,
+        status_id: 1,
       });
 
-      const res = await request(app).patch("/api/orders/1/total");
+      const res = await request(app).put("/api/orders/1/total"); // ✅ PUT
 
       expect(res.status).toBe(200);
       expect(res.body).toHaveProperty(
@@ -183,7 +267,7 @@ describe("Orders Controller Tests", () => {
     it("Debería devolver error cuando no existe la orden", async () => {
       ordersRepository.getById.mockResolvedValue(null);
 
-      const res = await request(app).patch("/api/orders/999/total");
+      const res = await request(app).put("/api/orders/999/total");
 
       expect(res.status).toBe(404);
       expect(res.body).toHaveProperty("error", "Orden no encontrada");
@@ -191,7 +275,7 @@ describe("Orders Controller Tests", () => {
     });
 
     it("Debería devolver error con ID inválido", async () => {
-      const res = await request(app).patch("/api/orders/invalid/total");
+      const res = await request(app).put("/api/orders/invalid/total");
 
       expect(res.status).toBe(400);
       expect(res.body.error).toContain("ID inválido");
@@ -203,7 +287,7 @@ describe("Orders Controller Tests", () => {
         new Error("DB error")
       );
 
-      const res = await request(app).patch("/api/orders/1/total");
+      const res = await request(app).put("/api/orders/1/total");
 
       expect(res.status).toBe(500);
       expect(res.body).toHaveProperty(
@@ -226,7 +310,6 @@ describe("Orders Controller Tests", () => {
       expect(res.status).toBe(200);
       expect(res.body).toHaveLength(2);
       expect(res.body[0]).toHaveProperty("id", 1);
-      // ✅ CORREGIDO: Valores por defecto (100, 0)
       expect(ordersRepository.getAll).toHaveBeenCalledWith(100, 0);
     });
 
@@ -239,7 +322,6 @@ describe("Orders Controller Tests", () => {
       const res = await request(app).get("/api/orders?limit=10&offset=5");
 
       expect(res.status).toBe(200);
-      // ✅ CORREGIDO: Números, no strings
       expect(ordersRepository.getAll).toHaveBeenCalledWith(10, 5);
     });
 
@@ -267,8 +349,8 @@ describe("Orders Controller Tests", () => {
         customer_id: 1,
         address_id: 1,
         total: 100,
-        payment_method: "credit_card",
-        status: "pending",
+        payment_method_id: 1,
+        status_id: 1,
       });
 
       const res = await request(app).get("/api/orders/1");
@@ -357,8 +439,8 @@ describe("Orders Controller Tests", () => {
         customer_id: 1,
         address_id: 1,
         total: 100,
-        payment_method: "credit_card",
-        status: "pending",
+        payment_method_id: 1,
+        status_id: 1,
       };
       ordersRepository.getById.mockResolvedValue(mockOrder);
       ordersRepository.delete.mockResolvedValue(mockOrder);
@@ -404,58 +486,63 @@ describe("Orders Controller Tests", () => {
   });
 
   describe("PATCH /api/orders/:id", () => {
-    it("Debería actualizar parcialmente una orden (múltiples campos)", async () => {
-      ordersRepository.getById.mockResolvedValue({ id: 1 });
+    it("Debería actualizar el status_id de la orden", async () => {
+      ordersRepository.getById.mockResolvedValue({ id: 1, status_id: 1 });
+      db.query.mockResolvedValue({ rows: [{ id: 2 }] }); // Status válido
       ordersRepository.updatePartial.mockResolvedValue({
         id: 1,
-        customer_id: 2,
+        customer_id: 1,
         address_id: 1,
         total: 100,
-        payment_method: "debit_card",
-        status: "shipped",
+        payment_method_id: 1,
+        status_id: 2,
       });
 
-      const res = await request(app).patch("/api/orders/1").send({
-        customer_id: 2,
-        payment_method: "debit_card",
-        status: "shipped",
-      });
+      const res = await request(app)
+        .patch("/api/orders/1")
+        .send({ status_id: 2 });
 
       expect(res.status).toBe(200);
       expect(res.body).toHaveProperty(
         "message",
         "Orden actualizada exitosamente"
       );
-      expect(res.body.order).toHaveProperty("customer_id", 2);
-      expect(res.body.order).toHaveProperty("payment_method", "debit_card");
-      expect(res.body.order).toHaveProperty("status", "shipped");
+      expect(res.body.order).toHaveProperty("status_id", 2);
       expect(ordersRepository.updatePartial).toHaveBeenCalledWith("1", {
-        customer_id: 2,
-        payment_method: "debit_card",
-        status: "shipped",
+        status_id: 2,
       });
     });
 
-    it("Debería actualizar parcialmente solo customer_id", async () => {
-      ordersRepository.getById.mockResolvedValue({ id: 1 });
-      ordersRepository.updatePartial.mockResolvedValue({
-        id: 1,
-        customer_id: 3,
-        address_id: 1,
-        total: 100,
-        payment_method: "credit_card",
-        status: "pending",
-      });
-
+    it("Debería devolver error cuando intenta actualizar customer_id (campo inmutable)", async () => {
       const res = await request(app)
         .patch("/api/orders/1")
-        .send({ customer_id: 3 });
+        .send({ customer_id: 2 });
 
-      expect(res.status).toBe(200);
-      expect(res.body.order).toHaveProperty("customer_id", 3);
-      expect(ordersRepository.updatePartial).toHaveBeenCalledWith("1", {
-        customer_id: 3,
-      });
+      expect(res.status).toBe(400);
+      expect(res.body.error).toContain("Solo se puede actualizar el estado");
+      expect(res.body.error).toContain("customer_id");
+      expect(ordersRepository.updatePartial).not.toHaveBeenCalled();
+    });
+
+    it("Debería devolver error cuando intenta actualizar payment_method_id (campo inmutable)", async () => {
+      const res = await request(app)
+        .patch("/api/orders/1")
+        .send({ payment_method_id: 2 });
+
+      expect(res.status).toBe(400);
+      expect(res.body.error).toContain("Solo se puede actualizar el estado");
+      expect(res.body.error).toContain("payment_method_id");
+    });
+
+    // 🔥 NUEVA PRUEBA: No permite actualizar total
+    it("Debería devolver error cuando intenta actualizar total (debe usar PUT /total)", async () => {
+      const res = await request(app)
+        .patch("/api/orders/1")
+        .send({ total: 500 });
+
+      expect(res.status).toBe(400);
+      expect(res.body.error).toContain("Solo se puede actualizar el estado");
+      expect(res.body.error).toContain("total");
     });
 
     it("Debería devolver error cuando no existe la orden", async () => {
@@ -463,26 +550,17 @@ describe("Orders Controller Tests", () => {
 
       const res = await request(app)
         .patch("/api/orders/999")
-        .send({ customer_id: 2 });
+        .send({ status_id: 2 });
 
       expect(res.status).toBe(404);
       expect(res.body).toHaveProperty("error", "Orden no encontrada");
       expect(ordersRepository.updatePartial).not.toHaveBeenCalled();
     });
 
-    it("Debería devolver error con datos inválidos (payment_method)", async () => {
-      const res = await request(app)
-        .patch("/api/orders/1")
-        .send({ payment_method: "invalid_method" });
-
-      expect(res.status).toBe(400);
-      expect(res.body.error).toContain("payment_method inválido");
-    });
-
     it("Debería devolver error con ID inválido", async () => {
       const res = await request(app)
         .patch("/api/orders/invalid")
-        .send({ customer_id: 2 });
+        .send({ status_id: 2 });
 
       expect(res.status).toBe(400);
       expect(res.body.error).toContain("ID inválido");
@@ -490,11 +568,12 @@ describe("Orders Controller Tests", () => {
 
     it("Debería manejar error de base de datos", async () => {
       ordersRepository.getById.mockResolvedValue({ id: 1 });
+      db.query.mockResolvedValue({ rows: [{ id: 2 }] });
       ordersRepository.updatePartial.mockRejectedValue(new Error("DB error"));
 
       const res = await request(app)
         .patch("/api/orders/1")
-        .send({ customer_id: 2 });
+        .send({ status_id: 2 });
 
       expect(res.status).toBe(500);
       expect(res.body).toHaveProperty("error", "Error al actualizar la orden");
@@ -504,53 +583,54 @@ describe("Orders Controller Tests", () => {
   describe("PATCH /api/orders/:id/status", () => {
     it("Debería actualizar el estado de la orden", async () => {
       ordersRepository.getById.mockResolvedValue({ id: 1 });
+      db.query.mockResolvedValue({ rows: [{ id: 2 }] }); // Status válido
       ordersRepository.updateStatus.mockResolvedValue({
         id: 1,
         customer_id: 1,
         address_id: 1,
         total: 100,
-        payment_method: "credit_card",
-        status: "delivered",
+        payment_method_id: 1,
+        status_id: 2, // ✅ CORREGIDO: Ahora es ID
       });
 
       const res = await request(app)
         .patch("/api/orders/1/status")
-        .send({ status: "delivered" });
+        .send({ status_id: 2 }); // ✅ CORREGIDO: Enviar ID
 
       expect(res.status).toBe(200);
       expect(res.body).toHaveProperty(
         "message",
         "Estado de la orden actualizado exitosamente"
       );
-      expect(res.body.order).toHaveProperty("status", "delivered");
-      expect(ordersRepository.updateStatus).toHaveBeenCalledWith(
-        "1",
-        "delivered"
-      );
+      expect(res.body.order).toHaveProperty("status_id", 2);
+      expect(ordersRepository.updateStatus).toHaveBeenCalledWith("1", 2);
     });
 
     it("Debería devolver error cuando falta el estado", async () => {
       const res = await request(app).patch("/api/orders/1/status").send({});
 
       expect(res.status).toBe(400);
-      expect(res.body.error).toContain("Status inválido");
+      expect(res.body.error).toContain("status_id inválido");
     });
 
-    it("Debería devolver error con status inválido", async () => {
+    it("Debería devolver error con status_id inválido", async () => {
+      db.query.mockResolvedValue({ rows: [] }); // Status no existe
+
       const res = await request(app)
         .patch("/api/orders/1/status")
-        .send({ status: "invalid_status" });
+        .send({ status_id: 999 });
 
       expect(res.status).toBe(400);
-      expect(res.body.error).toContain("Status inválido");
+      expect(res.body.error).toContain("Estado del pedido no válido");
     });
 
     it("Debería devolver error cuando no existe la orden", async () => {
       ordersRepository.getById.mockResolvedValue(null);
+      db.query.mockResolvedValue({ rows: [{ id: 2 }] });
 
       const res = await request(app)
         .patch("/api/orders/999/status")
-        .send({ status: "delivered" });
+        .send({ status_id: 2 });
 
       expect(res.status).toBe(404);
       expect(res.body).toHaveProperty("error", "Orden no encontrada");
@@ -560,7 +640,7 @@ describe("Orders Controller Tests", () => {
     it("Debería devolver error con ID inválido", async () => {
       const res = await request(app)
         .patch("/api/orders/invalid/status")
-        .send({ status: "delivered" });
+        .send({ status_id: 2 });
 
       expect(res.status).toBe(400);
       expect(res.body.error).toContain("ID inválido");
@@ -568,11 +648,12 @@ describe("Orders Controller Tests", () => {
 
     it("Debería manejar error de base de datos", async () => {
       ordersRepository.getById.mockResolvedValue({ id: 1 });
+      db.query.mockResolvedValue({ rows: [{ id: 2 }] });
       ordersRepository.updateStatus.mockRejectedValue(new Error("DB error"));
 
       const res = await request(app)
         .patch("/api/orders/1/status")
-        .send({ status: "delivered" });
+        .send({ status_id: 2 });
 
       expect(res.status).toBe(500);
       expect(res.body).toHaveProperty(
@@ -613,6 +694,69 @@ describe("Orders Controller Tests", () => {
       expect(res.body).toHaveProperty(
         "error",
         "Error al contar las órdenes del día"
+      );
+    });
+  });
+
+  describe("GET /api/orders/status/:status_id", () => {
+    it("Debería traer órdenes por estado", async () => {
+      const mockOrders = [
+        { id: 1, customer_id: 1, total: 100, status_id: 1 },
+        { id: 2, customer_id: 2, total: 200, status_id: 1 },
+      ];
+      db.query.mockResolvedValue({ rows: [{ id: 1 }] }); // Status válido
+      ordersRepository.getByStatus.mockResolvedValue(mockOrders);
+
+      const res = await request(app).get("/api/orders/status/1");
+
+      expect(res.status).toBe(200);
+      expect(res.body).toHaveLength(2);
+      expect(res.body[0]).toHaveProperty("status_id", 1);
+      expect(ordersRepository.getByStatus).toHaveBeenCalledWith("1", 100, 0);
+    });
+
+    it("Debería manejar error cuando el estado no existe", async () => {
+      db.query.mockResolvedValue({ rows: [] }); // Status no existe
+
+      const res = await request(app).get("/api/orders/status/999");
+
+      expect(res.status).toBe(400);
+      expect(res.body.error).toContain("Estado del pedido no válido");
+      expect(ordersRepository.getByStatus).not.toHaveBeenCalled();
+    });
+
+    it("Debería traer órdenes por estado con paginación", async () => {
+      const mockOrders = [{ id: 1, customer_id: 1, total: 100, status_id: 2 }];
+      db.query.mockResolvedValue({ rows: [{ id: 2 }] });
+      ordersRepository.getByStatus.mockResolvedValue(mockOrders);
+
+      const res = await request(app).get(
+        "/api/orders/status/2?limit=50&offset=10"
+      );
+
+      expect(res.status).toBe(200);
+      expect(res.body).toHaveLength(1);
+   
+      expect(ordersRepository.getByStatus).toHaveBeenCalledWith("2", 50, 10);
+    });
+
+    it("Debería devolver error con status_id inválido", async () => {
+      const res = await request(app).get("/api/orders/status/invalid");
+
+      expect(res.status).toBe(400);
+      expect(res.body.error).toContain("ID inválido");
+    });
+
+    it("Debería manejar error de base de datos", async () => {
+      db.query.mockResolvedValue({ rows: [{ id: 1 }] });
+      ordersRepository.getByStatus.mockRejectedValue(new Error("DB error"));
+
+      const res = await request(app).get("/api/orders/status/1");
+
+      expect(res.status).toBe(500);
+      expect(res.body).toHaveProperty(
+        "error",
+        "Error al obtener las órdenes por estado"
       );
     });
   });

@@ -128,10 +128,10 @@ const updateOrderPartial = async (req, res) => {
 
 const updateStatusOrder = async (req, res) => {
   const { id } = req.params;
-  const { status } = req.body;
+  const { status_id } = req.body;
 
   try {
-    const updatedOrder = await OrdersService.updateStatusOrder(id, status);
+    const updatedOrder = await OrdersService.updateStatusOrder(id, status_id);
     res.json({
       message: "Estado de la orden actualizado exitosamente",
       order: updatedOrder,
@@ -156,11 +156,30 @@ const countOrdersForDay = async (req, res) => {
     res.json({
       message: "Órdenes contadas exitosamente",
       count,
-      date: new Date().toISOString().split("T")[0], // Opcional pero útil
+      date: new Date().toISOString().split("T")[0],
     });
   } catch (err) {
     console.error("Error al contar las órdenes del día:", err.message);
     res.status(500).json({ error: "Error al contar las órdenes del día" });
+  }
+};
+
+const getOrdersByStatus = async (req, res) => {
+  const { status_id } = req.params;
+  const { limit, offset } = req.query;
+  try {
+    const orders = await OrdersService.getOrdersByStatus(
+      status_id,
+      limit,
+      offset
+    );
+    res.json(orders);
+  } catch (err) {
+    console.error("Error al obtener las órdenes por estado:", err.message);
+    if (err instanceof ValidationError) {
+      return res.status(400).json({ error: err.message });
+    }
+    res.status(500).json({ error: "Error al obtener las órdenes por estado" });
   }
 };
 
@@ -174,4 +193,5 @@ module.exports = {
   updateStatusOrder,
   updateTotalOrder,
   countOrdersForDay,
+  getOrdersByStatus, 
 };
