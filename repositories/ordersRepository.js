@@ -194,6 +194,7 @@ class OrdersRepository {
     return parseInt(result.rows[0].total, 10);
   }
 
+  
   async getByStatus(status_id, limit = 100, offset = 0) {
     const query = `
       SELECT 

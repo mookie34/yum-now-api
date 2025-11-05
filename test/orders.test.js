@@ -112,7 +112,6 @@ describe("Orders Controller Tests", () => {
       expect(ordersRepository.create).not.toHaveBeenCalled();
     });
 
-    // 🔥 NUEVA PRUEBA: Validación crítica de seguridad
     it("Debería devolver error cuando la dirección NO pertenece al cliente", async () => {
       customerRepository.getById.mockResolvedValue({
         id: 1,

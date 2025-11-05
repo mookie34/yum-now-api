@@ -5,7 +5,6 @@ const db = require("../db");
 const { ValidationError, NotFoundError } = require("../errors/customErrors");
 
 class OrdersService {
-
   async validateOrderData(orderData, isPartial = false, isCreate = false) {
     const errors = [];
     const { customer_id, address_id, payment_method_id, status_id, total } =
@@ -61,7 +60,6 @@ class OrdersService {
       if (!payment_method_id || isNaN(payment_method_id)) {
         errors.push("payment_method_id inválido");
       } else {
-        // ✅ CORREGIDO: yunowdatabase en minúsculas
         const result = await db.query(
           "SELECT id FROM yunowdatabase.payment_methods WHERE id = $1 AND is_active = true",
           [payment_method_id]
@@ -77,7 +75,6 @@ class OrdersService {
       if (!status_id || isNaN(status_id)) {
         errors.push("status_id inválido");
       } else {
-        // ✅ CORREGIDO: yunowdatabase en minúsculas
         const result = await db.query(
           "SELECT id FROM yunowdatabase.order_statuses WHERE id = $1",
           [status_id]
@@ -102,10 +99,6 @@ class OrdersService {
     }
   }
 
-  /**
-   * Crea una nueva orden
-   * ✅ MEJORADO: El total siempre inicia en 0, ignorando el valor enviado
-   */
   async addOrder(orderData) {
     await this.validateOrderData(orderData, false, true);
 
@@ -177,14 +170,9 @@ class OrdersService {
     return await ordersRepository.delete(id);
   }
 
-  /**
-   * Actualización parcial de una orden
-   * 🔒 MEJORADO: Solo permite actualizar status_id (campos inmutables protegidos)
-   */
   async updateOrderPartial(id, orderData) {
     this.validateId(id);
 
-    // 🔒 Solo se puede actualizar el estado después de crear la orden
     const allowedFields = ["status_id"];
     const receivedFields = Object.keys(orderData);
     const invalidFields = receivedFields.filter(
@@ -220,7 +208,6 @@ class OrdersService {
       throw new ValidationError("status_id inválido");
     }
 
-    // ✅ CORREGIDO: yunowdatabase en minúsculas
     const validStatus = await db.query(
       "SELECT id FROM yunowdatabase.order_statuses WHERE id = $1",
       [status_id]
@@ -242,9 +229,6 @@ class OrdersService {
     return await ordersRepository.countForDay();
   }
 
-  /**
-   * ✨ NUEVO: Obtiene órdenes por estado
-   */
   async getOrdersByStatus(status_id, limit = 100, offset = 0) {
     this.validateId(status_id);
 
