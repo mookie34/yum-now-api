@@ -48,7 +48,6 @@ class OrdersService {
     }
 
     // Validar total (solo en actualizaciones, no en create)
-    // ✅ En create el total siempre es 0 y se calcula después
     if (!isCreate && (!isPartial || total !== undefined)) {
       if (total !== undefined && (isNaN(total) || parseFloat(total) < 0)) {
         errors.push("El total no puede ser negativo");
@@ -101,11 +100,8 @@ class OrdersService {
 
   async addOrder(orderData) {
     await this.validateOrderData(orderData, false, true);
-
-    // 🎯 Ignorar el total enviado por el usuario
     const { total, ...dataWithoutTotal } = orderData;
 
-    // Crear la orden con total = 0 (se calculará después con order_items)
     const newOrder = await ordersRepository.create({
       ...dataWithoutTotal,
       total: 0,
