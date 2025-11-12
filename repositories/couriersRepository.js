@@ -15,12 +15,10 @@ class CouriersRepository {
   }
 
   async getAll(limit = 100, offset = 0) {
-
     const query = `SELECT * FROM ${this.tableName} ORDER BY id ASC LIMIT $1 OFFSET $2`;
     const result = await db.query(query, [limit, offset]);
     return result.rows;
   }
-
 
   async getAvailable() {
     const result = await db.query(
@@ -68,7 +66,7 @@ class CouriersRepository {
     return result.rows[0];
   }
 
-  async updateCourierPartial(id, courierData) {
+  async updatePartial(id, courierData) {
     const { name, phone, vehicle, license_plate, available } = courierData;
     const fields = [];
     const values = [];
@@ -105,6 +103,14 @@ class CouriersRepository {
     )} WHERE id=$${counter} RETURNING *`;
     const result = await db.query(query, values);
     return result.rows[0];
+  }
+
+  async getById(id) {
+    const result = await db.query(
+      `SELECT * FROM ${this.tableName} WHERE id = $1`,
+      [id]
+    );
+    return result.rows[0] || null;
   }
 }
 

@@ -1,175 +1,164 @@
-const db = require('../db'); 
+const couriersService = require("../services/couriersService");
+const { ValidationError, NotFoundError } = require("../errors/customErrors");
 
- const addCourier = async (req, res) => {
- const { name, phone, vehicle, license_plate, available } = req.body;
+const addCourier = async (req, res) => {
+  try {
+    const courier = await couriersService.addCourier(req.body);
+    res.status(201).json({
+      message: "Domiciliario creado exitosamente",
+      courier,
+    });
+  } catch (err) {
+    if (err instanceof ValidationError) {
+      return res.status(400).json({ error: err.message });
+    }
+    console.error(err.message);
+    res
+      .status(500)
+      .json({ error: "Error al guardar el domiciliario en la base de datos" });
+  }
+};
 
-     if (!name || !phone || !vehicle || !license_plate) {
-         return res.status(400).json({ error: 'Faltan datos: nombre, teléfono, vehículo o placa' });
-     }
+const getCouriers = async (req, res) => {
+  try {
+    const { limit, offset } = req.query;
+    const couriers = await couriersService.getAllCouriers(limit, offset);
+    res.json(couriers);
+  } catch (err) {
+    if (err instanceof ValidationError) {
+      return res.status(400).json({ error: err.message });
+    }
+    console.error(err.message);
+    res.status(500).json({ error: "Error al obtener los Domiciliarios" });
+  }
+};
 
-     try {
-         const result = await db.query(
-             'INSERT INTO YuNowDataBase.couriers (name, phone, vehicle, available, license_plate) VALUES ($1, $2, $3, $4, $5) RETURNING *',
-             [name, phone, vehicle, available, license_plate]
-         );
+const getCouriersAvailable = async (req, res) => {
+  try {
+    const couriers = await couriersService.getAvailableCouriers();
+    if (couriers.length === 0) {
+      return res
+        .status(404)
+        .json({ error: "No hay Domiciliarios disponibles" });
+    }
+    res.json(couriers);
+  } catch (err) {
+    console.error(err.message);
+    res
+      .status(500)
+      .json({ error: "Error al obtener los Domiciliarios disponibles" });
+  }
+};
 
-         res.status(201).json({
-             message: 'Domiciliario creado exitosamente',
-             courier: result.rows[0]
-         });
-     } catch (err) {
-         console.error(err.message);
-         res.status(500).json({ error: 'Error al guardar el domiciliario en la base de datos' });
-     }
- };
+const getCourierForFilter = async (req, res) => {
+  try {
+    const { name, phone, license_plate } = req.query;
+    const filters = { name, phone, license_plate };
 
- const getCouriers = async (req,res) => {
-     try {
-         const result = await db.query('SELECT * FROM YuNowDataBase.couriers ORDER BY id ASC');
-         res.json(result.rows);
-     } catch (err) {
-         console.error(err.message);
-         res.status(500).json({ error: 'Error al obtener los Domiciliarios' });
-     }
- };
+    const couriers = await couriersService.getCouriersByFilter(filters);
 
- const getCouriesAvailable = async (req, res) => {
-        try {
-            const result = await db.query('SELECT * FROM YuNowDataBase.couriers WHERE available = true ORDER BY id ASC');
-            if (result.rows.length === 0) {
-                return res.status(404).json({ error: 'No hay Domiciliarios disponibles' });
-            }
-            res.json(result.rows);
-        } catch (err) {
-            console.error(err.message);
-            res.status(500).json({ error: 'Error al obtener los Domiciliarios disponibles' });
-        }
- }
+    if (couriers.length === 0) {
+      return res
+        .status(404)
+        .json({ message: "No se encontraron domiciliarios con esos filtros" });
+    }
 
- const getCourierForFilter = async (req, res) => {
-        try {
-            const { name,phone,license_plate } = req.query;
-            const params = []; 
-            let query = 'SELECT * FROM YuNowDataBase.couriers WHERE 1=1';
-            if (name) {
-                params.push(`%${name}%`); // agrega los %
-                query += ` AND name ILIKE $${params.length}`;
-            }
-            if (phone) {
-            params.push(`%${phone}%`);
-                query += ` AND phone ILIKE $${params.length}`;
-            }
-            if (license_plate) {
-                params.push(`%${license_plate}%`);
-                query += ` AND license_plate ILIKE $${params.length}`;
-            }
+    res.status(200).json(couriers);
+  } catch (err) {
+    console.error(err.message);
+    res
+      .status(500)
+      .json({ error: "Error al obtener los Domiciliarios por filtro" });
+  }
+};
 
-            const result = await db.query(query, params);
-            if (result.rows.length === 0) {
-                return res.status(404).json({ message: 'No se encontraron domiciliarios con esos filtros' });
-            }
-            
-            return res.status(200).json(result.rows);
+const getCourierById = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const courier = await couriersService.getCourierById(id);
+    res.json(courier);
+  } catch (err) {
+    if (err instanceof ValidationError) {
+      return res.status(400).json({ error: err.message });
+    }
+    if (err instanceof NotFoundError) {
+      return res.status(404).json({ error: err.message });
+    }
+    console.error(err.message);
+    res.status(500).json({ error: "Error al obtener el Domiciliario" });
+  }
+};
 
-        } catch (err) {
-            console.error(err.message);
-            res.status(500).json({ error: 'Error al obtener los Domiciliarios por filtro' });
-        }
- }
+const deleteCourier = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const deleted = await couriersService.deleteCourier(id);
+    res.json({
+      message: "Domiciliario eliminado exitosamente",
+      courier: deleted,
+    });
+  } catch (err) {
+    if (err instanceof ValidationError) {
+      return res.status(400).json({ error: err.message });
+    }
+    if (err instanceof NotFoundError) {
+      return res.status(404).json({ error: err.message });
+    }
+    console.error(err.message);
+    res.status(500).json({ error: "Error al eliminar el Domiciliario" });
+  }
+};
 
- const deleteCourier = async (req, res) => {
-     const { id } = req.params;
-     try {
-         const result = await db.query('DELETE FROM YuNowDataBase.couriers WHERE id = $1 RETURNING *', [id]);
+const updateCourier = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updatedCourier = await couriersService.updateCourier(id, req.body);
+    res.json({
+      message: "Domiciliario actualizado exitosamente",
+      courier: updatedCourier,
+    });
+  } catch (err) {
+    if (err instanceof ValidationError) {
+      return res.status(400).json({ error: err.message });
+    }
+    if (err instanceof NotFoundError) {
+      return res.status(404).json({ error: err.message });
+    }
+    console.error(err.message);
+    res.status(500).json({ error: "Error al actualizar el Domiciliario" });
+  }
+};
 
-         if (result.rows.length === 0) {
-             return res.status(404).json({ error: 'Domiciliario no encontrado' });
-         }
+const updateCourierPartial = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updatedCourier = await couriersService.updateCourierPartial(
+      id,
+      req.body
+    );
+    res.status(200).json({
+      message: "Domiciliario actualizado exitosamente",
+      courier: updatedCourier,
+    });
+  } catch (err) {
+    if (err instanceof ValidationError) {
+      return res.status(400).json({ error: err.message });
+    }
+    if (err instanceof NotFoundError) {
+      return res.status(404).json({ error: err.message });
+    }
+    console.error(err.message);
+    res.status(500).json({ error: "Error al actualizar el Domiciliario" });
+  }
+};
 
-         res.json({ message: 'Domiciliario eliminado exitosamente', courier: result.rows[0] });
-     } catch (err) {
-         console.error(err.message);
-         res.status(500).json({ error: 'Error al eliminar el Domiciliario' });
-     }
- };
-
- const updateCourier = async (req, res) => {
-        const { id } = req.params;
-        const { name, phone, vehicle, license_plate, available } = req.body;
-    
-        try {
-            const result = await db.query(
-                'UPDATE YuNowDataBase.couriers SET name = $1, phone = $2, vehicle = $3, license_plate = $4, available = $5 WHERE id = $6 RETURNING *',
-                [name, phone, vehicle, license_plate, available, id]
-            );
-    
-            if (result.rows.length === 0) {
-                return res.status(404).json({ error: 'Domiciliario no encontrado' });
-            }
-    
-            res.json({
-                message: 'Domiciliario actualizado exitosamente',
-                courier: result.rows[0]
-            });
-        } catch (err) {
-            console.error(err.message);
-            res.status(500).json({ error: 'Error al actualizar el Domiciliario' });
-        }
- }
-
- const updateCourierPartial = async (req, res) => {
-     const { id } = req.params;
-     const { name, phone, vehicle, license_plate, available } = req.body;
-
-     try {
-        const fields = [];
-        const values = [];
-        let counter = 1;
-
-        if (name) {
-            fields.push(`name=$${counter++}`);
-            values.push(name);
-        }
-        if (phone) {
-            fields.push(`phone=$${counter++}`);
-            values.push(phone);
-        }
-        if (vehicle) {
-            fields.push(`vehicle=$${counter++}`);
-            values.push(vehicle);
-        }
-        if (license_plate) {
-            fields.push(`license_plate=$${counter++}`);
-            values.push(license_plate);
-        }
-        if (available !== undefined) {
-            fields.push(`available=$${counter++}`);
-            values.push(available);
-        }
-        if (fields.length === 0) {
-            return res.status(400).json({ error: 'No se proporcionaron campos para actualizar' });
-        }
-
-        values.push(id);
-
-        const query = `UPDATE YuNowDataBase.couriers SET ${fields.join(', ')} WHERE id=$${counter} RETURNING *`;
-        const result = await db.query(query, values);
-
-        if (result.rows.length === 0) {
-            return res.status(404).json({ error: 'Domiciliario no encontrado' });
-        }
-
-        res.status(200).json({
-            message: 'Domiciliario actualizado exitosamente',
-            courier: result.rows[0]
-        });
-
-     } catch (err) {
-         console.error(err.message);
-         res.status(500).json({ error: 'Error al actualizar el Domiciliario' });
-     }
- }; 
-
- module.exports = { addCourier, getCouriers, deleteCourier, updateCourier, updateCourierPartial, getCourierForFilter, getCouriesAvailable };
-
-
+module.exports = {
+  addCourier,
+  getCouriers,
+  getCouriersAvailable,
+  getCourierForFilter,
+  getCourierById,
+  deleteCourier,
+  updateCourier,
+  updateCourierPartial,
+};

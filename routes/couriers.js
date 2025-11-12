@@ -1,19 +1,23 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const courierController = require('../controllers/couriersController');
+const courierController = require("../controllers/couriersController");
 
-// Crear un mensajero
-router.post('/', courierController.addCourier);
-// Listar mensajeros
-router.get('/', courierController.getCouriers);
-// Eliminar un mensajero
-router.delete('/:id', courierController.deleteCourier);
-// Actualizar un mensajero
-router.put('/:id', courierController.updateCourier);
-// Actualizar un mensajero parcialmente
-router.patch('/:id', courierController.updateCourierPartial);
 // Listar mensajeros por filtro
-router.get('/filter', courierController.getCourierForFilter);
+router.get("/filter", courierController.getCourierForFilter);
 // Listar mensajeros disponibles
-router.get('/available', courierController.getCouriesAvailable);
+router.get("/available", courierController.getCouriersAvailable);
+// Crear un mensajero
+router.post("/", courierController.addCourier);
+// Listar todos los mensajeros (con paginación opcional)
+router.get("/", courierController.getCouriers);
+
+// Obtener un mensajero por ID
+router.get("/:id", courierController.getCourierById);
+// Actualizar un mensajero completamente
+router.put("/:id", courierController.updateCourier);
+// Actualizar un mensajero parcialmente
+router.patch("/:id", courierController.updateCourierPartial);
+// Eliminar un mensajero
+router.delete("/:id", courierController.deleteCourier);
+
 module.exports = router;
