@@ -36,3 +36,7 @@ coverage/
 # Archivos temporales
 *.log
 *.tmp
+
+# Archivos Markdown (excepto README.md)
+*.md
+!README.md
