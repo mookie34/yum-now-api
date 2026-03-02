@@ -6,9 +6,13 @@ jest.mock('../db', () => ({
 
 const db = require('../db');
 const request = require('supertest');
-const app = require('../app'); 
+const app = require('../app');
 
 describe('POST /api/customer-preferences (mock)',()=>{
+    beforeEach(() => {
+        db.query.mockReset();
+    });
+
     it('Deberia crear una nueva preferencia de cliente', async () => {
         db.query
         .mockResolvedValueOnce({ rows: [{ id: 1}] }) // Mock para verificar customer_id
@@ -30,8 +34,8 @@ describe('POST /api/customer-preferences (mock)',()=>{
             .post('/api/customer-preferences')
             .send({ preference_key: 'default_payment_method', preference_value: 'nequi' });
 
-        expect(res.status).toBe(500);
-        expect(res.body.message).toBe('Debe proporcionar customer_id, preference_key y preference_value');
+        expect(res.status).toBe(400);
+        expect(res.body.error).toContain('customer_id es obligatorio');
     });
 
     it('Deberia validar que el customer_id exista en la tabla customers', async () => {
@@ -42,7 +46,7 @@ describe('POST /api/customer-preferences (mock)',()=>{
             .send({ customer_id: 999, preference_key: 'default_payment_method', preference_value: 'nequi' });
 
         expect(res.status).toBe(404);
-        expect(res.body.message).toBe('No existe un cliente con el customer_id proporcionado');
+        expect(res.body.error).toBe('No existe un cliente con el customer_id proporcionado');
     });
 
     it('Deberia manejar errores internos del servidor', async () => {
@@ -53,7 +57,7 @@ describe('POST /api/customer-preferences (mock)',()=>{
             .send({ customer_id: 1, preference_key: 'default_payment_method', preference_value: 'nequi' });
 
         expect(res.status).toBe(500);
-        expect(res.body.message).toBe('Error interno del servidor');
+        expect(res.body.error).toBe('Error interno del servidor');
     });
 
     it('Deberia validar que preference_key y preference_value son obligatorios', async () => {
@@ -61,8 +65,9 @@ describe('POST /api/customer-preferences (mock)',()=>{
             .post('/api/customer-preferences')
             .send({ customer_id: 1 });
 
-        expect(res.status).toBe(500);
-        expect(res.body.message).toBe('Debe proporcionar customer_id, preference_key y preference_value');
+        expect(res.status).toBe(400);
+        expect(res.body.error).toContain('preference_key es obligatorio');
+        expect(res.body.error).toContain('preference_value es obligatorio');
     });
 
     it('Deberia validar que preference_value no este vacio', async () => {
@@ -70,8 +75,8 @@ describe('POST /api/customer-preferences (mock)',()=>{
             .post('/api/customer-preferences')
             .send({ customer_id: 1, preference_key: 'default_payment_method', preference_value: '' });
 
-        expect(res.status).toBe(500);
-        expect(res.body.message).toBe('Debe proporcionar customer_id, preference_key y preference_value');
+        expect(res.status).toBe(400);
+        expect(res.body.error).toContain('preference_value es obligatorio');
     });
 
     it('Deberia validar que preference_key no este vacio', async () => {
@@ -79,8 +84,8 @@ describe('POST /api/customer-preferences (mock)',()=>{
             .post('/api/customer-preferences')
             .send({ customer_id: 1, preference_key: '', preference_value: 'nequi' });
 
-        expect(res.status).toBe(500);
-        expect(res.body.message).toBe('Debe proporcionar customer_id, preference_key y preference_value');
+        expect(res.status).toBe(400);
+        expect(res.body.error).toContain('preference_key es obligatorio');
     });
 
     it('Deberia obtener todas las preferencias de un cliente', async () => {
@@ -109,7 +114,7 @@ describe('POST /api/customer-preferences (mock)',()=>{
             .get('/api/customer-preferences/999');
 
         expect(res.status).toBe(404);
-        expect(res.body.message).toBe('No existe un cliente con el customer_id proporcionado');
+        expect(res.body.error).toBe('No existe un cliente con el customer_id proporcionado');
     });
 
     it('Deberia devolver mensaje cuando el resultado es vacio al obtener preferencias', async () => {
@@ -132,7 +137,7 @@ describe('POST /api/customer-preferences (mock)',()=>{
             .get('/api/customer-preferences/1');
 
         expect(res.status).toBe(500);
-        expect(res.body.message).toBe('Error interno del servidor');
+        expect(res.body.error).toBe('Error interno del servidor');
     });
 
     it('Deberia obtener una preferencia especifica de un cliente', async () => {
@@ -158,7 +163,7 @@ describe('POST /api/customer-preferences (mock)',()=>{
             .get('/api/customer-preferences/customer/999/preference_key/default_payment_method');
 
         expect(res.status).toBe(404);
-        expect(res.body.message).toBe('No existe un cliente con el customer_id proporcionado');
+        expect(res.body.error).toBe('No existe un cliente con el customer_id proporcionado');
     });
 
    it('Deberia devolver error cuando no existe la preferencia especifica para el cliente', async () => {
@@ -170,8 +175,8 @@ describe('POST /api/customer-preferences (mock)',()=>{
             .get('/api/customer-preferences/customer/1/preference_key/non_existent_key');
 
         expect(res.status).toBe(404);
-        expect(res.body.message).toBe('No se encontró la preferencia especificada para este cliente.');
-    }); 
+        expect(res.body.error).toBe('No se encontró la preferencia especificada para este cliente.');
+    });
 
     it('Deberia manejar errores internos del servidor al obtener una preferencia especifica', async () => {
         db.query.mockRejectedValueOnce(new Error('Error de base de datos'));
@@ -180,7 +185,7 @@ describe('POST /api/customer-preferences (mock)',()=>{
             .get('/api/customer-preferences/customer/1/preference_key/default_payment_method');
 
         expect(res.status).toBe(500);
-        expect(res.body.message).toBe('Error interno del servidor');
+        expect(res.body.error).toBe('Error interno del servidor');
     });
 
     it('Deberia validar que preference_key no este vacio al obtener una preferencia especifica', async () => {
@@ -218,7 +223,7 @@ describe('POST /api/customer-preferences (mock)',()=>{
         .send({}); // sin preference_value
 
     expect(res.status).toBe(400);
-    expect(res.body.message).toBe('Debe proporcionar preference_value');
+    expect(res.body.error).toBe('Debe proporcionar preference_value');
 });
 
     it('Debería validar que el customer_id exista en la tabla customers al actualizar una preferencia', async () => {
@@ -229,7 +234,7 @@ describe('POST /api/customer-preferences (mock)',()=>{
             .send({ preference_value: 'daviplata' });
 
         expect(res.status).toBe(404);
-        expect(res.body.message).toBe('No existe un cliente con el customer_id proporcionado');
+        expect(res.body.error).toBe('No existe un cliente con el customer_id proporcionado');
     });
 
     it('Debería validar que preference_value no esté vacío al actualizar una preferencia', async () => {
@@ -238,7 +243,7 @@ describe('POST /api/customer-preferences (mock)',()=>{
             .send({ preference_value: '' });
 
         expect(res.status).toBe(400);
-        expect(res.body.message).toBe('Debe proporcionar preference_value');
+        expect(res.body.error).toBe('Debe proporcionar preference_value');
     });
 
     it('Debería devolver error cuando no existe la preferencia específica para el cliente al actualizar', async () => {
@@ -251,7 +256,7 @@ describe('POST /api/customer-preferences (mock)',()=>{
             .send({ preference_value: 'daviplata' });
 
         expect(res.status).toBe(404);
-        expect(res.body.message).toBe('No se encontró la preferencia especificada para este cliente.');
+        expect(res.body.error).toBe('No se encontró la preferencia especificada para este cliente.');
     });
 
     it('Debería manejar errores internos del servidor al actualizar una preferencia', async () => {
@@ -262,7 +267,7 @@ describe('POST /api/customer-preferences (mock)',()=>{
             .send({ preference_value: 'daviplata' });
 
         expect(res.status).toBe(500);
-        expect(res.body.message).toBe('Error interno del servidor');
+        expect(res.body.error).toBe('Error interno del servidor');
     });
 
     it('Deberia eliminar una preferencia existente de un cliente', async () => {
@@ -285,7 +290,7 @@ describe('POST /api/customer-preferences (mock)',()=>{
             .delete('/api/customer-preferences/customer/999/preference_key/default_payment_method');
 
         expect(res.status).toBe(404);
-        expect(res.body.message).toBe('No existe un cliente con el customer_id proporcionado');
+        expect(res.body.error).toBe('No existe un cliente con el customer_id proporcionado');
     });
 
     it('Deberia devolver error cuando no existe la preferencia especifica para el cliente al eliminar', async () => {
@@ -297,7 +302,7 @@ describe('POST /api/customer-preferences (mock)',()=>{
             .delete('/api/customer-preferences/customer/1/preference_key/non_existent_key');
 
         expect(res.status).toBe(404);
-        expect(res.body.message).toBe('No se encontró la preferencia especificada para este cliente.');
+        expect(res.body.error).toBe('No se encontró la preferencia especificada para este cliente.');
     });
 
     it('Deberia manejar errores internos del servidor al eliminar una preferencia', async () => {
@@ -307,7 +312,7 @@ describe('POST /api/customer-preferences (mock)',()=>{
             .delete('/api/customer-preferences/customer/1/preference_key/default_payment_method');
 
         expect(res.status).toBe(500);
-        expect(res.body.message).toBe('Error interno del servidor');
+        expect(res.body.error).toBe('Error interno del servidor');
     });
 
     it('Deberia eliminar todas las preferencias de un cliente', async () => {
@@ -330,7 +335,7 @@ describe('POST /api/customer-preferences (mock)',()=>{
             .delete('/api/customer-preferences/customer/999');
 
         expect(res.status).toBe(404);
-        expect(res.body.message).toBe('No existe un cliente con el customer_id proporcionado');
+        expect(res.body.error).toBe('No existe un cliente con el customer_id proporcionado');
     });
 
     it('Deberia devolver mensaje cuando no existen preferencias para el cliente al eliminar todas', async () => {
@@ -342,7 +347,7 @@ describe('POST /api/customer-preferences (mock)',()=>{
             .delete('/api/customer-preferences/customer/1');
 
         expect(res.status).toBe(404);
-        expect(res.body.message).toBe('No se encontraron preferencias para este cliente.');
+        expect(res.body.error).toBe('No se encontraron preferencias para este cliente.');
     });
 
     it('Deberia manejar errores internos del servidor al eliminar todas las preferencias', async () => {
@@ -352,7 +357,7 @@ describe('POST /api/customer-preferences (mock)',()=>{
             .delete('/api/customer-preferences/customer/1');
 
         expect(res.status).toBe(500);
-        expect(res.body.message).toBe('Error interno del servidor');
+        expect(res.body.error).toBe('Error interno del servidor');
     });
 
 
