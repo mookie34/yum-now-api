@@ -15,31 +15,31 @@ const customerPreferencesRouter = require('./routes/customerPreferences');
 
 const app = express();
 // ============================================
-// MIDDLEWARES DE SEGURIDAD
+// SECURITY MIDDLEWARES
 // ============================================
 
-// Helmet - Protege headers HTTP
+// Helmet - Protects HTTP headers
 app.use(helmet());
 
-// CORS - Permite frontend separado
+// CORS - Allows separate frontend
 app.use(cors());
 
-// Rate Limiting - Previene ataques
+// Rate Limiting - Prevents abuse
 const limiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutos
-    max: 100, // Máximo 100 requests por IP
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 100, // Max 100 requests per IP
     message: 'Demasiadas peticiones, intenta más tarde'
   });
   app.use('/api/', limiter);
 
   // ============================================
-// PARSEO DE BODY
+// BODY PARSING
 // ============================================
 app.use(express.json());
 app.use(express.urlencoded({extended: true}));
 
 // ============================================
-// RUTAS
+// ROUTES
 // ============================================
 app.use('/api/products', productsRouter);
 app.use('/api/orders', ordersRouter);
@@ -58,18 +58,18 @@ app.get('/health', (req, res) => {
   });
 
 // ============================================
-// MANEJO DE ERRORES
+// ERROR HANDLING
 // ============================================
 
-// Error 404 - Ruta no encontrada
+// 404 - Route not found
 app.use((req, res, next) => {
     res.status(404).json({
       error: 'Ruta no encontrada',
       path: req.originalUrl
     });
   });
-  
-  // Error 500 - Error del servidor
+
+  // 500 - Server error
   app.use((err, req, res, next) => {
     console.error('Error:', err.stack);
     

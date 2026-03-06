@@ -9,9 +9,9 @@ class OrdersRepository {
     const {
       customer_id,
       address_id,
-      total = 0, // Siempre inicia en 0, se calcula después
+      total = 0, // Defaults to 0, calculated after order items are added
       payment_method_id,
-      status_id = 1, // Por defecto "CREATED"
+      status_id = 1, // Defaults to "CREATED" status
     } = orderData;
 
     const query = `
@@ -192,6 +192,22 @@ class OrdersRepository {
     `;
     const result = await db.query(query);
     return parseInt(result.rows[0].total, 10);
+  }
+
+  async paymentMethodExists(paymentMethodId) {
+    const result = await db.query(
+      'SELECT id FROM yunowdatabase.payment_methods WHERE id = $1 AND is_active = true',
+      [paymentMethodId]
+    );
+    return result.rows.length > 0;
+  }
+
+  async orderStatusExists(statusId) {
+    const result = await db.query(
+      'SELECT id FROM yunowdatabase.order_statuses WHERE id = $1',
+      [statusId]
+    );
+    return result.rows.length > 0;
   }
 
   

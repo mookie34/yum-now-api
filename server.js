@@ -1,67 +1,67 @@
-require('dotenv').config({quiet:true}); // Cargar variables de entorno desde un archivo .env
+require('dotenv').config({quiet:true}); // Load environment variables from .env
 const app = require('./app');
 const db=require('./db');
 const PORT = process.env.PORT || 3000;
-let server; // Variable para almacenar la instancia del servidor
+let server; // Server instance reference
 
-//Función para iniciar el servidor y conectarse a la base de datos
+// Start the server and connect to the database
 const startServer = async () => {
     try{
-        //PASO 1: Verificar la conexión a la base de datos
+        // Step 1: Verify database connection
         console.log('trying to connect to the database...');
-        await db.query('SELECT NOW()'); // Consulta simple para verificar la conexión
+        await db.query('SELECT NOW()'); // Simple query to verify the connection
         console.log('Database connected successfully.');
 
-        //PASO 2: Iniciar el servidor HTTP
+        // Step 2: Start the HTTP server
         server = app.listen(PORT, () => {
-            console.log(`🚀 Server listening on port ${PORT}`);
-            console.log('🌍 Environment:', process.env.NODE_ENV || 'development');
-            console.log('📡 Health check endpoint: http://localhost:' + PORT + '/health');
+            console.log(`Server listening on port ${PORT}`);
+            console.log('Environment:', process.env.NODE_ENV || 'development');
+            console.log('Health check endpoint: http://localhost:' + PORT + '/health');
         });
     }
     catch(error){
         console.error('Error starting server:', error.message);
-        process.exit(1); // Salir del proceso con un código de error
+        process.exit(1); // Exit with error code
     }
 };
 
-//Función para cerrar el servidor y la conexión a la base de datos
+// Gracefully shut down the server and database connection
 const gracefulShutdown = async (signal) => {
     console.log(`\nReceived ${signal}. Shutting down gracefully...`);
     if (server) {
-        //Paso 1: Dejar de aceptar nuevas peticiones
+        // Step 1: Stop accepting new requests
         server.close(async() => {
             console.log('HTTP server closed.');
 
             try{
-                //Paso 2: Cerrar la conexión a la base de datos
+                // Step 2: Close the database connection
                 await db.end();
                 console.log('Database connection closed.');
-                process.exit(0); // Salir del proceso exitosamente
+                process.exit(0); // Exit successfully
             }
             catch(error){
                 console.error('Error during shutdown:', error.message);
-                process.exit(1); // Salir del proceso con un código de error
+                process.exit(1); // Exit with error code
             }
         });
 
-        //Paso 3: Forzar el cierre si no se cierra en 10 segundos
+        // Step 3: Force shutdown after 10 seconds
         setTimeout(() => {
             console.error('Forcing shutdown after 10 seconds.');
             process.exit(1);
-        }, 10000); 
+        }, 10000);
     }
 };
 
-//Escuchar señales de terminación del sistema operativo
+// Listen for OS termination signals
 process.on('SIGINT', () => gracefulShutdown('SIGINT')); // Ctrl+C
-process.on('SIGTERM', () => gracefulShutdown('SIGTERM')); //kill del sistema
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM')); // System kill signal
 
-//manejo de errores no capturados
+// Unhandled exception handler
 process.on('uncaughtException', (error) => {
     console.error('Uncaught Exception:', error);
     process.exit(1);
 });
 
-startServer(); // Iniciar el servidor
+startServer(); // Start the server
 

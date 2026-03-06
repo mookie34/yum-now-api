@@ -17,7 +17,7 @@ const addAddress = async (req, res) => {
         } else if (error instanceof NotFoundError) {
             return res.status(404).json({ error: error.message });
         } else if (error instanceof DuplicateError) {
-            return res.status(400).json({ error: error.message });
+            return res.status(409).json({ error: error.message });
         }
         console.error('Error al crear la dirección:', error);
         res.status(500).json({ error: 'Error interno del servidor' });

@@ -2,7 +2,7 @@ const { Pool } = require('pg');
 require('dotenv').config({quiet: true});
 
 // ============================================
-// VALIDACIÓN DE VARIABLES DE ENTORNO
+// ENVIRONMENT VARIABLES VALIDATION
 // ============================================
 const requireEnvVars = ['DB_HOST', 'DB_NAME', 'DB_USER', 'DB_PASSWORD'];
 const missingVars = requireEnvVars.filter(varName => !process.env[varName]);
@@ -12,7 +12,7 @@ if(missingVars.length>0) {
 }
 
 // ============================================
-// CONFIGURACIÓN DEl POOL
+// POOL CONFIGURATION
 // ============================================
 const poolConfig = {
   host: process.env.DB_HOST,
@@ -20,39 +20,39 @@ const poolConfig = {
   database: process.env.DB_NAME,
   user: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
-  max: 20, // número máximo de conexiones en el pool
-  idleTimeoutMillis: 30000, // tiempo máximo de inactividad antes de cerrar una conexión
-  connectionTimeoutMillis: 30000 , // tiempo máximo para establecer una conexión
-  allowExitOnIdle: false // ✅ Importante para evitar cierres inesperados
+  max: 20, // Maximum connections in the pool
+  idleTimeoutMillis: 30000, // Max idle time before closing a connection
+  connectionTimeoutMillis: 30000, // Max time to establish a connection
+  allowExitOnIdle: false // Prevents unexpected pool closures
 };
 
-//SSL solo en producción
+// SSL only in production
 if (process.env.NODE_ENV === 'production') {
   poolConfig.ssl = { rejectUnauthorized: false };
 }
 
 // ============================================
-// CREAR EL POOL
+// CREATE THE POOL
 // ============================================
 
-const pool = new Pool(poolConfig); 
+const pool = new Pool(poolConfig);
 
 // ============================================
-// MANEJO DE ERRORES DEL POOL
+// POOL ERROR HANDLING
 // ============================================
 
 pool.on('error', (err) => {
-  console.error('❌ Error inesperado en PostgreSQL:', err);
+  console.error('Unexpected PostgreSQL error:', err);
 });
 
 pool.on('connect', () => {
   if (process.env.NODE_ENV === 'development') {
-    console.log('✅ Nueva conexión con PostgreSQL');
+    console.log('New PostgreSQL connection established.');
   }
 });
 
 // ============================================
-// EXPORTAR FUNCIONES
+// EXPORT FUNCTIONS
 // ============================================
 module.exports = {
   query: (text, params) => pool.query(text, params),

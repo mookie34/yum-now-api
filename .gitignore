@@ -22,7 +22,9 @@ Thumbs.db
 
 # IDEs / editores
 .vscode/
-.claude/
+.claude/*
+!.claude/agents/
+!.claude/commands/
 .idea/
 *.suo
 *.ntvs*
@@ -37,6 +39,10 @@ coverage/
 *.log
 *.tmp
 
-# Archivos Markdown (excepto README.md)
+# Archivos Markdown (excepto README.md, CLAUDE.md y code-reviewer.md)
 *.md
 !README.md
+!CLAUDE.md
+!REVIEW.md
+!.claude/agents/*.md
+!.claude/commands/*.md

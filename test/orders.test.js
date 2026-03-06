@@ -2,14 +2,12 @@
 jest.mock("../repositories/ordersRepository");
 jest.mock("../repositories/customerRepository");
 jest.mock("../repositories/addressesRepository");
-jest.mock("../db"); 
 
 const request = require("supertest");
 const app = require("../app");
 const ordersRepository = require("../repositories/ordersRepository");
 const customerRepository = require("../repositories/customerRepository");
 const addressRepository = require("../repositories/addressesRepository");
-const db = require("../db");
 
 describe("Orders Controller Tests", () => {
   // Limpiar mocks después de cada test
@@ -30,15 +28,8 @@ describe("Orders Controller Tests", () => {
         address_text: "123 Main St",
       });
 
-      db.query.mockImplementation((query) => {
-        if (query.includes("payment_methods")) {
-          return Promise.resolve({ rows: [{ id: 1 }] });
-        }
-        if (query.includes("order_statuses")) {
-          return Promise.resolve({ rows: [{ id: 1 }] });
-        }
-        return Promise.resolve({ rows: [] });
-      });
+      ordersRepository.paymentMethodExists.mockResolvedValue(true);
+      ordersRepository.orderStatusExists.mockResolvedValue(true);
 
       ordersRepository.create.mockResolvedValue({
         id: 1,
@@ -166,12 +157,7 @@ describe("Orders Controller Tests", () => {
       });
 
       // ✅ Mock: payment_method no existe o no está activo
-      db.query.mockImplementation((query) => {
-        if (query.includes("payment_methods")) {
-          return Promise.resolve({ rows: [] }); // No existe
-        }
-        return Promise.resolve({ rows: [] });
-      });
+      ordersRepository.paymentMethodExists.mockResolvedValue(false);
 
       const res = await request(app).post("/api/orders").send({
         customer_id: 1,
@@ -190,15 +176,8 @@ describe("Orders Controller Tests", () => {
         customer_id: 1,
       });
 
-      db.query.mockImplementation((query) => {
-        if (query.includes("payment_methods")) {
-          return Promise.resolve({ rows: [{ id: 1 }] });
-        }
-        if (query.includes("order_statuses")) {
-          return Promise.resolve({ rows: [] }); // Status no existe
-        }
-        return Promise.resolve({ rows: [] });
-      });
+      ordersRepository.paymentMethodExists.mockResolvedValue(true);
+      ordersRepository.orderStatusExists.mockResolvedValue(false);
 
       const res = await request(app).post("/api/orders").send({
         customer_id: 1,
@@ -220,7 +199,8 @@ describe("Orders Controller Tests", () => {
         id: 1,
         customer_id: 1, 
       });
-      db.query.mockResolvedValue({ rows: [{ id: 1 }] });
+      ordersRepository.paymentMethodExists.mockResolvedValue(true);
+      ordersRepository.orderStatusExists.mockResolvedValue(true);
 
       ordersRepository.create.mockRejectedValue(new Error("DB error"));
 
@@ -487,7 +467,7 @@ describe("Orders Controller Tests", () => {
   describe("PATCH /api/orders/:id", () => {
     it("Debería actualizar el status_id de la orden", async () => {
       ordersRepository.getById.mockResolvedValue({ id: 1, status_id: 1 });
-      db.query.mockResolvedValue({ rows: [{ id: 2 }] }); // Status válido
+      ordersRepository.orderStatusExists.mockResolvedValue(true);
       ordersRepository.updatePartial.mockResolvedValue({
         id: 1,
         customer_id: 1,
@@ -567,7 +547,7 @@ describe("Orders Controller Tests", () => {
 
     it("Debería manejar error de base de datos", async () => {
       ordersRepository.getById.mockResolvedValue({ id: 1 });
-      db.query.mockResolvedValue({ rows: [{ id: 2 }] });
+      ordersRepository.orderStatusExists.mockResolvedValue(true);
       ordersRepository.updatePartial.mockRejectedValue(new Error("DB error"));
 
       const res = await request(app)
@@ -582,7 +562,7 @@ describe("Orders Controller Tests", () => {
   describe("PATCH /api/orders/:id/status", () => {
     it("Debería actualizar el estado de la orden", async () => {
       ordersRepository.getById.mockResolvedValue({ id: 1 });
-      db.query.mockResolvedValue({ rows: [{ id: 2 }] }); // Status válido
+      ordersRepository.orderStatusExists.mockResolvedValue(true);
       ordersRepository.updateStatus.mockResolvedValue({
         id: 1,
         customer_id: 1,
@@ -613,7 +593,7 @@ describe("Orders Controller Tests", () => {
     });
 
     it("Debería devolver error con status_id inválido", async () => {
-      db.query.mockResolvedValue({ rows: [] }); // Status no existe
+      ordersRepository.orderStatusExists.mockResolvedValue(false);
 
       const res = await request(app)
         .patch("/api/orders/1/status")
@@ -625,7 +605,7 @@ describe("Orders Controller Tests", () => {
 
     it("Debería devolver error cuando no existe la orden", async () => {
       ordersRepository.getById.mockResolvedValue(null);
-      db.query.mockResolvedValue({ rows: [{ id: 2 }] });
+      ordersRepository.orderStatusExists.mockResolvedValue(true);
 
       const res = await request(app)
         .patch("/api/orders/999/status")
@@ -647,7 +627,7 @@ describe("Orders Controller Tests", () => {
 
     it("Debería manejar error de base de datos", async () => {
       ordersRepository.getById.mockResolvedValue({ id: 1 });
-      db.query.mockResolvedValue({ rows: [{ id: 2 }] });
+      ordersRepository.orderStatusExists.mockResolvedValue(true);
       ordersRepository.updateStatus.mockRejectedValue(new Error("DB error"));
 
       const res = await request(app)
@@ -703,7 +683,7 @@ describe("Orders Controller Tests", () => {
         { id: 1, customer_id: 1, total: 100, status_id: 1 },
         { id: 2, customer_id: 2, total: 200, status_id: 1 },
       ];
-      db.query.mockResolvedValue({ rows: [{ id: 1 }] }); // Status válido
+      ordersRepository.orderStatusExists.mockResolvedValue(true);
       ordersRepository.getByStatus.mockResolvedValue(mockOrders);
 
       const res = await request(app).get("/api/orders/status/1");
@@ -715,7 +695,7 @@ describe("Orders Controller Tests", () => {
     });
 
     it("Debería manejar error cuando el estado no existe", async () => {
-      db.query.mockResolvedValue({ rows: [] }); // Status no existe
+      ordersRepository.orderStatusExists.mockResolvedValue(false);
 
       const res = await request(app).get("/api/orders/status/999");
 
@@ -726,7 +706,7 @@ describe("Orders Controller Tests", () => {
 
     it("Debería traer órdenes por estado con paginación", async () => {
       const mockOrders = [{ id: 1, customer_id: 1, total: 100, status_id: 2 }];
-      db.query.mockResolvedValue({ rows: [{ id: 2 }] });
+      ordersRepository.orderStatusExists.mockResolvedValue(true);
       ordersRepository.getByStatus.mockResolvedValue(mockOrders);
 
       const res = await request(app).get(
@@ -747,7 +727,7 @@ describe("Orders Controller Tests", () => {
     });
 
     it("Debería manejar error de base de datos", async () => {
-      db.query.mockResolvedValue({ rows: [{ id: 1 }] });
+      ordersRepository.orderStatusExists.mockResolvedValue(true);
       ordersRepository.getByStatus.mockRejectedValue(new Error("DB error"));
 
       const res = await request(app).get("/api/orders/status/1");

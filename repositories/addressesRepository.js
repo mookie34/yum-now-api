@@ -44,10 +44,12 @@ class AddressesRepository {
     };
 
     async updatePartial(id, addressData) {
+        const ALLOWED_FIELDS = ['customer_id', 'label', 'address_text', 'reference', 'latitude', 'longitude', 'is_primary'];
         const fields = [];
         const values = [];
         let index = 1;
         for (const [key, value] of Object.entries(addressData)) {
+            if (!ALLOWED_FIELDS.includes(key)) continue;
             fields.push(`${key} = $${index}`);
             values.push(value);
             index++;

@@ -110,7 +110,7 @@ class ProductRepository{
         const values = [];
         let paramCount = 1;
 
-        // Construir query dinámicamente
+        // Build query dynamically
         if (updates.name !== undefined) {
             fields.push(`name = $${paramCount}`);
             values.push(updates.name);

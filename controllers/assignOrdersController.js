@@ -9,7 +9,7 @@ const addAssignOrder = async (req, res) => {
   try {
     const assignment = await assignOrdersService.createAssignment(req.body);
     res.status(201).json({
-      mensaje: "Orden asignada exitosamente.",
+      message: "Orden asignada exitosamente.",
       assignOrder: assignment,
     });
   } catch (err) {
@@ -88,7 +88,7 @@ const updateAssignOrderCourier = async (req, res) => {
       courier_id
     );
     res.status(200).json({
-      mensaje: "Asignación de orden actualizada exitosamente.",
+      message: "Asignación de orden actualizada exitosamente.",
       assignOrder: updatedAssignment,
     });
   } catch (err) {
@@ -110,7 +110,7 @@ const deleteAssignOrder = async (req, res) => {
       order_id
     );
     res.status(200).json({
-      mensaje: "Asignación de orden eliminada exitosamente",
+      message: "Asignación de orden eliminada exitosamente",
       assignOrder: deletedAssignment,
     });
   } catch (err) {

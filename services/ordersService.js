@@ -1,7 +1,6 @@
 const ordersRepository = require("../repositories/ordersRepository");
 const customerRepository = require("../repositories/customerRepository");
 const addressRepository = require("../repositories/addressesRepository");
-const db = require("../db");
 const { ValidationError, NotFoundError } = require("../errors/customErrors");
 
 class OrdersService {
@@ -59,11 +58,8 @@ class OrdersService {
       if (!payment_method_id || isNaN(payment_method_id)) {
         errors.push("payment_method_id inválido");
       } else {
-        const result = await db.query(
-          "SELECT id FROM yunowdatabase.payment_methods WHERE id = $1 AND is_active = true",
-          [payment_method_id]
-        );
-        if (result.rows.length === 0) {
+        const exists = await ordersRepository.paymentMethodExists(payment_method_id);
+        if (!exists) {
           errors.push("Método de pago no válido o inactivo");
         }
       }
@@ -74,11 +70,8 @@ class OrdersService {
       if (!status_id || isNaN(status_id)) {
         errors.push("status_id inválido");
       } else {
-        const result = await db.query(
-          "SELECT id FROM yunowdatabase.order_statuses WHERE id = $1",
-          [status_id]
-        );
-        if (result.rows.length === 0) {
+        const exists = await ordersRepository.orderStatusExists(status_id);
+        if (!exists) {
           errors.push("Estado del pedido no válido");
         }
       }
@@ -204,11 +197,8 @@ class OrdersService {
       throw new ValidationError("status_id inválido");
     }
 
-    const validStatus = await db.query(
-      "SELECT id FROM yunowdatabase.order_statuses WHERE id = $1",
-      [status_id]
-    );
-    if (validStatus.rows.length === 0) {
+    const statusExists = await ordersRepository.orderStatusExists(status_id);
+    if (!statusExists) {
       throw new ValidationError("Estado del pedido no válido");
     }
 
@@ -238,12 +228,8 @@ class OrdersService {
       throw new ValidationError("El offset debe ser un número no negativo");
     }
 
-    // Validar que el estado exista
-    const validStatus = await db.query(
-      "SELECT id FROM yunowdatabase.order_statuses WHERE id = $1",
-      [status_id]
-    );
-    if (validStatus.rows.length === 0) {
+    const statusExists = await ordersRepository.orderStatusExists(status_id);
+    if (!statusExists) {
       throw new ValidationError("Estado del pedido no válido");
     }
 

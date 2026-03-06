@@ -28,7 +28,7 @@ describe('POST /assignOrders', () => {
             .send({ order_id: 1, courier_id: 1 });
 
         expect(response.status).toBe(201);
-        expect(response.body).toHaveProperty('mensaje', 'Orden asignada exitosamente.');
+        expect(response.body).toHaveProperty('message', 'Orden asignada exitosamente.');
         expect(response.body).toHaveProperty('assignOrder');
         expect(assignOrdersService.createAssignment).toHaveBeenCalledWith({
             order_id: 1,
@@ -278,7 +278,7 @@ describe('POST /assignOrders', () => {
             .send({ courier_id: 2 });
 
         expect(response.status).toBe(200);
-        expect(response.body).toHaveProperty('mensaje', 'Asignación de orden actualizada exitosamente.');
+        expect(response.body).toHaveProperty('message', 'Asignación de orden actualizada exitosamente.');
         expect(response.body).toHaveProperty('assignOrder');
         expect(response.body.assignOrder).toEqual({ id: 1, order_id: 1, courier_id: 2 });
     });
@@ -346,7 +346,7 @@ describe('POST /assignOrders', () => {
             .delete('/api/assign-orders/1');
 
         expect(response.status).toBe(200);
-        expect(response.body).toHaveProperty('mensaje', 'Asignación de orden eliminada exitosamente');
+        expect(response.body).toHaveProperty('message', 'Asignación de orden eliminada exitosamente');
         expect(response.body).toHaveProperty('assignOrder');
         expect(response.body.assignOrder).toEqual({ id: 1, order_id: 1, courier_id: 1 });
     });

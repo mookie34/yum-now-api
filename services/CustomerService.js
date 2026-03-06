@@ -6,7 +6,7 @@ class CustomerService {
     validateCustomerData(name, email, phone, isPartial = false){
         const errors = [];
     
-        // Validar nombre (REQUERIDO, max 100 caracteres)
+        // Validate name (REQUIRED, max 100 characters)
         if (!isPartial || name !== undefined) {
             if (!name || name.trim().length < 2) {
             errors.push('Nombre inválido (mínimo 2 caracteres)');
@@ -15,8 +15,7 @@ class CustomerService {
             }
         }
     
-        // Validar email (OPCIONAL, max 100 caracteres)
-        // Solo valida si se proporciona
+        // Validate email (OPTIONAL, max 100 characters, only validated if provided)
         if (email !== undefined && email !== null && email.trim() !== '') {
             const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
             if (!emailRegex.test(email)) {
@@ -26,7 +25,7 @@ class CustomerService {
             }
         }
     
-        // Validar teléfono (REQUERIDO, UNIQUE, max 20 caracteres)
+        // Validate phone (REQUIRED, UNIQUE, max 20 characters)
         if (!isPartial || phone !== undefined) {
             if (!phone || phone.trim().length < 7) {
             errors.push('Teléfono inválido (mínimo 7 caracteres)');
@@ -34,7 +33,7 @@ class CustomerService {
             errors.push('Teléfono muy largo (máximo 20 caracteres)');
             }
         
-            // Validar que contenga principalmente números
+            // Validate that the phone contains mainly digits
             const phoneRegex = /^[\d\s\-\(\)\+]+$/;
             if (phone && !phoneRegex.test(phone)) {
             errors.push('Teléfono contiene caracteres inválidos');
@@ -47,7 +46,7 @@ class CustomerService {
     };
 
     /**
-    * Valida que el ID sea un número entero positivo
+    * Validates that the ID is a positive integer
     */
     validateId(id){
         if (!id || isNaN(id) || parseInt(id) <= 0) {
@@ -74,10 +73,10 @@ class CustomerService {
             return await customerRepository.create(normalizedData);
         }
         catch(err){
-            if (err.code === '23505') { // Código de error de violación de unicidad en PostgreSQL
+            if (err.code === '23505') { // PostgreSQL unique constraint violation code
                 throw new DuplicateError('El teléfono ya está registrado');
             } else {
-                throw err; // Re-lanzar otros errores
+                throw err; // Propagate unexpected errors
             }
         }
     };
@@ -121,10 +120,10 @@ class CustomerService {
             return updatedCustomer;
         }
         catch(err){
-            if (err.code === '23505') { // Código de error de violación de unicidad en PostgreSQL
+            if (err.code === '23505') { // PostgreSQL unique constraint violation code
                 throw new DuplicateError('El teléfono ya está registrado');
             } else {
-                throw err; // Re-lanzar otros errores
+                throw err; // Propagate unexpected errors
             }
         }
     };
@@ -151,10 +150,10 @@ class CustomerService {
             return updatedCustomer;
         }
         catch(err){
-            if (err.code === '23505') { // Código de error de violación de unicidad en PostgreSQL
+            if (err.code === '23505') { // PostgreSQL unique constraint violation code
                 throw new DuplicateError('El teléfono ya está registrado');
             } else {
-                throw err; // Re-lanzar otros errores
+                throw err; // Propagate unexpected errors
             }
         }
     };
@@ -169,10 +168,10 @@ class CustomerService {
             return deletedCustomer;
         }
         catch(err){
-            if (err.code === '23503') { // Código de error de violación de clave foránea en PostgreSQL
+            if (err.code === '23503') { // PostgreSQL foreign key constraint violation code
                 throw new ValidationError('No se puede eliminar el cliente porque tiene ordenes asociadas');
             }
-            throw err; // Re-lanzar otros errores
+            throw err; // Propagate unexpected errors
         }
        
     };

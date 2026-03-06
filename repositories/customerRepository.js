@@ -49,10 +49,12 @@ class CustomerRepository {
     };
 
     async updatePartial(id, customerData) {
+        const ALLOWED_FIELDS = ['name', 'email', 'phone'];
         const fields = [];
         const values = [];
         let index = 1;
         for (const [key, value] of Object.entries(customerData)) {
+            if (!ALLOWED_FIELDS.includes(key)) continue;
             fields.push(`${key} = $${index}`);
             values.push(value);
             index++;

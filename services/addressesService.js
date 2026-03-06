@@ -3,16 +3,16 @@ const customerRepository = require('../repositories/customerRepository');
 const {ValidationError, NotFoundError, DuplicateError} = require('../errors/customErrors');
 
 class AddressesService {
-    ValidateAddressData(customer_id, label, address_text, reference, latitude, longitude, is_primary, isPartial = false){
+    validateAddressData(customer_id, label, address_text, reference, latitude, longitude, is_primary, isPartial = false){
         const errors = [];
         
-            // Validar customer_id (REQUERIDO, debe existir en tabla customers)
+            // Validate customer_id (REQUIRED, must exist in customers table)
             if (!isPartial || customer_id !== undefined) {
                 if (!customer_id || isNaN(customer_id) || parseInt(customer_id) <= 0) {
                     errors.push('ID de cliente inválido');
                 }
             }
-            // Validar label (REQUERIDO, no vacío, longitud máxima 50)
+            // Validate label (REQUIRED, non-empty, max 50 characters)
             if (!isPartial || label !== undefined) {
                 if (!label || label.trim() === '') {
                     errors.push('La etiqueta es obligatoria');
@@ -20,7 +20,7 @@ class AddressesService {
                     errors.push('La etiqueta no debe exceder los 50 caracteres');
                 }
             }
-            // Validar address_text (REQUERIDO, no vacío, longitud máxima 255)
+            // Validate address_text (REQUIRED, non-empty, max 255 characters)
             if (!isPartial || address_text !== undefined) {
                 if (!address_text || address_text.trim() === '') {
                     errors.push('La dirección es obligatoria');
@@ -28,27 +28,27 @@ class AddressesService {
                     errors.push('La dirección no debe exceder los 255 caracteres');
                 }
             }
-            // Validar reference (OPCIONAL, longitud máxima 255)
+            // Validate reference (OPTIONAL, max 255 characters)
             if (reference !== undefined && reference !== null) {
                 if (reference.length > 255) {
                     errors.push('La referencia no debe exceder los 255 caracteres');
                 }
             }
-            // Validar latitude (OPCIONAL, debe ser un número entre -90 y 90)
+            // Validate latitude (OPTIONAL, must be a number between -90 and 90)
             if (latitude !== undefined && latitude !== null) {
                 const lat = parseFloat(latitude);
                 if (isNaN(lat) || lat < -90 || lat > 90) {
                     errors.push('Latitud inválida. Debe estar entre -90 y 90');
                 }
             }
-            // Validar longitude (OPCIONAÑ, debe ser un número entre -180 y 180)
+            // Validate longitude (OPTIONAL, must be a number between -180 and 180)
             if (longitude !== undefined && longitude !== null) {
                 const lon = parseFloat(longitude);
                 if (isNaN(lon) || lon < -180 || lon > 180) {
                     errors.push('Longitud inválida. Debe estar entre -180 y 180');
                 }
             }
-            // Validar is_primary (REQUERIDO, booleano)
+            // Validate is_primary (REQUIRED, boolean)
             if (!isPartial || is_primary !== undefined) {
                 if (is_primary !== undefined && typeof is_primary !== 'boolean') {
                     errors.push('is_primary debe ser un valor booleano');
@@ -69,19 +69,19 @@ class AddressesService {
         async addAddress(addressData) {
 
             const { customer_id, label, address_text, reference, latitude, longitude, is_primary } = addressData;
-            // Validar datos
-            this.ValidateAddressData(customer_id, label, address_text, reference, latitude, longitude, is_primary);
+            // Validate input data
+            this.validateAddressData(customer_id, label, address_text, reference, latitude, longitude, is_primary);
 
-            // Verificar que el cliente exista
+            // Verify that the customer exists
             const customer = await customerRepository.getById(customer_id);
             if (!customer) {
                 throw new NotFoundError('Cliente no encontrado');
             }
-            // Si is_primary es true, desmarcar otras direcciones primarias del mismo cliente
+            // If is_primary is true, unset other primary addresses for this customer
             if (is_primary) {
                 await addressesRepository.unsetPrimaryAddresses(customer_id);
             }
-            // Crear la dirección
+            // Create the address
             const newAddress = await addressesRepository.create(addressData);
             return newAddress;
         };
@@ -97,7 +97,7 @@ class AddressesService {
         
         async getAddressesByCustomerId(customer_id) {
             this.validateId(customer_id);
-            // Verificar que el cliente exista
+            // Verify that the customer exists
             const customer = await customerRepository.getById(customer_id);
             if (!customer) {
                 throw new NotFoundError('Cliente no encontrado');
@@ -108,7 +108,7 @@ class AddressesService {
 
         async getPrimaryAddressByCustomerId(customer_id) {
             this.validateId(customer_id);
-            // Verificar que el cliente exista
+            // Verify that the customer exists
             const customer = await customerRepository.getById(customer_id);
             if (!customer) {
                 throw new NotFoundError('Cliente no encontrado');
@@ -145,9 +145,9 @@ class AddressesService {
             const { customer_id, label, address_text, reference, latitude, longitude, is_primary } = addressData;
             this.validateId(id);
                 
-                // Validar datos
-                this.ValidateAddressData(customer_id, label, address_text, reference, latitude, longitude, is_primary);
-                // Si is_primary es true, desmarcar otras direcciones primarias del mismo cliente
+                // Validate input data
+                this.validateAddressData(customer_id, label, address_text, reference, latitude, longitude, is_primary);
+                // If is_primary is true, unset other primary addresses for this customer
                 if (is_primary) {
                     await addressesRepository.unsetPrimaryAddresses(customer_id);
                 }
@@ -167,15 +167,15 @@ class AddressesService {
                     is_primary === undefined) {
                     throw new ValidationError('Debe proporcionar al menos un campo para actualizar');
                 }
-                // Validar datos
-                this.ValidateAddressData(customer_id, label, address_text, reference, latitude, longitude, is_primary, true);
-                
+                // Validate input data
+                this.validateAddressData(customer_id, label, address_text, reference, latitude, longitude, is_primary, true);
+
                 const existingAddress = await addressesRepository.getById(id);
                 if (!existingAddress) {
                     throw new NotFoundError('Dirección no encontrada');
                 }
 
-                // Si is_primary es true, desmarcar otras direcciones primarias del mismo cliente
+                // If is_primary is true, unset other primary addresses for this customer
                 if (is_primary) {
                     await addressesRepository.unsetPrimaryAddresses(existingAddress.customer_id);
                 }
