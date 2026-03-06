@@ -79,7 +79,7 @@ describe("Orders Controller Tests", () => {
         status_id: 1,
       });
 
-      expect(res.status).toBe(400); 
+      expect(res.status).toBe(404);
       expect(res.body.error).toContain("Cliente no encontrado");
       expect(customerRepository.getById).toHaveBeenCalledWith(999);
       expect(addressRepository.getById).not.toHaveBeenCalled();
@@ -97,7 +97,7 @@ describe("Orders Controller Tests", () => {
         status_id: 1,
       });
 
-      expect(res.status).toBe(400); 
+      expect(res.status).toBe(404);
       expect(res.body.error).toContain("Dirección no encontrada");
       expect(addressRepository.getById).toHaveBeenCalledWith(999);
       expect(ordersRepository.create).not.toHaveBeenCalled();

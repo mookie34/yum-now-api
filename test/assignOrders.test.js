@@ -71,7 +71,7 @@ describe('POST /assignOrders', () => {
             .post('/api/assign-orders')
             .send({ order_id: 1, courier_id: 1 });
 
-        expect(response.status).toBe(400);
+        expect(response.status).toBe(409);
         expect(response.body).toHaveProperty('error', 'La orden ya ha sido asignada a un repartidor');
     });
 

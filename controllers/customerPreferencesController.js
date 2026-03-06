@@ -4,7 +4,7 @@ const { ValidationError, NotFoundError } = require("../errors/customErrors");
 const createCustomerPreference = async (req, res) => {
   try {
     const preference = await customerPreferencesService.createPreference(req.body);
-    res.status(201).json({ message: "Preferencia creada exitosamente", preferencia: preference });
+    res.status(201).json({ message: "Preferencia creada exitosamente", preference: preference });
   } catch (err) {
     if (err instanceof ValidationError) {
       return res.status(400).json({ error: err.message });
@@ -61,7 +61,7 @@ const updateCustomerPreference = async (req, res) => {
     const { customer_id, preference_key } = req.params;
     const { preference_value } = req.body;
     const preference = await customerPreferencesService.updatePreference(customer_id, preference_key, preference_value);
-    res.status(200).json({ message: "Preferencia actualizada exitosamente.", preferencia: preference });
+    res.status(200).json({ message: "Preferencia actualizada exitosamente.", preference: preference });
   } catch (err) {
     if (err instanceof ValidationError) {
       return res.status(400).json({ error: err.message });

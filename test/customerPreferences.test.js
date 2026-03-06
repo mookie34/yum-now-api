@@ -25,7 +25,7 @@ describe('POST /api/customer-preferences (mock)',()=>{
 
         expect(res.status).toBe(201);
         expect(res.body.message).toBe('Preferencia creada exitosamente');
-        expect(res.body.preferencia.preference_key).toBe('default_payment_method');
+        expect(res.body.preference.preference_key).toBe('default_payment_method');
 
     });
 
@@ -214,7 +214,7 @@ describe('POST /api/customer-preferences (mock)',()=>{
 
         expect(res.status).toBe(200);
         expect(res.body.message).toBe('Preferencia actualizada exitosamente.');
-        expect(res.body.preferencia.preference_value).toBe('daviplata');
+        expect(res.body.preference.preference_value).toBe('daviplata');
     });
 
     it('Debería validar que preference_value es obligatorio al actualizar una preferencia', async () => {

@@ -1,460 +1,393 @@
 # Code Review – Yum Now API
 
-**Date:** 2026-03-05
+**Date:** 2026-03-06
 **Reviewed by:** code-reviewer agent
-**Scope:** Full project — all 46 `.js` files (app, server, db, errors, 8 controllers, 8 services, 8 repositories, 8 routes, 9 tests + setup)
+**Scope:** Full project — all `.js` files excluding `node_modules`
 
 ---
 
 ## Summary
 
-The overall architecture is solid and correctly follows the Routes → Controllers → Services → Repositories → DB layered pattern. Custom error classes are used consistently, parameterized queries are the norm, and test coverage is broad across all modules. However, there are recurring critical violations of the CLAUDE.md language rule (Spanish comments in code), one architectural violation in `ordersService.js` (direct DB access), a real SQL injection vector in two repository `updatePartial` methods, and several consistency gaps in error mapping and response keys.
+The project has a solid and consistent layered architecture. Controllers are thin, services contain business logic, and repositories are properly isolated. Parameterized queries are used throughout with field whitelists in `updatePartial` methods — no SQL injection risk. Test coverage is present for all modules and follows Arrange/Act/Assert.
+
+Since the last review (2026-03-05), the following issues were resolved: the `ordersService.js` direct `db.query()` calls were moved to the repository, the SQL injection risk in `addressesRepository` and `customerRepository` was fixed with whitelists, the `DuplicateError → 409` mapping in `addressesController.js` was corrected, the `ValidateAddressData` PascalCase naming was fixed, the `assignOrdersController` was updated to use `message` instead of `mensaje`, and the `couriersService` `validateCourierData` was made synchronous.
+
+The remaining issues are concentrated in: one incorrect HTTP status code, a Spanish JSON key, a cross-platform filename bug, semantically wrong error types, and widespread Spanish inline comments.
 
 ---
 
 ## Critical Issues 🔴
 
-### 1. Spanish comments throughout the codebase
+### 1. `DuplicateError` mapped to HTTP 400 instead of 409
+**File:** `controllers/assignOrdersController.js:23`
 
-**Rule violated:** "All code must be written in English — no exceptions. This applies to… Comments (inline and block)"
-
-The following files contain Spanish-language comments in code (not user-facing strings):
-
-| File | Lines | Example |
-|------|-------|---------|
-| `app.js` | 17–70 | `// MIDDLEWARES DE SEGURIDAD`, `// Helmet - Protege headers HTTP`, `// 15 minutos`, `// PARSEO DE BODY`, `// RUTAS`, `// MANEJO DE ERRORES` |
-| `server.js` | 1–66 | `// Cargar variables de entorno desde un archivo .env`, `// Variable para almacenar la instancia del servidor`, `// Salir del proceso con un código de error` |
-| `db.js` | 4–55 | `// VALIDACIÓN DE VARIABLES DE ENTORNO`, `// CONFIGURACIÓN DEl POOL`, `// número máximo de conexiones en el pool`, `// SSL solo en producción` |
-| `repositories/ordersRepository.js` | 12, 14 | `// Siempre inicia en 0, se calcula después`, `// Por defecto "CREATED"` |
-| `services/addressesService.js` | 44 | `// Validar longitude (OPCIONAÑ, ...)` — also a typo |
-| `services/customerService.js` | 77, 124, 154, 172 | `// Código de error de violación de unicidad en PostgreSQL`, `// Re-lanzar otros errores` |
-| `repositories/productsRepository.js` | 113 | `// Construir query dinámicamente` |
-
-**Fix:** Replace all Spanish inline/block comments with English equivalents.
-
----
-
-### 2. `DuplicateError` mapped to HTTP 400 instead of 409 in `addressesController.js`
-
-**File:** `controllers/addressesController.js` — line 20
-
-**Problem:** The CLAUDE.md error mapping table specifies `DuplicateError → 409`. This controller incorrectly maps it to `400`.
+CLAUDE.md explicitly specifies `DuplicateError → 409`. This is the only controller in the project that still maps it to 400.
 
 ```js
-// Current (WRONG)
-} else if (error instanceof DuplicateError) {
-    return res.status(400).json({ error: error.message }); // ❌ Should be 409
+// ❌ Current
+if (err instanceof DuplicateError) {
+  return res.status(400).json({ error: err.message });
 }
-```
 
-**Fix:**
-```js
-} else if (error instanceof DuplicateError) {
-    return res.status(409).json({ error: error.message });
+// ✅ Fix
+if (err instanceof DuplicateError) {
+  return res.status(409).json({ error: err.message });
 }
 ```
 
 ---
 
-### 3. `ordersService.js` directly calls `db.query()` — architectural violation
+### 2. Spanish JSON key in API response
+**File:** `controllers/customerPreferencesController.js:7, 64`
 
-**File:** `services/ordersService.js` — lines 62–69, 77–84, 207–213, 242–245
-
-**Problem:** The service layer imports and directly queries the database (`db.query()`), bypassing the repository layer. CLAUDE.md states: "Business logic must never depend on infrastructure details such as HTTP frameworks or database drivers." The dependency chain must be `Services → Repositories → Database`.
+JSON response keys must be in English. `preferencia` is Spanish.
 
 ```js
-// Current (WRONG) — service calls db directly
-const result = await db.query(
-    "SELECT id FROM yunowdatabase.payment_methods WHERE id = $1 AND is_active = true",
-    [payment_method_id]
-);
+// ❌ Current (line 7)
+res.status(201).json({ message: "Preferencia creada exitosamente", preferencia: preference });
+
+// ✅ Fix
+res.status(201).json({ message: "Preferencia creada exitosamente", preference: preference });
 ```
 
-**Fix:** Create repository methods (e.g., in a `paymentMethodsRepository` or extend `ordersRepository`) for existence checks:
-
+Same fix at line 64:
 ```js
-// In ordersRepository.js
-async paymentMethodExists(paymentMethodId) {
-    const result = await db.query(
-        'SELECT id FROM yunowdatabase.payment_methods WHERE id = $1 AND is_active = true',
-        [paymentMethodId]
-    );
-    return result.rows.length > 0;
-}
-
-async orderStatusExists(statusId) {
-    const result = await db.query(
-        'SELECT id FROM yunowdatabase.order_statuses WHERE id = $1',
-        [statusId]
-    );
-    return result.rows.length > 0;
-}
-```
-
-Then in `ordersService.js`, remove the `db` import and use the repository methods.
-
----
-
-### 4. SQL injection via unwhitelisted field names in `updatePartial` methods
-
-**Files:**
-- `repositories/addressesRepository.js` — lines 49–61
-- `repositories/customerRepository.js` — lines 54–66
-
-**Problem:** Both `updatePartial` methods iterate over all keys in the `addressData`/`customerData` object and inject them directly into the SQL column names without a whitelist. If a caller ever passes unexpected keys (e.g., from unsanitized request body), those keys become part of the SQL string, creating a SQL injection vector.
-
-```js
-// Current (RISKY)
-for (const [key, value] of Object.entries(addressData)) {
-    fields.push(`${key} = $${index}`); // key is injected directly into SQL
-    values.push(value);
-    index++;
-}
-```
-
-**Fix:** Apply an explicit allowlist:
-
-```js
-// In addressesRepository.js updatePartial
-const ALLOWED_FIELDS = ['label', 'address_text', 'reference', 'latitude', 'longitude', 'is_primary', 'customer_id'];
-const fields = [];
-const values = [];
-let index = 1;
-
-for (const [key, value] of Object.entries(addressData)) {
-    if (!ALLOWED_FIELDS.includes(key)) continue;
-    fields.push(`${key} = $${index}`);
-    values.push(value);
-    index++;
-}
+// ❌
+res.status(200).json({ message: "Preferencia actualizada exitosamente.", preferencia: preference });
+// ✅
+res.status(200).json({ message: "Preferencia actualizada exitosamente.", preference: preference });
 ```
 
 ---
 
-### 5. `OrderItemsRepository` swallows pg error codes by re-wrapping errors
+### 3. `CustomerService.js` — PascalCase filename causes cross-platform failure
+**File:** `services/CustomerService.js`
 
-**File:** `repositories/orderItemsRepository.js` — lines 18–19, 33–34, etc.
+CLAUDE.md requires `kebab-case` file names. More critically, the file is required as `'../services/customerService'` in both `controllers/customerController.js:1` and `test/customers.test.js:5`. This resolves on Windows (case-insensitive filesystem) but **fails on Linux** — breaking Docker containers, CI pipelines, and production servers.
 
-**Problem:** Every method wraps caught errors in `new Error(...)`, discarding the original error's properties (including `err.code`). The service layer relies on `err.code === '23505'` in other modules to detect constraint violations. This pattern breaks error propagation uniformly.
-
-```js
-// Current (WRONG)
-} catch (error) {
-    throw new Error(`Error al crear item de orden: ${error.message}`); // loses error.code
-}
 ```
-
-**Fix:** Let errors propagate naturally (remove all try/catch in the repository), as the other repositories do:
-
-```js
-async create(orderItemData) {
-    const { order_id, product_id, quantity, price } = orderItemData;
-    const query = `INSERT INTO ${this.tableName} ... RETURNING *`;
-    const result = await db.query(query, [order_id, product_id, quantity, price]);
-    return result.rows[0];
-}
+Rename: services/CustomerService.js  →  services/customer-service.js
+Update require paths in:
+  - controllers/customerController.js:1
+  - test/customers.test.js:1,5
 ```
 
 ---
 
-### 6. Method name `ValidateAddressData` uses PascalCase — naming convention violation
+### 4. `NotFoundError` condition throws `ValidationError` in `ordersService`
+**File:** `services/ordersService.js:22–24, 33–35`
 
-**File:** `services/addressesService.js` — line 6
-
-**Problem:** Methods must use `camelCase` per CLAUDE.md. `ValidateAddressData` starts with an uppercase letter, treating it as a class/constructor name, not a method.
-
-```js
-// Current (WRONG)
-ValidateAddressData(customer_id, label, ...) { ... }
-```
-
-**Fix:**
-```js
-validateAddressData(customer_id, label, ...) { ... }
-```
-
-All call sites (`this.ValidateAddressData(...)`) must be updated accordingly.
-
----
-
-### 7. JSON response key `mensaje` in `assignOrdersController.js` — Spanish key name
-
-**File:** `controllers/assignOrdersController.js` — lines 12, 91, 113
-
-**Problem:** The response JSON uses `mensaje` (Spanish) as a key. All JSON response keys must be in English. User-facing _values_ can be in Spanish, but the key must be `message`.
+When a customer or address does not exist in the DB, a `ValidationError` (→ 400) is thrown. The correct type is `NotFoundError` (→ 404). A record not being found is not a validation error.
 
 ```js
-// Current (WRONG)
-res.status(201).json({ mensaje: "Orden asignada exitosamente.", assignOrder: assignment });
+// ❌ Current — customer not found, but thrown as ValidationError (400)
+customer = await customerRepository.getById(customer_id);
+if (!customer) {
+  throw new ValidationError("Cliente no encontrado");
+}
+
+// ✅ Fix
+customer = await customerRepository.getById(customer_id);
+if (!customer) {
+  throw new NotFoundError("Cliente no encontrado");
+}
 ```
 
-**Fix:**
-```js
-res.status(201).json({ message: "Orden asignada exitosamente.", assignOrder: assignment });
-```
+Same issue at line 33–35 for address not found.
+
+> **Note:** Tests at `test/orders.test.js:82,100` currently expect `400` for these cases and must be updated alongside this fix.
 
 ---
 
 ## Warnings 🟡
 
-### 8. Business logic in `couriersController.js` — empty result check
+### 5. Spanish inline comments throughout service and route files
 
-**File:** `controllers/couriersController.js` — lines 39–42
+CLAUDE.md mandates **all** comments be in English. Spanish comments are widespread:
 
-**Problem:** The controller checks if `couriers.length === 0` and returns 404. This is a business rule and belongs in the service layer.
+**`services/ordersService.js`** (lines 15, 28, 49, 56, 68):
+```js
+// Validar customer_id                                       ← ❌
+// Validar address_id                                        ← ❌
+// Validar total (solo en actualizaciones, no en create)     ← ❌
+// Validar payment_method_id                                 ← ❌
+// Validar status_id                                         ← ❌
+```
+
+**`services/assignOrdersService.js`** — most comments are Spanish (lines 12, 33, 42, 61, 66, 72, 80, 88, 115, 125, 145, 171, 209, and more):
+```js
+// Validar ID numérico           ← ❌
+// Verificar que la orden existe  ← ❌
+// Crear la asignación            ← ❌
+```
+
+**`services/couriersService.js`** (lines 9, 21, 35, 46, 56):
+```js
+// Validar name      ← ❌
+// Validar phone     ← ❌
+// Validar vehicle   ← ❌
+```
+
+**`services/productService.js`** (lines 43, 76, 84, 92, 104, 113, 157):
+```js
+// Verificar dígitos enteros (máximo 8)  ← ❌
+// Validar nombre si se proporciona      ← ❌
+// Default si no se puede convertir      ← ❌
+```
+
+**`services/CustomerService.js`** (line 4):
+```js
+// Clase del servicio   ← ❌
+```
+
+**All route files** — Spanish operation descriptions:
+```js
+// Crear un cliente              ← ❌ (routes/customers.js)
+// Listar clientes               ← ❌
+// Crear un producto             ← ❌ (routes/products.js)
+// actualizar una dirección...   ← ❌ (routes/addresses.js:15)
+// ← NUEVA (opcional)            ← ❌ (routes/orders.js:7)
+```
+
+---
+
+### 6. Business logic inside controller (`getCouriersByFilter`)
+**File:** `controllers/couriersController.js:57–61`
+
+The controller checks `couriers.length === 0` and returns 404 directly. Business rules belong in the service layer.
 
 ```js
-// Current (WRONG — business logic in controller)
-const couriers = await couriersService.getAvailableCouriers();
+// ❌ Current — business logic in controller
+const couriers = await couriersService.getCouriersByFilter(filters);
 if (couriers.length === 0) {
-    return res.status(404).json({ error: "No hay Domiciliarios disponibles" });
+  return res.status(404).json({ message: "No se encontraron domiciliarios..." });
 }
-```
 
-**Fix:** Move the empty check into `couriersService.getAvailableCouriers()`:
-
-```js
-async getAvailableCouriers() {
-    const couriers = await couriersRepository.getAvailable();
-    if (couriers.length === 0) {
-        throw new NotFoundError("No hay Domiciliarios disponibles");
-    }
-    return couriers;
+// ✅ Fix — move to couriersService.getCouriersByFilter
+const couriers = await couriersRepository.getForFilter(filters);
+if (couriers.length === 0) {
+  throw new NotFoundError("No se encontraron domiciliarios con esos filtros");
 }
+return couriers;
 ```
 
 ---
 
-### 9. `assignOrdersController.js` 500 error messages in English — violates Spanish user-facing rule
+### 7. Global error handler can leak internal error messages
+**File:** `app.js:73–79`
 
-**File:** `controllers/assignOrdersController.js` — lines 26, 39, 59, 78, 102, 124
+The fallback `app.use((err, req, res, next) => ...)` handler exposes `err.message` for all unhandled errors. If any error bypasses the controller's `try/catch`, sensitive DB or system error details are returned to clients.
 
-**Problem:** All 500 responses return `"Internal server error"` in English. CLAUDE.md requires user-facing strings to be in Spanish.
+Additionally, none of the custom error classes set a `status` property, making `err.status` always `undefined` — so the fallback is always 500, but `err.message` is still exposed.
 
 ```js
-// Current (WRONG)
-res.status(500).json({ error: "Internal server error" });
-```
+// ❌ Current
+res.status(err.status || 500).json({
+  error: err.message || 'Error interno del servidor'
+});
 
-**Fix:**
-```js
-res.status(500).json({ error: "Error interno del servidor" });
-```
-
----
-
-### 10. `validateCourierData` is marked `async` without any `await`
-
-**File:** `services/couriersService.js` — line 5
-
-**Problem:** `async validateCourierData(...)` contains no `await` expressions. Marking a synchronous function `async` is misleading and causes unnecessary Promise wrapping. All callers use `await this.validateCourierData(...)` unnecessarily.
-
-**Fix:** Remove `async`:
-```js
-validateCourierData(courierData, isPartial = false) { ... }
+// ✅ Fix
+const statusCode = err.status || 500;
+const message = statusCode === 500 ? 'Error interno del servidor' : err.message;
+res.status(statusCode).json({ error: message });
 ```
 
 ---
 
-### 11. Dead code in `normalizeProductData`
+### 8. Validation message mismatch in `couriersService`
+**File:** `services/couriersService.js:32`
 
-**File:** `services/productService.js` — lines 135–141
-
-**Problem:** Inside `if (description !== undefined)`, there is an inner check `if (description === undefined || ...)` which can never be true because the outer condition guarantees `description !== undefined`.
+The error message says "máximo 15 caracteres" but the actual limit enforced is 20 characters.
 
 ```js
-if (description !== undefined) {
-    // description is ALWAYS defined here, so this inner check is dead code:
-    if (description === undefined || description === null || ...) {
-        normalized.description = null;
-    }
+// ❌ Current — message says 15, check is > 20
+if (phone && phone.length > 20) {
+  errors.push("El teléfono no puede exceder los 15 caracteres");
 }
-```
 
-**Fix:** Remove the redundant inner condition:
-```js
-if (description !== undefined) {
-    normalized.description = (description === null || description.trim() === '')
-        ? null
-        : description.trim();
-}
+// ✅ Fix
+errors.push("El teléfono no puede exceder los 20 caracteres");
 ```
 
 ---
 
-### 12. `ordersRepository.js` throws a generic `Error` from repository layer
+### 9. File naming convention — camelCase instead of kebab-case
+**Files:** All controllers, services, repositories, and routes
 
-**File:** `repositories/ordersRepository.js` — line 138
+CLAUDE.md requires `kebab-case` for file names (example given: `order-service.js`). The entire codebase uses camelCase consistently, which is itself a systemic CLAUDE.md violation. The `CustomerService.js` case is Critical (cross-platform failure). The rest should be migrated over time.
 
-**Problem:** Repository methods should not throw domain errors. The repository throws `new Error("No hay campos válidos para actualizar")`, which is a domain-level decision that belongs in the service.
-
-```js
-// Current (WRONG — in repository)
-if (fields.length === 0) {
-    throw new Error("No hay campos válidos para actualizar");
-}
+Key targets:
 ```
-
-**Fix:** Guard against empty fields in the service before calling the repository, and remove this throw from the repository. Alternatively return `null` and let the service check:
-
-```js
-// In repository
-if (fields.length === 0) return null;
-
-// In service
-const updated = await ordersRepository.updatePartial(id, orderData);
-if (!updated) throw new ValidationError("No se proporcionaron campos para actualizar");
+services/productService.js         → product-service.js
+services/ordersItemsService.js     → orders-items-service.js
+routes/orderItems.js               → order-items.js
+routes/assignOrders.js             → assign-orders.js
+routes/customerPreferences.js      → customer-preferences.js
+controllers/ordersController.js    → orders-controller.js
 ```
 
 ---
 
-### 13. Inconsistent function naming — "ForFilter" and "ForPhone" patterns
+### 10. Typo in variable name: `addressessRouter`
+**File:** `app.js:13`
 
-**Files:**
-- `controllers/customerController.js` — `getCustomerForPhone` (line 36)
-- `controllers/couriersController.js` — `getCourierForFilter` (line 53)
-- `controllers/productsController.js` — `getProductForFilter` (line 55)
+```js
+// ❌ Typo — double 's'
+const addressessRouter = require('./routes/addresses');
+app.use('/api/addresses', addressessRouter);
 
-**Problem:** These names are unconventional. Standard naming would be `getCustomerByPhone`, `getCouriersByFilter`, `getProductsByFilter`. The inconsistency continues in the route files and the service method name (`getCustomerByPhone` in service vs `getCustomerForPhone` in controller).
+// ✅ Fix
+const addressesRouter = require('./routes/addresses');
+app.use('/api/addresses', addressesRouter);
+```
 
 ---
 
-### 14. `customerRepository.getByPhone` uses wildcard ILIKE — returns an array of matches
+### 11. API error response format inconsistent with CLAUDE.md spec
+**Files:** All controllers
 
-**File:** `repositories/customerRepository.js` — lines 22–26
-
-**Problem:** The query uses `ILIKE '%phone%'`, which returns multiple results. The method name `getByPhone` implies lookup by unique identifier. This could silently return multiple customers. The service treats it as potentially empty (`customer.length === 0`) but never limits to a single result.
-
-```js
-// Wildcard allows partial match, multiple results
-const result = await db.query(
-    '... WHERE phone ILIKE $1', [`%${phone}%`]
-);
+CLAUDE.md defines error responses as:
+```json
+{ "error": "ValidationError", "message": "El teléfono es obligatorio" }
 ```
 
-**Fix:** If exact match is intended (phone is unique), use `= $1` without wildcards. If search is intended, rename to `searchByPhone` and document accordingly.
-
----
-
-### 15. CORS is fully open — no origin restriction
-
-**File:** `app.js` — line 25
-
-**Problem:** `app.use(cors())` with no options allows requests from any origin. In production this is a security risk and should be restricted to the known frontend URL.
-
-**Fix:**
-```js
-app.use(cors({ origin: process.env.FRONTEND_URL }));
+All controllers return:
+```json
+{ "error": "El teléfono es obligatorio" }
 ```
+
+The error type name is absent. This makes client-side error handling harder and contradicts the documented contract. Consider aligning with the spec as a followup.
 
 ---
 
 ## Suggestions 🟢
 
-### 16. Duplicated SQL JOIN query in `assignOrdersRepository.js`
+### 12. Redundant partial update for orders
+**File:** `services/ordersService.js:162–188`, `routes/orders.js:13`
 
-**File:** `repositories/assignOrdersRepository.js` — `getAll()`, `getByCourierId()`, `getByOrderId()` (lines 33–60, 69–97, 106–134)
-
-The same large JOIN SELECT is copy-pasted three times. Extract the common SELECT + JOINs to a private helper string and append `WHERE` clauses as needed.
-
----
-
-### 17. Several functions exceed the 20-line guideline
-
-**Files:**
-- `services/productService.js` — `validateProductData` (59 lines), `normalizeProductData` (39 lines), `validateFilters` (54 lines), `normalizeFilters` (26 lines)
-- `services/ordersItemsService.js` — `updateOrderItem` (47 lines)
-- `services/addressesService.js` — `ValidateAddressData` (55 lines)
-
-Consider splitting large validation methods into smaller focused helpers (e.g., `validateName`, `validatePrice`, `validatePriceRange`).
+`updateOrderPartial` (used by `PATCH /:id`) only accepts `status_id`, making it functionally identical to `updateStatusOrder` (used by `PATCH /:id/status`). Consider removing one endpoint or expanding `updateOrderPartial` to support additional mutable fields to justify its existence.
 
 ---
 
-### 18. `getAllAddresses` only supports `limit`, not `offset`
+### 13. `validateAddressData` has too many positional parameters
+**File:** `services/addressesService.js:6`
 
-**File:** `services/addressesService.js` — line 89; `repositories/addressesRepository.js` — line 13
+The method takes 8 positional parameters, making call sites error-prone and hard to read:
+```js
+validateAddressData(customer_id, label, address_text, reference, latitude, longitude, is_primary, isPartial)
+```
 
-All other collection endpoints support `limit + offset` pagination. Addresses only supports `limit`. Add `offset` for consistency.
-
----
-
-### 19. Inconsistent test mock strategies
-
-Some tests mock the service layer (`customers.test.js`, `products.test.js`, `addresses.test.js`), some mock the repository layer (`couriers.test.js`, `orders.test.js`), and `customerPreferences.test.js` mocks `db` directly. Standardize on mocking the service layer in controller tests for isolation.
-
----
-
-### 20. `test-connection.js` at project root — unclear purpose
-
-**File:** `test-connection.js`
-
-This file exists at the project root but is not referenced in any test suite or npm script. If it's a one-time utility, it should be removed. If it's needed, document its purpose and add an npm script for it.
+Consider accepting `(addressData, isPartial = false)` and destructuring internally:
+```js
+validateAddressData(addressData, isPartial = false) {
+  const { customer_id, label, address_text, reference, latitude, longitude, is_primary } = addressData;
+  ...
+}
+```
 
 ---
 
-### 21. SSL `rejectUnauthorized: false` in production
+### 14. Dead code in `normalizeProductData`
+**File:** `services/productService.js:145–147`
 
-**File:** `db.js` — line 31
-
-This disables SSL certificate verification in production, which exposes the connection to man-in-the-middle attacks. Provide a proper CA certificate instead:
+Inside `if (is_active !== undefined)`, the inner check `if (is_active === undefined || ...)` can never be true:
 
 ```js
+// ❌ Inner check is dead code
+if (is_active !== undefined) {
+  if (is_active === undefined || is_active === null || is_active === '') { // always false
+    normalized.is_active = false;
+  }
+```
+
+Remove the dead inner condition.
+
+---
+
+### 15. Duplicated SQL JOIN query in `assignOrdersRepository.js`
+**File:** `repositories/assignOrdersRepository.js:33–134`
+
+The same large SELECT + JOIN block is copy-pasted across `getAll()`, `getByCourierId()`, and `getByOrderId()`. Extract to a private base query constant and append the `WHERE` clause per method.
+
+---
+
+### 16. Service-level unit tests are missing
+**Files:** All `test/*.test.js`
+
+Tests mock either the service layer or the repository layer and test through the HTTP controller. There are no isolated unit tests for service methods (e.g., validating edge cases in `validateOrderData`, `validateProductData`). Consider adding service-level tests for complex validation logic.
+
+---
+
+### 17. `test-connection.js` at project root — unclear purpose
+**File:** `test-connection.js`
+
+This file exists at the root but is not referenced in any test suite or npm script. If it's a one-time utility, remove it. If needed, add an npm script and document its purpose.
+
+---
+
+### 18. SSL `rejectUnauthorized: false` in production
+**File:** `db.js:31`
+
+Disabling SSL certificate verification in production exposes the DB connection to man-in-the-middle attacks. Provide a proper CA certificate:
+
+```js
+// ✅ Safer
 poolConfig.ssl = {
-    rejectUnauthorized: true,
-    ca: process.env.DB_SSL_CA
+  rejectUnauthorized: true,
+  ca: process.env.DB_SSL_CA
 };
 ```
 
 ---
 
-### 22. Inconsistent success response format
-
-CLAUDE.md defines success responses as `{ "data": {...} }`, but the codebase uses mixed formats:
-
-- `{ message, order }` (orders)
-- `{ message, customer }` (customers)
-- `{ message, preferencia }` (customerPreferences — also a Spanish key)
-- Raw arrays (get-all endpoints)
-
-Standardize to the format defined in CLAUDE.md, and fix the `preferencia` key to `preference`.
-
----
-
 ## CLAUDE.md Violations
 
-| Rule | Files Affected |
-|------|----------------|
-| All code in English — no Spanish comments | `app.js`, `server.js`, `db.js`, `ordersRepository.js`, `addressesService.js`, `customerService.js`, `productsRepository.js` |
-| All code in English — no Spanish JSON keys | `assignOrdersController.js` (`mensaje`), `customerPreferencesController.js` (`preferencia`) |
-| User-facing strings in Spanish — 500 errors | `assignOrdersController.js` (returns `"Internal server error"` in English) |
-| Controllers contain no business logic | `couriersController.js` (empty check for available couriers) |
-| Services must not depend on infrastructure | `ordersService.js` (direct `db.query()` calls) |
-| Repositories contain only SQL — no business logic | `ordersRepository.js` (throws domain error) |
-| Error mapping: DuplicateError → 409 | `addressesController.js` (maps to 400) |
-| Parameterized queries only — no injection risk | `addressesRepository.js`, `customerRepository.js` (unwhitelisted field names in SQL) |
-| camelCase for methods | `addressesService.js` (`ValidateAddressData`) |
-| Functions under 20 lines | `productService.js`, `ordersItemsService.js`, `addressesService.js` |
+| Rule | Violation | File(s) | Severity |
+|------|-----------|---------|----------|
+| `DuplicateError → 409` | Mapped to 400 | `assignOrdersController.js:23` | 🔴 Critical |
+| JSON keys in English | `preferencia` key in response | `customerPreferencesController.js:7,64` | 🔴 Critical |
+| Files: kebab-case | `CustomerService.js` uses PascalCase; all others use camelCase | `services/CustomerService.js`, all other files | 🔴 Critical (filename) / 🟡 Warning (others) |
+| `NotFoundError → 404` | Customer/address not found throws `ValidationError` (400) | `ordersService.js:22,33` | 🔴 Critical |
+| Comments in English | Spanish comments throughout services and routes | `ordersService.js`, `assignOrdersService.js`, `couriersService.js`, `productService.js`, `CustomerService.js`, all route files | 🟡 Warning |
+| No business logic in controllers | Array-length check for couriers in controller | `couriersController.js:57–61` | 🟡 Warning |
 
 ---
 
 ## Checklist Summary
 
-| Checklist Item | Status |
-|----------------|--------|
-| Layered architecture respected (Routes → Controllers → Services → Repositories) | ⚠️ Partial — `ordersService.js` bypasses repositories |
-| Code written entirely in English (variables, functions, files, comments, SQL) | ❌ Fail — Spanish comments in 7+ files |
-| User-facing error messages written in Spanish | ⚠️ Partial — `assignOrdersController.js` uses English in 500 responses |
-| Functions do one thing only and are under 20 lines | ⚠️ Partial — several service validation methods exceed 20 lines |
-| Descriptive, intention-revealing names (camelCase, PascalCase, kebab-case) | ⚠️ Partial — `ValidateAddressData`, `getCustomerForPhone`, `getCourierForFilter` |
-| No duplicated code | ⚠️ Partial — SQL JOIN duplicated 3× in `assignOrdersRepository.js` |
-| Early returns preferred over nested conditionals | ✅ Pass |
-| Controllers contain no business logic | ⚠️ Partial — `couriersController.js` has empty result check |
-| Services contain no Express objects (req, res) | ✅ Pass |
-| Repositories contain only SQL — no business logic | ⚠️ Partial — `ordersRepository.js` throws domain error |
-| Parameterized queries only — no string concatenation in SQL | ⚠️ Partial — column names injected unwhitelisted in `updatePartial` methods |
-| Custom error classes used (ValidationError, NotFoundError, etc.) | ✅ Pass |
-| No exposed secrets or API keys | ✅ Pass |
-| Input validation implemented | ✅ Pass |
-| Test coverage for endpoints, services, and error handling | ✅ Pass |
-| No N+1 query problems | ✅ Pass |
-| Pagination used for large datasets | ⚠️ Partial — `getAllAddresses` missing `offset` |
+| Area | Item | Status |
+|------|------|--------|
+| **Architecture** | Layered architecture respected | ✅ Pass |
+| **Architecture** | Controllers contain no business logic | ⚠️ Partial — `couriersController.js:57` |
+| **Architecture** | Services contain no Express objects | ✅ Pass |
+| **Architecture** | Repositories contain only SQL | ✅ Pass |
+| **Architecture** | Services use repositories (no direct `db.query`) | ✅ Pass |
+| **Language** | Variable/function names in English | ✅ Pass |
+| **Language** | File names in English | ✅ Pass |
+| **Language** | Comments in English | ❌ Fail — Spanish comments in services and all route files |
+| **Language** | JSON response keys in English | ❌ Fail — `preferencia` in `customerPreferencesController.js` |
+| **Language** | User-facing error strings in Spanish | ✅ Pass |
+| **Naming** | Variables/functions: camelCase | ✅ Pass |
+| **Naming** | Files: kebab-case | ❌ Fail — `CustomerService.js` is PascalCase; all others camelCase |
+| **Naming** | DB tables/columns: snake_case | ✅ Pass |
+| **Error Handling** | Custom error classes used | ✅ Pass |
+| **Error Handling** | `ValidationError → 400` | ✅ Pass |
+| **Error Handling** | `NotFoundError → 404` | ❌ Fail — `ordersService.js` throws `ValidationError` for not-found |
+| **Error Handling** | `DuplicateError → 409` | ❌ Fail — `assignOrdersController.js` maps to 400 |
+| **Error Handling** | `BusinessRuleError → 422` | ✅ Pass (not triggered in current flow) |
+| **Error Handling** | Repositories do not re-wrap errors | ✅ Pass |
+| **Error Handling** | Services translate PG error codes | ✅ Pass |
+| **Security** | Parameterized queries | ✅ Pass |
+| **Security** | Dynamic field names use whitelist before SQL injection | ✅ Pass |
+| **Security** | No exposed secrets | ✅ Pass |
+| **Security** | Input validation on all endpoints | ✅ Pass |
+| **Clean Code** | Functions do one thing | ✅ Pass |
+| **Clean Code** | Functions under 20 lines | ⚠️ Partial — `validateProductData`, `validateAddressData` exceed 20 lines |
+| **Clean Code** | Descriptive, intention-revealing names | ✅ Pass |
+| **Clean Code** | No duplicated code | ⚠️ Partial — SQL JOIN duplicated 3× in `assignOrdersRepository.js` |
+| **Clean Code** | Early returns preferred | ✅ Pass |
+| **Testing** | Test coverage for endpoints | ✅ Pass |
+| **Testing** | Tests follow Arrange/Act/Assert | ✅ Pass |
+| **Testing** | Service-level unit tests | ⚠️ Partial — tests are primarily integration-level via controllers |
+| **Performance** | No N+1 query problems | ✅ Pass |
+| **Performance** | Pagination for large datasets | ⚠️ Partial — `getAllAddresses` has `limit` but no `offset` |

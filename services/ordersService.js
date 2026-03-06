@@ -20,7 +20,7 @@ class OrdersService {
 
       customer = await customerRepository.getById(customer_id);
       if (!customer) {
-        throw new ValidationError("Cliente no encontrado");
+        throw new NotFoundError("Cliente no encontrado");
       }
     }
 
@@ -32,7 +32,7 @@ class OrdersService {
 
       address = await addressRepository.getById(address_id);
       if (!address) {
-        throw new ValidationError("Dirección no encontrada");
+        throw new NotFoundError("Dirección no encontrada");
       }
     }
 

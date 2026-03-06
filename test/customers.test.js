@@ -1,8 +1,8 @@
-jest.mock('../services/customerService');
+jest.mock('../services/customer-service');
 
 const request = require('supertest');
 const app = require('../app');
-const customerService = require('../services/customerService');
+const customerService = require('../services/customer-service');
 const { ValidationError, NotFoundError, DuplicateError } = require('../errors/customErrors');
 
 describe('POST /api/customers', () => {
