@@ -33,7 +33,7 @@ const getCustomers = async (req, res) => {
     }
 };
 
-const getCustomerForPhone = async (req, res) => {
+const getCustomerByPhone = async (req, res) => {
     try {
         const customer = await customerService.getCustomerByPhone(req.params.phone);
         res.json(customer);
@@ -141,4 +141,4 @@ const deleteCustomer = async (req, res) => {
     }
 };
 
-module.exports = {addCustomer,getCustomers,getCustomerForPhone,updateCustomer,updateCustomerPartial,deleteCustomer,getCustomerById};
+module.exports = {addCustomer,getCustomers,getCustomerByPhone,updateCustomer,updateCustomerPartial,deleteCustomer,getCustomerById};

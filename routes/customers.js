@@ -9,7 +9,7 @@ router.post('/', customerController.addCustomer);
 router.get('/', customerController.getCustomers);
 
 // Listar cliente por telefono
-router.get('/phone/:phone', customerController.getCustomerForPhone);
+router.get('/phone/:phone', customerController.getCustomerByPhone);
 
 // Listar cliente por ID
 router.get('/:id', customerController.getCustomerById);

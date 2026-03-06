@@ -36,13 +36,11 @@ const getCouriers = async (req, res) => {
 const getCouriersAvailable = async (req, res) => {
   try {
     const couriers = await couriersService.getAvailableCouriers();
-    if (couriers.length === 0) {
-      return res
-        .status(404)
-        .json({ error: "No hay Domiciliarios disponibles" });
-    }
     res.json(couriers);
   } catch (err) {
+    if (err instanceof NotFoundError) {
+      return res.status(404).json({ error: err.message });
+    }
     console.error(err.message);
     res
       .status(500)
@@ -50,7 +48,7 @@ const getCouriersAvailable = async (req, res) => {
   }
 };
 
-const getCourierForFilter = async (req, res) => {
+const getCouriersByFilter = async (req, res) => {
   try {
     const { name, phone, license_plate } = req.query;
     const filters = { name, phone, license_plate };
@@ -156,7 +154,7 @@ module.exports = {
   addCourier,
   getCouriers,
   getCouriersAvailable,
-  getCourierForFilter,
+  getCouriersByFilter,
   getCourierById,
   deleteCourier,
   updateCourier,

@@ -23,7 +23,7 @@ const addAssignOrder = async (req, res) => {
       return res.status(400).json({ error: err.message });
     }
     console.error("Error asignando una orden a un repartidor:", err);
-    res.status(500).json({ error: "Internal server error" });
+    res.status(500).json({ error: "Error interno del servidor" });
   }
 }
 
@@ -36,7 +36,7 @@ const getAssignOrders = async (req, res) => {
       return res.status(404).json({ error: err.message });
     }
     console.error("Error obteniendo las asignaciones de orden:", err);
-    res.status(500).json({ error: "Internal server error" });
+    res.status(500).json({ error: "Error interno del servidor" });
   }
 }
 
@@ -56,7 +56,7 @@ const getAssignOrderByCourierId = async (req, res) => {
       return res.status(404).json({ error: err.message });
     }
     console.error("Error obteniendo las asignaciones de orden por ID de repartidor:", err);
-    res.status(500).json({ error: "Internal server error" });
+    res.status(500).json({ error: "Error interno del servidor" });
   }
 }
 
@@ -75,7 +75,7 @@ const getAssignOrderByOrderId = async (req, res) => {
       return res.status(404).json({ error: err.message });
     }
     console.error("Error obteniendo las asignaciones de orden por ID de orden:", err);
-    res.status(500).json({ error: "Internal server error" });
+    res.status(500).json({ error: "Error interno del servidor" });
   }
 }
 
@@ -99,7 +99,7 @@ const updateAssignOrderCourier = async (req, res) => {
       return res.status(404).json({ error: err.message });
     }
     console.error("Error actualizando la asignación de orden:", err);
-    res.status(500).json({ error: "Internal server error" });
+    res.status(500).json({ error: "Error interno del servidor" });
   }
 }
 
@@ -121,7 +121,7 @@ const deleteAssignOrder = async (req, res) => {
       return res.status(404).json({ error: err.message });
     }
     console.error("Error eliminando la asignación de orden:", err);
-    res.status(500).json({ error: "Internal server error" });
+    res.status(500).json({ error: "Error interno del servidor" });
   }
 }
 

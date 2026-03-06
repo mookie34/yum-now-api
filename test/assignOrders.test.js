@@ -85,7 +85,7 @@ describe('POST /assignOrders', () => {
             .send({ order_id: 1, courier_id: 1 });
 
         expect(response.status).toBe(500);
-        expect(response.body).toHaveProperty('error', 'Internal server error');
+        expect(response.body).toHaveProperty('error', 'Error interno del servidor');
     });
 
     it('Debe retornar 400 si faltan parámetros', async () => {
@@ -134,7 +134,7 @@ describe('POST /assignOrders', () => {
             .get('/api/assign-orders');
 
         expect(response.status).toBe(500);
-        expect(response.body).toHaveProperty('error', 'Internal server error');
+        expect(response.body).toHaveProperty('error', 'Error interno del servidor');
     });
 
     it('Debe retornar 404 si no hay asignaciones de órdenes disponibles', async () => {
@@ -206,7 +206,7 @@ describe('POST /assignOrders', () => {
             .get('/api/assign-orders/courier/1');
 
         expect(response.status).toBe(500);
-        expect(response.body).toHaveProperty('error', 'Internal server error');
+        expect(response.body).toHaveProperty('error', 'Error interno del servidor');
     });
 
     it('Debe consultar las asignaciones de órdenes por ID de orden correctamente', async () => {
@@ -263,7 +263,7 @@ describe('POST /assignOrders', () => {
             .get('/api/assign-orders/order/1');
 
         expect(response.status).toBe(500);
-        expect(response.body).toHaveProperty('error', 'Internal server error');
+        expect(response.body).toHaveProperty('error', 'Error interno del servidor');
     });
 
     it('Debe actualizar la asignación de orden correctamente', async () => {
@@ -332,7 +332,7 @@ describe('POST /assignOrders', () => {
             .send({ courier_id: 2 });
 
         expect(response.status).toBe(500);
-        expect(response.body).toHaveProperty('error', 'Internal server error');
+        expect(response.body).toHaveProperty('error', 'Error interno del servidor');
     });
 
     it('Debe eliminar la asignación de orden correctamente', async () => {
@@ -384,6 +384,6 @@ describe('POST /assignOrders', () => {
             .delete('/api/assign-orders/1');
 
         expect(response.status).toBe(500);
-        expect(response.body).toHaveProperty('error', 'Internal server error');
+        expect(response.body).toHaveProperty('error', 'Error interno del servidor');
     });
 });

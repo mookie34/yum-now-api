@@ -52,7 +52,7 @@ const getProducts = async (req, res) => {
   }
 };
 
-const getProductForFilter = async (req, res) => {
+const getProductsByFilter = async (req, res) => {
   try {
     const products = await productService.searchProducts(req.query);
     res.json(products);
@@ -203,7 +203,7 @@ module.exports = {
   addProduct,
   getProducts,
   getProductById,
-  getProductForFilter,
+  getProductsByFilter,
   deleteProduct,
   deactivateProduct,
   updateProduct,

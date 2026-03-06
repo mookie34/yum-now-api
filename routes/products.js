@@ -7,7 +7,7 @@ router.post('/', productsController.addProduct);
 // Listar productos
 router.get('/', productsController.getProducts);
 // Listar productos por filtro
-router.get('/filter', productsController.getProductForFilter);
+router.get('/filter', productsController.getProductsByFilter);
 // Obtener un producto por ID
 router.get('/:id', productsController.getProductById);
 // Desactivar un producto (soft delete)

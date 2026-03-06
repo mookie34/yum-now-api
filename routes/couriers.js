@@ -3,7 +3,7 @@ const router = express.Router();
 const courierController = require("../controllers/couriersController");
 
 // Listar mensajeros por filtro
-router.get("/filter", courierController.getCourierForFilter);
+router.get("/filter", courierController.getCouriersByFilter);
 // Listar mensajeros disponibles
 router.get("/available", courierController.getCouriersAvailable);
 // Crear un mensajero

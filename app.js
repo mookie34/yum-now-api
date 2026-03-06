@@ -22,7 +22,7 @@ const app = express();
 app.use(helmet());
 
 // CORS - Allows separate frontend
-app.use(cors());
+app.use(cors({ origin: process.env.FRONTEND_URL }));
 
 // Rate Limiting - Prevents abuse
 const limiter = rateLimit({

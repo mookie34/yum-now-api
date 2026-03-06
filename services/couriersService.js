@@ -2,7 +2,7 @@ const couriersRepository = require("../repositories/couriersRepository");
 const { ValidationError, NotFoundError } = require("../errors/customErrors");
 
 class CouriersService {
-  async validateCourierData(courierData, isPartial = false) {
+  validateCourierData(courierData, isPartial = false) {
     const errors = [];
     const { name, phone, vehicle, license_plate, available } = courierData;
 
@@ -71,7 +71,7 @@ class CouriersService {
 
   async addCourier(courierData) {
     const data = { ...courierData, available: courierData.available ?? true };
-    await this.validateCourierData(data, false);
+    this.validateCourierData(data, false);
     return await couriersRepository.create(data);
   }
 
@@ -90,7 +90,11 @@ class CouriersService {
   }
 
   async getAvailableCouriers() {
-    return await couriersRepository.getAvailable();
+    const couriers = await couriersRepository.getAvailable();
+    if (couriers.length === 0) {
+      throw new NotFoundError("No hay Domiciliarios disponibles");
+    }
+    return couriers;
   }
 
   async getCouriersByFilter(filters) {
@@ -108,7 +112,7 @@ class CouriersService {
 
   async updateCourier(id, courierData) {
     this.validateId(id);
-    await this.validateCourierData(courierData, false);
+    this.validateCourierData(courierData, false);
     const updatedCourier = await couriersRepository.update(id, courierData);
     if (!updatedCourier) {
       throw new NotFoundError("Domiciliario no encontrado");
@@ -118,7 +122,7 @@ class CouriersService {
 
   async updateCourierPartial(id, courierData) {
     this.validateId(id);
-    await this.validateCourierData(courierData, true);
+    this.validateCourierData(courierData, true);
     const updatedCourier = await couriersRepository.updatePartial(
       id,
       courierData

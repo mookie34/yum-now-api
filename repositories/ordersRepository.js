@@ -134,9 +134,7 @@ class OrdersRepository {
       }
     }
 
-    if (fields.length === 0) {
-      throw new Error("No hay campos válidos para actualizar");
-    }
+    if (fields.length === 0) return null;
 
     values.push(id);
     const query = `

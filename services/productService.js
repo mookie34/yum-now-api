@@ -133,14 +133,9 @@ class ProductService{
         }
 
         if (description !== undefined) {
-            if (description === undefined || 
-                description === null || 
-                description === '' || 
-                (typeof description === 'string' && description.trim() === '')) {
-                normalized.description = null;
-            } else {
-                normalized.description = description.trim();
-            }
+            normalized.description = (description === null || description.trim() === '')
+                ? null
+                : description.trim();
         }
 
         if (price !== undefined) {
