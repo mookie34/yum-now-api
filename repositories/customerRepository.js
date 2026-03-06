@@ -18,9 +18,10 @@ class CustomerRepository {
     };
 
     async getByPhone(phone) {
+        const sanitizedPhone = phone.replace(/[\s\-\(\)\+]/g, '');
         const result = await db.query(
-              'SELECT id, name, phone, email, created_at FROM YuNowDataBase.customers WHERE phone = $1',
-               [phone]
+              'SELECT id, name, phone, email, created_at FROM YuNowDataBase.customers WHERE REGEXP_REPLACE(phone, \'[\\s\\-\\(\\)\\+]\', \'\', \'g\') LIKE $1',
+               [`%${sanitizedPhone}%`]
             );
 
         return result.rows;
