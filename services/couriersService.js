@@ -6,7 +6,7 @@ class CouriersService {
     const errors = [];
     const { name, phone, vehicle, license_plate, available } = courierData;
 
-    // Validar name
+    // Validate name
     if (!isPartial || name !== undefined) {
       if (!name || name.trim() === "") {
         errors.push("El nombre es obligatorio");
@@ -17,7 +17,7 @@ class CouriersService {
       errors.push("El nombre no puede exceder los 100 caracteres");
     }
 
-    // Validar phone
+    // Validate phone
     if (!isPartial || phone !== undefined) {
       if (!phone || phone.trim() === "") {
         errors.push("El teléfono es obligatorio");
@@ -29,10 +29,10 @@ class CouriersService {
     }
 
     if (phone && phone.length > 20) {
-      errors.push("El teléfono no puede exceder los 15 caracteres");
+      errors.push("El teléfono no puede exceder los 20 caracteres");
     }
 
-    // Validar vehicle
+    // Validate vehicle
     if (!isPartial || vehicle !== undefined) {
       if (!vehicle || vehicle.trim() === "") {
         errors.push("El vehículo es obligatorio");
@@ -43,7 +43,7 @@ class CouriersService {
       errors.push("El vehículo no puede exceder los 50 caracteres");
     }
 
-    // Validar license_plate
+    // Validate license_plate
     if (!isPartial || license_plate !== undefined) {
       if (!license_plate || license_plate.trim() === "") {
         errors.push("La placa es obligatoria");
@@ -53,7 +53,7 @@ class CouriersService {
       errors.push("La placa no puede exceder los 20 caracteres");
     }
 
-    // Validar available
+    // Validate available
     if (available !== undefined && typeof available !== "boolean") {
       errors.push("available debe ser un valor booleano");
     }
@@ -98,7 +98,11 @@ class CouriersService {
   }
 
   async getCouriersByFilter(filters) {
-    return await couriersRepository.getForFilter(filters);
+    const couriers = await couriersRepository.getForFilter(filters);
+    if (couriers.length === 0) {
+      throw new NotFoundError("No se encontraron domiciliarios con esos filtros");
+    }
+    return couriers;
   }
 
   async getCourierById(id) {

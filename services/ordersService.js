@@ -12,7 +12,7 @@ class OrdersService {
     let customer = null;
     let address = null;
 
-    // Validar customer_id
+    // Validate customer_id (must be a positive number and exist in DB)
     if (!isPartial || customer_id !== undefined) {
       if (!customer_id || isNaN(customer_id) || parseInt(customer_id) <= 0) {
         throw new ValidationError("customer_id inválido");
@@ -24,7 +24,7 @@ class OrdersService {
       }
     }
 
-    // Validar address_id
+    // Validate address_id (must be a positive number and exist in DB)
     if (!isPartial || address_id !== undefined) {
       if (!address_id || isNaN(address_id) || parseInt(address_id) <= 0) {
         throw new ValidationError("address_id inválido");
@@ -46,14 +46,14 @@ class OrdersService {
       );
     }
 
-    // Validar total (solo en actualizaciones, no en create)
+    // Validate total (only on updates, not on create)
     if (!isCreate && (!isPartial || total !== undefined)) {
       if (total !== undefined && (isNaN(total) || parseFloat(total) < 0)) {
         errors.push("El total no puede ser negativo");
       }
     }
 
-    // Validar payment_method_id
+    // Validate payment_method_id
     if (!isPartial || payment_method_id !== undefined) {
       if (!payment_method_id || isNaN(payment_method_id)) {
         errors.push("payment_method_id inválido");
@@ -65,7 +65,7 @@ class OrdersService {
       }
     }
 
-    // Validar status_id
+    // Validate status_id
     if (!isPartial || status_id !== undefined) {
       if (!status_id || isNaN(status_id)) {
         errors.push("status_id inválido");
@@ -83,7 +83,7 @@ class OrdersService {
   }
 
   /**
-   * Valida que un ID sea válido
+   * Validates that an ID is valid
    */
   validateId(id) {
     if (!id || isNaN(id) || parseInt(id) <= 0) {

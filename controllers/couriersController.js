@@ -54,15 +54,11 @@ const getCouriersByFilter = async (req, res) => {
     const filters = { name, phone, license_plate };
 
     const couriers = await couriersService.getCouriersByFilter(filters);
-
-    if (couriers.length === 0) {
-      return res
-        .status(404)
-        .json({ message: "No se encontraron domiciliarios con esos filtros" });
-    }
-
     res.status(200).json(couriers);
   } catch (err) {
+    if (err instanceof NotFoundError) {
+      return res.status(404).json({ error: err.message });
+    }
     console.error(err.message);
     res
       .status(500)

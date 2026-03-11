@@ -10,7 +10,7 @@ const orderItemsRouter = require('./routes/orderItems');
 const customersRouter = require('./routes/customers');
 const couriersRouter = require('./routes/couriers');
 const assignOrdersRouter = require('./routes/assignOrders');
-const addressessRouter = require('./routes/addresses');
+const addressesRouter = require('./routes/addresses');
 const customerPreferencesRouter = require('./routes/customerPreferences');
 
 const app = express();
@@ -47,7 +47,7 @@ app.use('/api/order-items', orderItemsRouter);
 app.use('/api/customers', customersRouter);
 app.use('/api/couriers', couriersRouter);
 app.use('/api/assign-orders', assignOrdersRouter);
-app.use('/api/addresses', addressessRouter);
+app.use('/api/addresses', addressesRouter);
 app.use('/api/customer-preferences', customerPreferencesRouter);
 
 // ============================================
@@ -73,9 +73,9 @@ app.use((req, res, next) => {
   app.use((err, req, res, next) => {
     console.error('Error:', err.stack);
     
-    res.status(err.status || 500).json({
-      error: err.message || 'Error interno del servidor'
-    });
+    const statusCode = err.status || 500;
+    const message = statusCode === 500 ? 'Error interno del servidor' : err.message;
+    res.status(statusCode).json({ error: message });
   });
 
 //console.log("DB host:", process.env.DB_HOST);
