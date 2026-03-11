@@ -22,8 +22,8 @@ const addOrderItem = async (req, res) => {
         if (error instanceof NotFoundError) {
             return res.status(404).json({ error: error.message });
         }
-        console.error(error.message);
-        res.status(500).json({ error: 'Error al guardar el item de orden en la base de datos' });
+        console.error("Error creating order item:", error.message);
+        res.status(500).json({ error: 'Error interno del servidor' });
     }
 };
 
@@ -41,8 +41,8 @@ const getAllOrderItems = async (req, res) => {
         if (error instanceof ValidationError) {
             return res.status(400).json({ error: error.message });
         }
-        console.error(error.message);
-        res.status(500).json({ error: 'Error al obtener los items de orden desde la base de datos' });
+        console.error("Error fetching order items:", error.message);
+        res.status(500).json({ error: 'Error interno del servidor' });
     }
 };
 
@@ -58,8 +58,8 @@ const getOrderItemByOrderId = async (req, res) => {
         if (error instanceof NotFoundError) {
             return res.status(404).json({ error: error.message });
         }
-        console.error(error.message);
-        res.status(500).json({ error: 'Error al obtener los items de orden desde la base de datos' });
+        console.error("Error fetching order items by order ID:", error.message);
+        res.status(500).json({ error: 'Error interno del servidor' });
     }
 };
 
@@ -78,8 +78,8 @@ const deleteAllItemsInOrder = async (req, res) => {
         if (error instanceof NotFoundError) {
             return res.status(404).json({ error: error.message });
         }
-        console.error(error.message);
-        res.status(500).json({ error: 'Error al eliminar los items de orden desde la base de datos' });
+        console.error("Error deleting order items:", error.message);
+        res.status(500).json({ error: 'Error interno del servidor' });
     }
 };
 
@@ -101,8 +101,8 @@ const deleteItemInOrderByIdProduct = async (req, res) => {
         if (error instanceof NotFoundError) {
             return res.status(404).json({ error: error.message });
         }
-        console.error(error.message);
-        res.status(500).json({ error: 'Error al eliminar el item de orden desde la base de datos' });
+        console.error("Error deleting order item:", error.message);
+        res.status(500).json({ error: 'Error interno del servidor' });
     }
 };
 
@@ -128,8 +128,8 @@ const updateQuantityOrPriceInOrderItem = async (req, res) => {
         if (error instanceof NotFoundError) {
             return res.status(404).json({ error: error.message });
         }
-        console.error(error.message);
-        res.status(500).json({ error: 'Error al actualizar el item de orden en la base de datos' });
+        console.error("Error updating order item:", error.message);
+        res.status(500).json({ error: 'Error interno del servidor' });
     }
 };
 

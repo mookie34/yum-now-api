@@ -137,7 +137,7 @@ describe("POST /api/couriers", () => {
       });
 
     expect(res.status).toBe(400);
-    expect(res.body.error).toContain("15 caracteres");
+    expect(res.body.error).toContain("20 caracteres");
   });
 
   it("Debe rechazar si available no es booleano", async () => {
@@ -375,7 +375,7 @@ describe("GET /api/couriers/filter", () => {
       .query({ name: "NoExiste" });
 
     expect(res.status).toBe(404);
-    expect(res.body.message).toBe(
+    expect(res.body.error).toBe(
       "No se encontraron domiciliarios con esos filtros"
     );
   });
@@ -621,7 +621,7 @@ describe("PATCH /api/couriers/:id", () => {
       .send({ phone: "1".repeat(21) }); // Excede límite
 
     expect(res.status).toBe(400);
-    expect(res.body.error).toContain("15 caracteres");
+    expect(res.body.error).toContain("20 caracteres");
   });
 
   it("Debe manejar error de base de datos", async () => {

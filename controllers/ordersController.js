@@ -9,14 +9,14 @@ const addOrder = async (req, res) => {
       order,
     });
   } catch (err) {
-    console.error("Error al crear la orden:", err.message);
+    console.error("Error creating order:", err.message);
     if (err instanceof ValidationError) {
       return res.status(400).json({ error: err.message });
     }
     if (err instanceof NotFoundError) {
       return res.status(404).json({ error: err.message });
     }
-    res.status(500).json({ error: "Error al crear la orden" });
+    res.status(500).json({ error: "Error interno del servidor" });
   }
 };
 
@@ -29,14 +29,14 @@ const updateTotalOrder = async (req, res) => {
       order: updatedOrder,
     });
   } catch (err) {
-    console.error("Error al actualizar el total de la orden:", err.message);
+    console.error("Error updating order total:", err.message);
     if (err instanceof ValidationError) {
       return res.status(400).json({ error: err.message });
     }
     if (err instanceof NotFoundError) {
       return res.status(404).json({ error: err.message });
     }
-    res.status(500).json({ error: "Error al actualizar el total de la orden" });
+    res.status(500).json({ error: "Error interno del servidor" });
   }
 };
 
@@ -46,11 +46,11 @@ const getOrders = async (req, res) => {
     const orders = await OrdersService.getAllOrders(limit, offset);
     res.json(orders);
   } catch (err) {
-    console.error("Error al obtener las órdenes:", err.message);
+    console.error("Error fetching orders:", err.message);
     if (err instanceof ValidationError) {
       return res.status(400).json({ error: err.message });
     }
-    res.status(500).json({ error: "Error al obtener las órdenes" });
+    res.status(500).json({ error: "Error interno del servidor" });
   }
 };
 
@@ -60,14 +60,14 @@ const getOrderById = async (req, res) => {
     const order = await OrdersService.getOrderById(id);
     res.json(order);
   } catch (err) {
-    console.error("Error al obtener la orden:", err.message);
+    console.error("Error fetching order by ID:", err.message);
     if (err instanceof ValidationError) {
       return res.status(400).json({ error: err.message });
     }
     if (err instanceof NotFoundError) {
       return res.status(404).json({ error: err.message });
     }
-    res.status(500).json({ error: "Error al obtener la orden" });
+    res.status(500).json({ error: "Error interno del servidor" });
   }
 };
 
@@ -77,11 +77,11 @@ const getOrderByCustomerId = async (req, res) => {
     const orders = await OrdersService.getOrdersByCustomerId(customer_id);
     res.json(orders);
   } catch (err) {
-    console.error("Error al obtener las órdenes del cliente:", err.message);
+    console.error("Error fetching orders by customer:", err.message);
     if (err instanceof ValidationError) {
       return res.status(400).json({ error: err.message });
     }
-    res.status(500).json({ error: "Error al obtener las órdenes del cliente" });
+    res.status(500).json({ error: "Error interno del servidor" });
   }
 };
 
@@ -94,14 +94,14 @@ const deleteOrder = async (req, res) => {
       order: deletedOrder,
     });
   } catch (err) {
-    console.error("Error al eliminar la orden:", err.message);
+    console.error("Error deleting order:", err.message);
     if (err instanceof ValidationError) {
       return res.status(400).json({ error: err.message });
     }
     if (err instanceof NotFoundError) {
       return res.status(404).json({ error: err.message });
     }
-    res.status(500).json({ error: "Error al eliminar la orden" });
+    res.status(500).json({ error: "Error interno del servidor" });
   }
 };
 
@@ -115,14 +115,14 @@ const updateOrderPartial = async (req, res) => {
       order: updatedOrder,
     });
   } catch (err) {
-    console.error("Error al actualizar la orden:", err.message);
+    console.error("Error partially updating order:", err.message);
     if (err instanceof ValidationError) {
       return res.status(400).json({ error: err.message });
     }
     if (err instanceof NotFoundError) {
       return res.status(404).json({ error: err.message });
     }
-    res.status(500).json({ error: "Error al actualizar la orden" });
+    res.status(500).json({ error: "Error interno del servidor" });
   }
 };
 
@@ -137,16 +137,14 @@ const updateStatusOrder = async (req, res) => {
       order: updatedOrder,
     });
   } catch (err) {
-    console.error("Error al actualizar el estado de la orden:", err.message);
+    console.error("Error updating order status:", err.message);
     if (err instanceof ValidationError) {
       return res.status(400).json({ error: err.message });
     }
     if (err instanceof NotFoundError) {
       return res.status(404).json({ error: err.message });
     }
-    res
-      .status(500)
-      .json({ error: "Error al actualizar el estado de la orden" });
+    res.status(500).json({ error: "Error interno del servidor" });
   }
 };
 
@@ -159,8 +157,8 @@ const countOrdersForDay = async (req, res) => {
       date: new Date().toISOString().split("T")[0],
     });
   } catch (err) {
-    console.error("Error al contar las órdenes del día:", err.message);
-    res.status(500).json({ error: "Error al contar las órdenes del día" });
+    console.error("Error counting orders for today:", err.message);
+    res.status(500).json({ error: "Error interno del servidor" });
   }
 };
 
@@ -175,11 +173,11 @@ const getOrdersByStatus = async (req, res) => {
     );
     res.json(orders);
   } catch (err) {
-    console.error("Error al obtener las órdenes por estado:", err.message);
+    console.error("Error fetching orders by status:", err.message);
     if (err instanceof ValidationError) {
       return res.status(400).json({ error: err.message });
     }
-    res.status(500).json({ error: "Error al obtener las órdenes por estado" });
+    res.status(500).json({ error: "Error interno del servidor" });
   }
 };
 
@@ -193,5 +191,5 @@ module.exports = {
   updateStatusOrder,
   updateTotalOrder,
   countOrdersForDay,
-  getOrdersByStatus, 
+  getOrdersByStatus,
 };

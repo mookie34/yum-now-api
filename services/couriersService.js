@@ -2,48 +2,50 @@ const couriersRepository = require("../repositories/couriersRepository");
 const { ValidationError, NotFoundError } = require("../errors/customErrors");
 
 class CouriersService {
-  validateCourierData(courierData, isPartial = false) {
+  validateName(name, isPartial) {
     const errors = [];
-    const { name, phone, vehicle, license_plate, available } = courierData;
-
-    // Validate name
     if (!isPartial || name !== undefined) {
       if (!name || name.trim() === "") {
         errors.push("El nombre es obligatorio");
       }
     }
-
     if (name && name.length > 100) {
       errors.push("El nombre no puede exceder los 100 caracteres");
     }
+    return errors;
+  }
 
-    // Validate phone
+  validatePhone(phone, isPartial) {
+    const errors = [];
     if (!isPartial || phone !== undefined) {
       if (!phone || phone.trim() === "") {
         errors.push("El teléfono es obligatorio");
       }
     }
-
     if (phone && !/^\+?[\d\s\-()]+$/.test(phone.trim())) {
       errors.push("El teléfono contiene caracteres inválidos");
     }
-
     if (phone && phone.length > 20) {
       errors.push("El teléfono no puede exceder los 20 caracteres");
     }
+    return errors;
+  }
 
-    // Validate vehicle
+  validateVehicle(vehicle, isPartial) {
+    const errors = [];
     if (!isPartial || vehicle !== undefined) {
       if (!vehicle || vehicle.trim() === "") {
         errors.push("El vehículo es obligatorio");
       }
     }
-
     if (vehicle && vehicle.length > 50) {
       errors.push("El vehículo no puede exceder los 50 caracteres");
     }
+    return errors;
+  }
 
-    // Validate license_plate
+  validateLicensePlate(license_plate, isPartial) {
+    const errors = [];
     if (!isPartial || license_plate !== undefined) {
       if (!license_plate || license_plate.trim() === "") {
         errors.push("La placa es obligatoria");
@@ -52,8 +54,19 @@ class CouriersService {
     if (license_plate && license_plate.length > 20) {
       errors.push("La placa no puede exceder los 20 caracteres");
     }
+    return errors;
+  }
 
-    // Validate available
+  validateCourierData(courierData, isPartial = false) {
+    const { name, phone, vehicle, license_plate, available } = courierData;
+
+    const errors = [
+      ...this.validateName(name, isPartial),
+      ...this.validatePhone(phone, isPartial),
+      ...this.validateVehicle(vehicle, isPartial),
+      ...this.validateLicensePlate(license_plate, isPartial),
+    ];
+
     if (available !== undefined && typeof available !== "boolean") {
       errors.push("available debe ser un valor booleano");
     }

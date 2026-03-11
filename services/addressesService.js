@@ -3,62 +3,90 @@ const customerRepository = require('../repositories/customerRepository');
 const {ValidationError, NotFoundError, DuplicateError} = require('../errors/customErrors');
 
 class AddressesService {
+    validateCustomerId(customer_id, isPartial) {
+        if (!isPartial || customer_id !== undefined) {
+            if (!customer_id || isNaN(customer_id) || parseInt(customer_id) <= 0) {
+                return 'ID de cliente inválido';
+            }
+        }
+        return null;
+    }
+
+    validateLabel(label, isPartial) {
+        if (!isPartial || label !== undefined) {
+            if (!label || label.trim() === '') {
+                return 'La etiqueta es obligatoria';
+            } else if (label.length > 50) {
+                return 'La etiqueta no debe exceder los 50 caracteres';
+            }
+        }
+        return null;
+    }
+
+    validateAddressText(address_text, isPartial) {
+        if (!isPartial || address_text !== undefined) {
+            if (!address_text || address_text.trim() === '') {
+                return 'La dirección es obligatoria';
+            } else if (address_text.length > 255) {
+                return 'La dirección no debe exceder los 255 caracteres';
+            }
+        }
+        return null;
+    }
+
+    validateReference(reference) {
+        if (reference !== undefined && reference !== null) {
+            if (reference.length > 255) {
+                return 'La referencia no debe exceder los 255 caracteres';
+            }
+        }
+        return null;
+    }
+
+    validateCoordinates(latitude, longitude) {
+        const errors = [];
+        if (latitude !== undefined && latitude !== null) {
+            const lat = parseFloat(latitude);
+            if (isNaN(lat) || lat < -90 || lat > 90) {
+                errors.push('Latitud inválida. Debe estar entre -90 y 90');
+            }
+        }
+        if (longitude !== undefined && longitude !== null) {
+            const lon = parseFloat(longitude);
+            if (isNaN(lon) || lon < -180 || lon > 180) {
+                errors.push('Longitud inválida. Debe estar entre -180 y 180');
+            }
+        }
+        return errors;
+    }
+
     validateAddressData(customer_id, label, address_text, reference, latitude, longitude, is_primary, isPartial = false){
         const errors = [];
-        
-            // Validate customer_id (REQUIRED, must exist in customers table)
-            if (!isPartial || customer_id !== undefined) {
-                if (!customer_id || isNaN(customer_id) || parseInt(customer_id) <= 0) {
-                    errors.push('ID de cliente inválido');
-                }
-            }
-            // Validate label (REQUIRED, non-empty, max 50 characters)
-            if (!isPartial || label !== undefined) {
-                if (!label || label.trim() === '') {
-                    errors.push('La etiqueta es obligatoria');
-                } else if (label.length > 50) {
-                    errors.push('La etiqueta no debe exceder los 50 caracteres');
-                }
-            }
-            // Validate address_text (REQUIRED, non-empty, max 255 characters)
-            if (!isPartial || address_text !== undefined) {
-                if (!address_text || address_text.trim() === '') {
-                    errors.push('La dirección es obligatoria');
-                } else if (address_text.length > 255) {
-                    errors.push('La dirección no debe exceder los 255 caracteres');
-                }
-            }
-            // Validate reference (OPTIONAL, max 255 characters)
-            if (reference !== undefined && reference !== null) {
-                if (reference.length > 255) {
-                    errors.push('La referencia no debe exceder los 255 caracteres');
-                }
-            }
-            // Validate latitude (OPTIONAL, must be a number between -90 and 90)
-            if (latitude !== undefined && latitude !== null) {
-                const lat = parseFloat(latitude);
-                if (isNaN(lat) || lat < -90 || lat > 90) {
-                    errors.push('Latitud inválida. Debe estar entre -90 y 90');
-                }
-            }
-            // Validate longitude (OPTIONAL, must be a number between -180 and 180)
-            if (longitude !== undefined && longitude !== null) {
-                const lon = parseFloat(longitude);
-                if (isNaN(lon) || lon < -180 || lon > 180) {
-                    errors.push('Longitud inválida. Debe estar entre -180 y 180');
-                }
-            }
-            // Validate is_primary (REQUIRED, boolean)
-            if (!isPartial || is_primary !== undefined) {
-                if (is_primary !== undefined && typeof is_primary !== 'boolean') {
-                    errors.push('is_primary debe ser un valor booleano');
-                }
-            }
 
-            if (errors.length > 0) {
-                throw new ValidationError(errors.join('; '));
-            }   
-        };
+        const customerErr = this.validateCustomerId(customer_id, isPartial);
+        if (customerErr) errors.push(customerErr);
+
+        const labelErr = this.validateLabel(label, isPartial);
+        if (labelErr) errors.push(labelErr);
+
+        const addressErr = this.validateAddressText(address_text, isPartial);
+        if (addressErr) errors.push(addressErr);
+
+        const refErr = this.validateReference(reference);
+        if (refErr) errors.push(refErr);
+
+        errors.push(...this.validateCoordinates(latitude, longitude));
+
+        if (!isPartial || is_primary !== undefined) {
+            if (is_primary !== undefined && typeof is_primary !== 'boolean') {
+                errors.push('is_primary debe ser un valor booleano');
+            }
+        }
+
+        if (errors.length > 0) {
+            throw new ValidationError(errors.join('; '));
+        }
+    };
 
         validateId(id){
             if (!id || isNaN(id) || parseInt(id) <= 0) {
@@ -94,7 +122,7 @@ class AddressesService {
             const addresses = await addressesRepository.getAll(limit);
             return addresses;
         };
-        
+
         async getAddressesByCustomerId(customer_id) {
             this.validateId(customer_id);
             // Verify that the customer exists
@@ -144,7 +172,7 @@ class AddressesService {
         async updateAddress(id, addressData) {
             const { customer_id, label, address_text, reference, latitude, longitude, is_primary } = addressData;
             this.validateId(id);
-                
+
                 // Validate input data
                 this.validateAddressData(customer_id, label, address_text, reference, latitude, longitude, is_primary);
                 // If is_primary is true, unset other primary addresses for this customer
@@ -161,7 +189,7 @@ class AddressesService {
         async updateAddressPartial(id, addressData) {
             const { customer_id, label, address_text, reference, latitude, longitude, is_primary } = addressData;
             this.validateId(id);
-                
+
                 if (customer_id === undefined && label === undefined && address_text === undefined &&
                     reference === undefined && latitude === undefined && longitude === undefined &&
                     is_primary === undefined) {
@@ -179,7 +207,7 @@ class AddressesService {
                 if (is_primary) {
                     await addressesRepository.unsetPrimaryAddresses(existingAddress.customer_id);
                 }
-                
+
                 const updatedAddress = await addressesRepository.updatePartial(id, addressData);
                 if (!updatedAddress) {
                     throw new NotFoundError('Dirección no encontrada');
@@ -189,4 +217,3 @@ class AddressesService {
 }
 
 module.exports = new AddressesService();
-

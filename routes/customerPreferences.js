@@ -2,17 +2,17 @@ const express = require("express");
 const router = express.Router();
 const customerPreferencesController = require("../controllers/customerPreferencesController");
 
-// Crear una nueva preferencia de cliente
+// Create a new customer preference
 router.post("/", customerPreferencesController.createCustomerPreference);
-// Obtener todas las preferencias de un cliente
+// Get all preferences for a customer
 router.get("/:customer_id", customerPreferencesController.getCustomerPreferences);
-// Obtener una preferencia especifica de un cliente
+// Get a specific preference for a customer
 router.get("/customer/:customer_id/preference_key/:preference_key", customerPreferencesController.getCustomerSpecificPreference);
-// Actualizar una preferencia de cliente
+// Update a customer preference
 router.put("/customer/:customer_id/preference_key/:preference_key", customerPreferencesController.updateCustomerPreference);
-// Eliminar una preferencia de cliente
+// Delete a customer preference
 router.delete("/customer/:customer_id/preference_key/:preference_key", customerPreferencesController.deleteCustomerPreference);
-// Eliminar todas las preferencias de un cliente
+// Delete all preferences for a customer
 router.delete("/customer/:customer_id", customerPreferencesController.deleteAllCustomerPreferences);
 
 module.exports = router;

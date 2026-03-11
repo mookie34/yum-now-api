@@ -17,7 +17,7 @@ const addProduct = async (req, res) => {
       product,
     });
   } catch (err) {
-    console.error("Error al crear producto:", err.message);
+    console.error("Error creating product:", err.message);
 
     if (err instanceof ValidationError) {
       return res.status(400).json({ error: err.message });
@@ -27,7 +27,7 @@ const addProduct = async (req, res) => {
       return res.status(409).json({ error: err.message });
     }
 
-    res.status(500).json({ error: "Error al crear el producto" });
+    res.status(500).json({ error: "Error interno del servidor" });
   }
 };
 
@@ -41,14 +41,14 @@ const getProducts = async (req, res) => {
     const products = await productService.getAllProducts(limit, offset);
     res.json(products);
   } catch (err) {
-    console.error("Error al obtener productos:", err.message);
+    console.error("Error fetching products:", err.message);
 
-    // ✅ AGREGADO: Manejo de ValidationError para límites inválidos
+    // ValidationError handling for invalid pagination limits
     if (err instanceof ValidationError) {
       return res.status(400).json({ error: err.message });
     }
 
-    res.status(500).json({ error: "Error al obtener los productos" });
+    res.status(500).json({ error: "Error interno del servidor" });
   }
 };
 
@@ -57,7 +57,7 @@ const getProductsByFilter = async (req, res) => {
     const products = await productService.searchProducts(req.query);
     res.json(products);
   } catch (err) {
-    console.error("Error al obtener productos con filtros:", err.message);
+    console.error("Error fetching products by filter:", err.message);
 
     if (err instanceof ValidationError) {
       return res.status(400).json({ error: err.message });
@@ -67,9 +67,7 @@ const getProductsByFilter = async (req, res) => {
       return res.status(404).json({ error: err.message });
     }
 
-    res
-      .status(500)
-      .json({ error: "Error al obtener los productos con filtros" });
+    res.status(500).json({ error: "Error interno del servidor" });
   }
 };
 
@@ -78,7 +76,7 @@ const getProductById = async (req, res) => {
     const product = await productService.getProductById(req.params.id);
     res.json(product);
   } catch (err) {
-    console.error("Error al obtener el producto:", err.message);
+    console.error("Error fetching product by ID:", err.message);
 
     if (err instanceof ValidationError) {
       return res.status(400).json({ error: err.message });
@@ -88,7 +86,7 @@ const getProductById = async (req, res) => {
       return res.status(404).json({ error: err.message });
     }
 
-    res.status(500).json({ error: "Error al obtener el producto" });
+    res.status(500).json({ error: "Error interno del servidor" });
   }
 };
 
@@ -104,7 +102,7 @@ const updateProduct = async (req, res) => {
       product,
     });
   } catch (err) {
-    console.error("Error al actualizar producto:", err.message);
+    console.error("Error updating product:", err.message);
 
     if (err instanceof ValidationError) {
       return res.status(400).json({ error: err.message });
@@ -118,7 +116,7 @@ const updateProduct = async (req, res) => {
       return res.status(409).json({ error: err.message });
     }
 
-    res.status(500).json({ error: "Error al actualizar el producto" });
+    res.status(500).json({ error: "Error interno del servidor" });
   }
 };
 
@@ -133,7 +131,7 @@ const updateProductPartial = async (req, res) => {
       product,
     });
   } catch (err) {
-    console.error("Error al actualizar producto parcialmente:", err.message);
+    console.error("Error partially updating product:", err.message);
 
     if (err instanceof ValidationError) {
       return res.status(400).json({ error: err.message });
@@ -147,7 +145,7 @@ const updateProductPartial = async (req, res) => {
       return res.status(409).json({ error: err.message });
     }
 
-    res.status(500).json({ error: "Error al actualizar el producto" });
+    res.status(500).json({ error: "Error interno del servidor" });
   }
 };
 
@@ -163,7 +161,7 @@ const deleteProduct = async (req, res) => {
       product,
     });
   } catch (err) {
-    console.error("Error al eliminar producto:", err.message);
+    console.error("Error deleting product:", err.message);
 
     if (err instanceof ValidationError) {
       return res.status(400).json({ error: err.message });
@@ -173,7 +171,7 @@ const deleteProduct = async (req, res) => {
       return res.status(404).json({ error: err.message });
     }
 
-    res.status(500).json({ error: "Error al eliminar el producto" });
+    res.status(500).json({ error: "Error interno del servidor" });
   }
 };
 
@@ -185,7 +183,7 @@ const deactivateProduct = async (req, res) => {
       product,
     });
   } catch (err) {
-    console.error("Error al desactivar producto:", err.message);
+    console.error("Error deactivating product:", err.message);
 
     if (err instanceof ValidationError) {
       return res.status(400).json({ error: err.message });
@@ -195,7 +193,7 @@ const deactivateProduct = async (req, res) => {
       return res.status(404).json({ error: err.message });
     }
 
-    res.status(500).json({ error: "Error al desactivar el producto" });
+    res.status(500).json({ error: "Error interno del servidor" });
   }
 };
 

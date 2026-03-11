@@ -1,7 +1,7 @@
 const customerRepository = require('../repositories/customerRepository');
 const {ValidationError, NotFoundError, DuplicateError} = require('../errors/customErrors');
 
-// Clase del servicio
+// Service class
 class CustomerService {
     validateCustomerData(name, email, phone, isPartial = false){
         const errors = [];
@@ -65,9 +65,9 @@ class CustomerService {
 
     async addCustomer(customerData) {
         const { name, email, phone } = customerData;
-        // Validar datos
+        // Validate data
         this.validateCustomerData(name, email, phone);
-        // Normalizar datos
+        // Normalize data
         const normalizedData = this.normalizeCustomerData(name, email, phone);
         try{
             return await customerRepository.create(normalizedData);
@@ -108,9 +108,9 @@ class CustomerService {
         const { name, email, phone } = customerData;
         this.validateId(id);
         
-        // Validar datos
+        // Validate data
         this.validateCustomerData(name, email, phone);
-        // Normalizar datos
+        // Normalize data
         const normalizedData = this.normalizeCustomerData(name, email, phone);
         try{
             const updatedCustomer = await customerRepository.update(id, normalizedData);
@@ -135,9 +135,9 @@ class CustomerService {
         if (name === undefined && email === undefined && phone === undefined) {
             throw new ValidationError('Debe proporcionar al menos un campo para actualizar (name, email o phone)');
         }
-        // Validar datos
+        // Validate data
         this.validateCustomerData(name, email, phone, true);
-        // Normalizar datos
+        // Normalize data
         const normalizedData = {};
         if (name !== undefined) normalizedData.name = name.trim();
         if (phone !== undefined) normalizedData.phone = phone.trim();

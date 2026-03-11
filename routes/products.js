@@ -2,21 +2,21 @@ const express = require('express');
 const router = express.Router();
 const productsController = require('../controllers/productsController');
 
-// Crear un producto
+// Create a product
 router.post('/', productsController.addProduct);
-// Listar productos
+// List products
 router.get('/', productsController.getProducts);
-// Listar productos por filtro
+// List products by filter
 router.get('/filter', productsController.getProductsByFilter);
-// Obtener un producto por ID
+// Get a product by ID
 router.get('/:id', productsController.getProductById);
-// Desactivar un producto (soft delete)
+// Deactivate a product (soft delete)
 router.patch('/:id/deactivate', productsController.deactivateProduct);
-// Eliminar un producto
+// Delete a product
 router.delete('/:id', productsController.deleteProduct);
-// Actualizar un producto
+// Update a product
 router.put('/:id', productsController.updateProduct);
-// Actualizar un producto parcialmente
+// Partially update a product
 router.patch('/:id', productsController.updateProductPartial);
 
 

@@ -2,9 +2,8 @@ const {ValidationError, NotFoundError, DuplicateError} = require('../errors/cust
 const productsRepository = require('../repositories/productsRepository');
 
 class ProductService{
-    validateProductData(name, description, price,is_active, isPartial = false){
+    validateName(name, isPartial) {
         const errors = [];
-
         if (!isPartial || name !== undefined) {
             if (!name || typeof name !== 'string') {
                 errors.push('El nombre es requerido y debe ser texto');
@@ -14,7 +13,11 @@ class ProductService{
                 errors.push('El nombre no puede exceder 100 caracteres');
             }
         }
+        return errors;
+    }
 
+    validateDescription(description) {
+        const errors = [];
         if (description !== undefined && description !== null && description !== '') {
             if (typeof description !== 'string') {
                 errors.push('La descripción debe ser texto');
@@ -24,13 +27,16 @@ class ProductService{
                 errors.push('La descripción es demasiado larga (máximo 5000 caracteres)');
             }
         }
+        return errors;
+    }
 
+    validatePrice(price, isPartial) {
+        const errors = [];
         if (!isPartial || price !== undefined) {
             if (price === undefined || price === null || price === '') {
                 errors.push('El precio es requerido');
             } else {
                 const numPrice = parseFloat(price);
-
                 if (isNaN(numPrice)) {
                     errors.push('El precio debe ser un número válido');
                 } else if (!isFinite(numPrice)) {
@@ -40,7 +46,7 @@ class ProductService{
                 } else if (numPrice > 99999999.99) {
                     errors.push('El precio excede el máximo permitido (99,999,999.99)');
                 } else {
-                    // Verificar dígitos enteros (máximo 8)
+                    // Verify integer digits (maximum 8)
                     const integerPart = Math.floor(numPrice);
                     if (integerPart.toString().length > 8) {
                         errors.push('El precio tiene demasiados dígitos enteros (máximo 8)');
@@ -48,15 +54,29 @@ class ProductService{
                 }
             }
         }
+        return errors;
+    }
 
+    validateIsActive(is_active) {
+        const errors = [];
         if (is_active !== undefined) {
             const validBooleanValues = [true, false, 'true', 'false', '1', '0', 1, 0];
-            if (!validBooleanValues.includes(is_active) && 
-                is_active !== null && 
+            if (!validBooleanValues.includes(is_active) &&
+                is_active !== null &&
                 is_active !== '') {
                 errors.push('is_active debe ser true o false');
             }
         }
+        return errors;
+    }
+
+    validateProductData(name, description, price, is_active, isPartial = false){
+        const errors = [
+            ...this.validateName(name, isPartial),
+            ...this.validateDescription(description),
+            ...this.validatePrice(price, isPartial),
+            ...this.validateIsActive(is_active)
+        ];
 
         if (errors.length > 0) {
             throw new ValidationError(errors.join(', '));
@@ -73,7 +93,7 @@ class ProductService{
         const errors = [];
         const { name, min_price, max_price, is_active } = filters;
 
-        // Validar nombre si se proporciona
+        // Validate name if provided
         if (name !== undefined && name !== null && name !== '') {
             if (typeof name !== 'string') {
                 errors.push('El nombre debe ser texto');
@@ -82,7 +102,7 @@ class ProductService{
             }
         }
 
-        // Validar min_price
+        // Validate min_price
         if (min_price !== undefined && min_price !== null && min_price !== '') {
             const numMinPrice = parseFloat(min_price);
             if (isNaN(numMinPrice)) {
@@ -92,7 +112,7 @@ class ProductService{
             }
         }
 
-        // Validar max_price
+        // Validate max_price
         if (max_price !== undefined && max_price !== null && max_price !== '') {
             const numMaxPrice = parseFloat(max_price);
             if (isNaN(numMaxPrice)) {
@@ -102,8 +122,8 @@ class ProductService{
             }
         }
 
-        // Validar rango de precios
-        if (min_price !== undefined && max_price !== undefined && 
+        // Validate price range
+        if (min_price !== undefined && max_price !== undefined &&
             min_price !== null && max_price !== null) {
             const numMin = parseFloat(min_price);
             const numMax = parseFloat(max_price);
@@ -112,7 +132,7 @@ class ProductService{
             }
         }
 
-        // Validar is_active
+        // Validate is_active
         if (is_active !== undefined && is_active !== null && is_active !== '') {
             const validBooleanValues = [true, false, 'true', 'false', '1', '0', 1, 0];
             if (!validBooleanValues.includes(is_active)) {
@@ -143,18 +163,12 @@ class ProductService{
             normalized.price = Math.round(numPrice * 100) / 100;
         }
         if ( is_active !== undefined) {
-            if (is_active === undefined || 
-                is_active === null || 
-                is_active === '') {
-                normalized.is_active = false;
-            } else if (typeof is_active === 'boolean') {
+            if (typeof is_active === 'boolean') {
                 normalized.is_active = is_active;
             } else if (is_active === 'true' || is_active === '1' || is_active === 1) {
                 normalized.is_active = true;
-            } else if (is_active === 'false' || is_active === '0' || is_active === 0) {
-                normalized.is_active = false;
             } else {
-                normalized.is_active = false; // Default si no se puede convertir
+                normalized.is_active = false;
             }
         }
 
@@ -163,19 +177,19 @@ class ProductService{
 
     normalizeFilters(filters) {
         const normalized = {};
-        
+
         if (filters.name !== undefined && filters.name !== null && filters.name !== '') {
             normalized.name = filters.name.trim();
         }
-        
+
         if (filters.min_price !== undefined && filters.min_price !== null && filters.min_price !== '') {
             normalized.min_price = parseFloat(filters.min_price);
         }
-        
+
         if (filters.max_price !== undefined && filters.max_price !== null && filters.max_price !== '') {
             normalized.max_price = parseFloat(filters.max_price);
         }
-        
+
         if (filters.is_active !== undefined && filters.is_active !== null && filters.is_active !== '') {
             const value = filters.is_active;
             if (value === 'true' || value === '1' || value === 1 || value === true) {
@@ -184,7 +198,7 @@ class ProductService{
                 normalized.is_active = false;
             }
         }
-        
+
         return normalized;
     };
 
@@ -196,7 +210,7 @@ class ProductService{
         if (existingProduct) {
             throw new DuplicateError(`Ya existe un producto con el nombre "${normalizedData.name}"`);
         }
-        
+
         return await productsRepository.create(normalizedData);
     };
 
@@ -219,7 +233,7 @@ class ProductService{
         if (!name || typeof name !== 'string' || name.trim().length < 2) {
             throw new ValidationError('El nombre debe tener mínimo 2 caracteres');
         }
-        
+
         const product = await productsRepository.findByName(name.trim());
         if (!product) {
             throw new NotFoundError(`No se encontró un producto con el nombre "${name}"`);
@@ -230,11 +244,11 @@ class ProductService{
     async searchProducts(filters) {
         this.validateFilters(filters);
         const normalizedFilters = this.normalizeFilters(filters);
-        
+
         if (Object.keys(normalizedFilters).length === 0) {
             throw new ValidationError('Debe proporcionar al menos un filtro de búsqueda');
         }
-        
+
         return await productsRepository.findByFilters(normalizedFilters);
     };
 
@@ -276,14 +290,14 @@ class ProductService{
 
     async updateProductPartial(id, productData) {
         const { name, description, price, is_active } = productData;
-        
+
         this.validateId(id);
-        
-        if (name === undefined && description === undefined && 
+
+        if (name === undefined && description === undefined &&
             price === undefined && is_active === undefined) {
             throw new ValidationError('Debe proporcionar al menos un campo para actualizar');
         }
-        
+
         this.validateProductData(name, description, price, is_active, true);
         const normalizedData = this.normalizeProductData(name, description, price, is_active);
 

@@ -1,5 +1,31 @@
 const db = require("../db");
 
+const BASE_ASSIGNMENT_QUERY = `
+  SELECT
+    ao.id AS assignment_id,
+    ao.assigned_at,
+    c.id AS courier_id,
+    c.name AS courier_name,
+    c.phone AS courier_phone,
+    c.license_plate AS courier_license_plate,
+    c.vehicle AS courier_vehicle,
+    o.id AS order_id,
+    o.total,
+    o.status_id,
+    os.display_name AS status,
+    pm.display_name AS payment_method,
+    cust.name AS customer_name,
+    cust.phone AS customer_phone,
+    addr.address_text AS delivery_address
+  FROM YuNowDataBase.assignment_order ao
+  INNER JOIN YuNowDataBase.couriers c ON ao.courier_id = c.id
+  INNER JOIN YuNowDataBase.orders o ON ao.order_id = o.id
+  LEFT JOIN YuNowDataBase.order_statuses os ON o.status_id = os.id
+  LEFT JOIN YuNowDataBase.payment_methods pm ON o.payment_method_id = pm.id
+  LEFT JOIN YuNowDataBase.customers cust ON o.customer_id = cust.id
+  LEFT JOIN YuNowDataBase.addresses addr ON o.address_id = addr.id
+`;
+
 class AssignOrdersRepository {
   constructor() {
     this.tableName = "YuNowDataBase.assignment_order";
@@ -8,11 +34,11 @@ class AssignOrdersRepository {
   }
 
   /**
-   * Crear una nueva asignación de orden a un courier
-   * @param {Object} assignData - Datos de la asignación
-   * @param {number} assignData.order_id - ID de la orden
-   * @param {number} assignData.courier_id - ID del courier
-   * @returns {Object} Asignación creada
+   * Creates a new order-to-courier assignment
+   * @param {Object} assignData - Assignment data
+   * @param {number} assignData.order_id - Order ID
+   * @param {number} assignData.courier_id - Courier ID
+   * @returns {Object} Created assignment
    */
   async create(assignData) {
     const { order_id, courier_id } = assignData;
@@ -26,118 +52,41 @@ class AssignOrdersRepository {
   }
 
   /**
-   * Obtener todas las asignaciones con información completa
-   * @returns {Array} Lista de asignaciones con datos de courier y orden
+   * Gets all assignments with full details
+   * @returns {Array} List of assignments with courier and order data
    */
   async getAll() {
-    const query = `
-      SELECT
-        ao.id AS assignment_id,
-        ao.assigned_at,
-        c.id AS courier_id,
-        c.name AS courier_name,
-        c.phone AS courier_phone,
-        c.license_plate AS courier_license_plate,
-        c.vehicle AS courier_vehicle,
-        o.id AS order_id,
-        o.total,
-        o.status_id,
-        os.display_name AS status,
-        pm.display_name AS payment_method,
-        cust.name AS customer_name,
-        cust.phone AS customer_phone,
-        addr.address_text AS delivery_address
-      FROM ${this.tableName} ao
-      INNER JOIN ${this.couriersTable} c ON ao.courier_id = c.id
-      INNER JOIN ${this.ordersTable} o ON ao.order_id = o.id
-      LEFT JOIN YuNowDataBase.order_statuses os ON o.status_id = os.id
-      LEFT JOIN YuNowDataBase.payment_methods pm ON o.payment_method_id = pm.id
-      LEFT JOIN YuNowDataBase.customers cust ON o.customer_id = cust.id
-      LEFT JOIN YuNowDataBase.addresses addr ON o.address_id = addr.id
-      ORDER BY ao.assigned_at DESC
-    `;
+    const query = `${BASE_ASSIGNMENT_QUERY} ORDER BY ao.assigned_at DESC`;
     const result = await db.query(query);
     return result.rows;
   }
 
   /**
-   * Obtener asignaciones por ID de courier
-   * @param {number} courier_id - ID del courier
-   * @returns {Array} Lista de asignaciones del courier
+   * Gets assignments by courier ID
+   * @param {number} courier_id - Courier ID
+   * @returns {Array} List of courier assignments
    */
   async getByCourierId(courier_id) {
-    const query = `
-      SELECT
-        ao.id AS assignment_id,
-        ao.assigned_at,
-        c.id AS courier_id,
-        c.name AS courier_name,
-        c.phone AS courier_phone,
-        c.license_plate AS courier_license_plate,
-        c.vehicle AS courier_vehicle,
-        o.id AS order_id,
-        o.total,
-        o.status_id,
-        os.display_name AS status,
-        pm.display_name AS payment_method,
-        cust.name AS customer_name,
-        cust.phone AS customer_phone,
-        addr.address_text AS delivery_address
-      FROM ${this.tableName} ao
-      INNER JOIN ${this.couriersTable} c ON ao.courier_id = c.id
-      INNER JOIN ${this.ordersTable} o ON ao.order_id = o.id
-      LEFT JOIN YuNowDataBase.order_statuses os ON o.status_id = os.id
-      LEFT JOIN YuNowDataBase.payment_methods pm ON o.payment_method_id = pm.id
-      LEFT JOIN YuNowDataBase.customers cust ON o.customer_id = cust.id
-      LEFT JOIN YuNowDataBase.addresses addr ON o.address_id = addr.id
-      WHERE ao.courier_id = $1
-      ORDER BY ao.assigned_at DESC
-    `;
+    const query = `${BASE_ASSIGNMENT_QUERY} WHERE ao.courier_id = $1 ORDER BY ao.assigned_at DESC`;
     const result = await db.query(query, [courier_id]);
     return result.rows;
   }
 
   /**
-   * Obtener asignación por ID de orden
-   * @param {number} order_id - ID de la orden
-   * @returns {Object|null} Asignación encontrada o null
+   * Gets assignment by order ID
+   * @param {number} order_id - Order ID
+   * @returns {Object|null} Found assignment or null
    */
   async getByOrderId(order_id) {
-    const query = `
-      SELECT
-        ao.id AS assignment_id,
-        ao.assigned_at,
-        c.id AS courier_id,
-        c.name AS courier_name,
-        c.phone AS courier_phone,
-        c.license_plate AS courier_license_plate,
-        c.vehicle AS courier_vehicle,
-        o.id AS order_id,
-        o.total,
-        o.status_id,
-        os.display_name AS status,
-        pm.display_name AS payment_method,
-        cust.name AS customer_name,
-        cust.phone AS customer_phone,
-        addr.address_text AS delivery_address
-      FROM ${this.tableName} ao
-      INNER JOIN ${this.couriersTable} c ON ao.courier_id = c.id
-      INNER JOIN ${this.ordersTable} o ON ao.order_id = o.id
-      LEFT JOIN YuNowDataBase.order_statuses os ON o.status_id = os.id
-      LEFT JOIN YuNowDataBase.payment_methods pm ON o.payment_method_id = pm.id
-      LEFT JOIN YuNowDataBase.customers cust ON o.customer_id = cust.id
-      LEFT JOIN YuNowDataBase.addresses addr ON o.address_id = addr.id
-      WHERE ao.order_id = $1
-      ORDER BY ao.assigned_at DESC
-    `;
+    const query = `${BASE_ASSIGNMENT_QUERY} WHERE ao.order_id = $1 ORDER BY ao.assigned_at DESC`;
     const result = await db.query(query, [order_id]);
     return result.rows[0] || null;
   }
 
   /**
-   * Verificar si una orden ya está asignada
-   * @param {number} order_id - ID de la orden
-   * @returns {Object|null} Asignación existente o null
+   * Checks if an order is already assigned
+   * @param {number} order_id - Order ID
+   * @returns {Object|null} Existing assignment or null
    */
   async checkExistingAssignment(order_id) {
     const query = `
@@ -149,9 +98,9 @@ class AssignOrdersRepository {
   }
 
   /**
-   * Verificar si existe una orden
-   * @param {number} order_id - ID de la orden
-   * @returns {Object|null} Orden encontrada o null
+   * Checks if an order exists
+   * @param {number} order_id - Order ID
+   * @returns {Object|null} Found order or null
    */
   async checkOrderExists(order_id) {
     const query = `SELECT * FROM ${this.ordersTable} WHERE id = $1`;
@@ -160,9 +109,9 @@ class AssignOrdersRepository {
   }
 
   /**
-   * Verificar si existe un courier
-   * @param {number} courier_id - ID del courier
-   * @returns {Object|null} Courier encontrado o null
+   * Checks if a courier exists
+   * @param {number} courier_id - Courier ID
+   * @returns {Object|null} Found courier or null
    */
   async checkCourierExists(courier_id) {
     const query = `SELECT * FROM ${this.couriersTable} WHERE id = $1`;
@@ -171,10 +120,10 @@ class AssignOrdersRepository {
   }
 
   /**
-   * Actualizar el courier asignado a una orden
-   * @param {number} order_id - ID de la orden
-   * @param {number} courier_id - Nuevo ID del courier
-   * @returns {Object|null} Asignación actualizada o null
+   * Updates the courier assigned to an order
+   * @param {number} order_id - Order ID
+   * @param {number} courier_id - New courier ID
+   * @returns {Object|null} Updated assignment or null
    */
   async updateCourierByOrderId(order_id, courier_id) {
     const query = `
@@ -188,9 +137,9 @@ class AssignOrdersRepository {
   }
 
   /**
-   * Eliminar asignación por ID de orden
-   * @param {number} order_id - ID de la orden
-   * @returns {Object|null} Asignación eliminada o null
+   * Deletes assignment by order ID
+   * @param {number} order_id - Order ID
+   * @returns {Object|null} Deleted assignment or null
    */
   async deleteByOrderId(order_id) {
     const query = `
@@ -203,9 +152,9 @@ class AssignOrdersRepository {
   }
 
   /**
-   * Contar asignaciones activas de un courier
-   * @param {number} courier_id - ID del courier
-   * @returns {number} Cantidad de asignaciones activas
+   * Counts active assignments for a courier
+   * @param {number} courier_id - Courier ID
+   * @returns {number} Number of active assignments
    */
   async countActiveByCourier(courier_id) {
     const query = `

@@ -28,7 +28,10 @@ const poolConfig = {
 
 // SSL only in production
 if (process.env.NODE_ENV === 'production') {
-  poolConfig.ssl = { rejectUnauthorized: false };
+  poolConfig.ssl = {
+    rejectUnauthorized: true,
+    ca: process.env.DB_SSL_CA || undefined
+  };
 }
 
 // ============================================

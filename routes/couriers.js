@@ -2,22 +2,22 @@ const express = require("express");
 const router = express.Router();
 const courierController = require("../controllers/couriersController");
 
-// Listar mensajeros por filtro
+// List couriers by filter
 router.get("/filter", courierController.getCouriersByFilter);
-// Listar mensajeros disponibles
+// List available couriers
 router.get("/available", courierController.getCouriersAvailable);
-// Crear un mensajero
+// Create a courier
 router.post("/", courierController.addCourier);
-// Listar todos los mensajeros (con paginación opcional)
+// List all couriers (with optional pagination)
 router.get("/", courierController.getCouriers);
 
-// Obtener un mensajero por ID
+// Get a courier by ID
 router.get("/:id", courierController.getCourierById);
-// Actualizar un mensajero completamente
+// Fully update a courier
 router.put("/:id", courierController.updateCourier);
-// Actualizar un mensajero parcialmente
+// Partially update a courier
 router.patch("/:id", courierController.updateCourierPartial);
-// Eliminar un mensajero
+// Delete a courier
 router.delete("/:id", courierController.deleteCourier);
 
 module.exports = router;

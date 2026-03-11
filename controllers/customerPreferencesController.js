@@ -12,7 +12,7 @@ const createCustomerPreference = async (req, res) => {
     if (err instanceof NotFoundError) {
       return res.status(404).json({ error: err.message });
     }
-    console.error("Error creando preferencia de cliente:", err.message);
+    console.error("Error creating customer preference:", err.message);
     res.status(500).json({ error: "Error interno del servidor" });
   }
 };
@@ -34,7 +34,7 @@ const getCustomerPreferences = async (req, res) => {
     if (err instanceof NotFoundError) {
       return res.status(404).json({ error: err.message });
     }
-    console.error("Error obteniendo preferencias de cliente:", err.message);
+    console.error("Error fetching customer preferences:", err.message);
     res.status(500).json({ error: "Error interno del servidor" });
   }
 };
@@ -51,7 +51,7 @@ const getCustomerSpecificPreference = async (req, res) => {
     if (err instanceof NotFoundError) {
       return res.status(404).json({ error: err.message });
     }
-    console.error("Error obteniendo preferencia específica de cliente:", err.message);
+    console.error("Error fetching specific customer preference:", err.message);
     res.status(500).json({ error: "Error interno del servidor" });
   }
 };
@@ -69,7 +69,7 @@ const updateCustomerPreference = async (req, res) => {
     if (err instanceof NotFoundError) {
       return res.status(404).json({ error: err.message });
     }
-    console.error("Error actualizando preferencia de cliente:", err.message);
+    console.error("Error updating customer preference:", err.message);
     res.status(500).json({ error: "Error interno del servidor" });
   }
 };
@@ -86,7 +86,7 @@ const deleteCustomerPreference = async (req, res) => {
     if (err instanceof NotFoundError) {
       return res.status(404).json({ error: err.message });
     }
-    console.error("Error eliminando preferencia de cliente:", err.message);
+    console.error("Error deleting customer preference:", err.message);
     res.status(500).json({ error: "Error interno del servidor" });
   }
 };
@@ -103,7 +103,7 @@ const deleteAllCustomerPreferences = async (req, res) => {
     if (err instanceof NotFoundError) {
       return res.status(404).json({ error: err.message });
     }
-    console.error("Error eliminando todas las preferencias de cliente:", err.message);
+    console.error("Error deleting all customer preferences:", err.message);
     res.status(500).json({ error: "Error interno del servidor" });
   }
 };

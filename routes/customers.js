@@ -2,25 +2,25 @@ const express = require('express');
 const router = express.Router();
 const customerController = require('../controllers/customerController');
 
-// Crear un cliente
+// Create a customer
 router.post('/', customerController.addCustomer);
 
-// Listar clientes (opcional)
+// List customers
 router.get('/', customerController.getCustomers);
 
-// Listar cliente por telefono
+// Get customer by phone
 router.get('/phone/:phone', customerController.getCustomerByPhone);
 
-// Listar cliente por ID
+// Get customer by ID
 router.get('/:id', customerController.getCustomerById);
 
-// Actualizar un cliente
+// Update a customer
 router.put('/:id', customerController.updateCustomer);
 
-// Actualizar un cliente parcialmente
+// Partially update a customer
 router.patch('/:id', customerController.updateCustomerPartial);
 
-// Eliminar un cliente
+// Delete a customer
 router.delete('/:id', customerController.deleteCustomer);
 
 module.exports = router;

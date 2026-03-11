@@ -2,22 +2,20 @@ const express = require('express');
 const router = express.Router();
 const addressesController = require('../controllers/addressesController');
 
-// Crear una dirección
+// Create an address
 router.post('/', addressesController.addAddress);
-// Listar todas las direcciones
+// List all addresses
 router.get('/', addressesController.getAddresses);
-// Obtener dirección primaria por ID de cliente
+// Get primary address by customer ID
 router.get('/primary/:customer_id', addressesController.getPrimaryAddressByCustomerId);
-// Obtener direcciones por ID de cliente
+// Get addresses by customer ID
 router.get('/customer/:customer_id', addressesController.getAddressesByCustomerId);
-// Obtener direcciones por ID
+// Get address by ID
 router.get('/:id', addressesController.getAddressById);
-//actualizar una dirección parcialmente
+// Partially update an address
 router.patch('/:id', addressesController.updateAddressPartial);
-// Actualizar una dirección
+// Update an address
 router.put('/:id', addressesController.updateAddress);
-// Eliminar una dirección
+// Delete an address
 router.delete('/:id', addressesController.deleteAddress);
 module.exports = router;
-
-

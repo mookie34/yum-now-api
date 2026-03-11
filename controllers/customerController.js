@@ -9,17 +9,17 @@ const addCustomer = async (req, res) => {
             customer
         });
     } catch (err) {
-        console.error('Error al crear cliente:', err.message);
-        
+        console.error('Error creating customer:', err.message);
+
         if (err instanceof ValidationError) {
             return res.status(400).json({ error: err.message });
         }
-        
+
         if (err instanceof DuplicateError) {
             return res.status(409).json({ error: err.message });
         }
-        
-        res.status(500).json({ error: 'Error al crear el cliente' });
+
+        res.status(500).json({ error: 'Error interno del servidor' });
     }
 };
 
@@ -28,8 +28,8 @@ const getCustomers = async (req, res) => {
         const customers = await customerService.getAllCustomers(req.query.limit);
         res.json(customers);
     } catch (err) {
-        console.error('Error al obtener clientes: ', err.message);
-        res.status(500).json({ error: 'Error al obtener los clientes' });
+        console.error('Error fetching customers:', err.message);
+        res.status(500).json({ error: 'Error interno del servidor' });
     }
 };
 
@@ -38,17 +38,17 @@ const getCustomerByPhone = async (req, res) => {
         const customer = await customerService.getCustomerByPhone(req.params.phone);
         res.json(customer);
     } catch (err) {
-        console.error('Error al buscar cliente: ', err.message);
-        
+        console.error('Error fetching customer by phone:', err.message);
+
         if (err instanceof ValidationError) {
             return res.status(400).json({ error: err.message });
         }
-        
+
         if (err instanceof NotFoundError) {
             return res.status(404).json({ error: err.message });
         }
-        
-        res.status(500).json({ error: 'Error al buscar el cliente' });
+
+        res.status(500).json({ error: 'Error interno del servidor' });
     }
 };
 
@@ -57,13 +57,13 @@ const getCustomerById = async (req, res) => {
         const customer = await customerService.getCustomerById(req.params.id);
         res.json(customer);
     } catch (err) {
-        console.error('Error al buscar cliente:', err.message);
-        
+        console.error('Error fetching customer by ID:', err.message);
+
         if (err instanceof NotFoundError) {
             return res.status(404).json({ error: err.message });
         }
-        
-        res.status(500).json({ error: 'Error al buscar el cliente' });
+
+        res.status(500).json({ error: 'Error interno del servidor' });
     }
 };
 
@@ -75,21 +75,21 @@ const updateCustomer = async (req, res) => {
             customer
         });
     } catch (err) {
-        console.error('Error al actualizar cliente:', err.message);
-        
+        console.error('Error updating customer:', err.message);
+
         if (err instanceof ValidationError) {
             return res.status(400).json({ error: err.message });
         }
-        
+
         if (err instanceof NotFoundError) {
             return res.status(404).json({ error: err.message });
         }
-        
+
         if (err instanceof DuplicateError) {
             return res.status(409).json({ error: err.message });
         }
-        
-        res.status(500).json({ error: 'Error al actualizar el cliente' });
+
+        res.status(500).json({ error: 'Error interno del servidor' });
     }
 };
 
@@ -101,21 +101,21 @@ const updateCustomerPartial = async (req, res) => {
             customer
         });
     } catch (err) {
-        console.error('Error al actualizar cliente:', err.message);
-        
+        console.error('Error partially updating customer:', err.message);
+
         if (err instanceof ValidationError) {
             return res.status(400).json({ error: err.message });
         }
-        
+
         if (err instanceof NotFoundError) {
             return res.status(404).json({ error: err.message });
         }
-        
+
         if (err instanceof DuplicateError) {
             return res.status(409).json({ error: err.message });
         }
-        
-        res.status(500).json({ error: 'Error al actualizar el cliente' });
+
+        res.status(500).json({ error: 'Error interno del servidor' });
     }
 };
 
@@ -127,17 +127,17 @@ const deleteCustomer = async (req, res) => {
             customer
         });
     } catch (err) {
-        console.error('Error al eliminar cliente:', err.message);
-        
+        console.error('Error deleting customer:', err.message);
+
         if (err instanceof ValidationError) {
             return res.status(400).json({ error: err.message });
         }
-        
+
         if (err instanceof NotFoundError) {
             return res.status(404).json({ error: err.message });
         }
-        
-        res.status(500).json({ error: 'Error al eliminar el cliente' });
+
+        res.status(500).json({ error: 'Error interno del servidor' });
     }
 };
 

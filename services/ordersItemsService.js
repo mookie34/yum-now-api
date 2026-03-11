@@ -9,28 +9,28 @@ class OrdersItemsService {
         const errors = [];
         const { order_id, product_id, quantity, price } = itemsOrderData;
 
-        // Validar order_id
+        // Validate order_id
         if (!isPartial || order_id !== undefined) {
             if (!order_id || isNaN(order_id) || parseInt(order_id) <= 0) {
                 errors.push("order_id inválido");
             }
         }
 
-        // Validar product_id
+        // Validate product_id
         if (!isPartial || product_id !== undefined) {
             if (!product_id || isNaN(product_id) || parseInt(product_id) <= 0) {
                 errors.push("product_id inválido");
             }
         }
 
-        // Validar quantity
+        // Validate quantity
         if (!isPartial || quantity !== undefined) {
             if (!quantity || isNaN(quantity) || parseInt(quantity) <= 0) {
                 errors.push("quantity inválido");
             }
         }
 
-        // Validar price
+        // Validate price
         if (!isPartial || price !== undefined) {
             if (price === undefined || isNaN(price) || parseFloat(price) < 0) {
                 errors.push("price inválido");

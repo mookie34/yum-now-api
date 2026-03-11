@@ -12,10 +12,8 @@ const addCourier = async (req, res) => {
     if (err instanceof ValidationError) {
       return res.status(400).json({ error: err.message });
     }
-    console.error(err.message);
-    res
-      .status(500)
-      .json({ error: "Error al guardar el domiciliario en la base de datos" });
+    console.error("Error creating courier:", err.message);
+    res.status(500).json({ error: "Error interno del servidor" });
   }
 };
 
@@ -28,8 +26,8 @@ const getCouriers = async (req, res) => {
     if (err instanceof ValidationError) {
       return res.status(400).json({ error: err.message });
     }
-    console.error(err.message);
-    res.status(500).json({ error: "Error al obtener los Domiciliarios" });
+    console.error("Error fetching couriers:", err.message);
+    res.status(500).json({ error: "Error interno del servidor" });
   }
 };
 
@@ -41,10 +39,8 @@ const getCouriersAvailable = async (req, res) => {
     if (err instanceof NotFoundError) {
       return res.status(404).json({ error: err.message });
     }
-    console.error(err.message);
-    res
-      .status(500)
-      .json({ error: "Error al obtener los Domiciliarios disponibles" });
+    console.error("Error fetching available couriers:", err.message);
+    res.status(500).json({ error: "Error interno del servidor" });
   }
 };
 
@@ -59,10 +55,8 @@ const getCouriersByFilter = async (req, res) => {
     if (err instanceof NotFoundError) {
       return res.status(404).json({ error: err.message });
     }
-    console.error(err.message);
-    res
-      .status(500)
-      .json({ error: "Error al obtener los Domiciliarios por filtro" });
+    console.error("Error fetching couriers by filter:", err.message);
+    res.status(500).json({ error: "Error interno del servidor" });
   }
 };
 
@@ -78,8 +72,8 @@ const getCourierById = async (req, res) => {
     if (err instanceof NotFoundError) {
       return res.status(404).json({ error: err.message });
     }
-    console.error(err.message);
-    res.status(500).json({ error: "Error al obtener el Domiciliario" });
+    console.error("Error fetching courier by ID:", err.message);
+    res.status(500).json({ error: "Error interno del servidor" });
   }
 };
 
@@ -98,8 +92,8 @@ const deleteCourier = async (req, res) => {
     if (err instanceof NotFoundError) {
       return res.status(404).json({ error: err.message });
     }
-    console.error(err.message);
-    res.status(500).json({ error: "Error al eliminar el Domiciliario" });
+    console.error("Error deleting courier:", err.message);
+    res.status(500).json({ error: "Error interno del servidor" });
   }
 };
 
@@ -118,8 +112,8 @@ const updateCourier = async (req, res) => {
     if (err instanceof NotFoundError) {
       return res.status(404).json({ error: err.message });
     }
-    console.error(err.message);
-    res.status(500).json({ error: "Error al actualizar el Domiciliario" });
+    console.error("Error updating courier:", err.message);
+    res.status(500).json({ error: "Error interno del servidor" });
   }
 };
 
@@ -141,8 +135,8 @@ const updateCourierPartial = async (req, res) => {
     if (err instanceof NotFoundError) {
       return res.status(404).json({ error: err.message });
     }
-    console.error(err.message);
-    res.status(500).json({ error: "Error al actualizar el Domiciliario" });
+    console.error("Error partially updating courier:", err.message);
+    res.status(500).json({ error: "Error interno del servidor" });
   }
 };
 

@@ -4,77 +4,106 @@ const addressRepository = require("../repositories/addressesRepository");
 const { ValidationError, NotFoundError } = require("../errors/customErrors");
 
 class OrdersService {
-  async validateOrderData(orderData, isPartial = false, isCreate = false) {
-    const errors = [];
-    const { customer_id, address_id, payment_method_id, status_id, total } =
-      orderData;
-
-    let customer = null;
-    let address = null;
-
-    // Validate customer_id (must be a positive number and exist in DB)
-    if (!isPartial || customer_id !== undefined) {
-      if (!customer_id || isNaN(customer_id) || parseInt(customer_id) <= 0) {
-        throw new ValidationError("customer_id inválido");
-      }
-
-      customer = await customerRepository.getById(customer_id);
-      if (!customer) {
-        throw new NotFoundError("Cliente no encontrado");
-      }
+  validateCustomerId(customer_id) {
+    if (!customer_id || isNaN(customer_id) || parseInt(customer_id) <= 0) {
+      throw new ValidationError("customer_id inválido");
     }
+  }
 
-    // Validate address_id (must be a positive number and exist in DB)
-    if (!isPartial || address_id !== undefined) {
-      if (!address_id || isNaN(address_id) || parseInt(address_id) <= 0) {
-        throw new ValidationError("address_id inválido");
-      }
-
-      address = await addressRepository.getById(address_id);
-      if (!address) {
-        throw new NotFoundError("Dirección no encontrada");
-      }
+  validateAddressId(address_id) {
+    if (!address_id || isNaN(address_id) || parseInt(address_id) <= 0) {
+      throw new ValidationError("address_id inválido");
     }
+  }
 
-    if (
-      customer &&
-      address &&
-      parseInt(address.customer_id) !== parseInt(customer_id)
-    ) {
+  async resolveCustomer(customer_id) {
+    const customer = await customerRepository.getById(customer_id);
+    if (!customer) {
+      throw new NotFoundError("Cliente no encontrado");
+    }
+    return customer;
+  }
+
+  async resolveAddress(address_id) {
+    const address = await addressRepository.getById(address_id);
+    if (!address) {
+      throw new NotFoundError("Dirección no encontrada");
+    }
+    return address;
+  }
+
+  validateAddressBelongsToCustomer(address, customer_id) {
+    if (parseInt(address.customer_id) !== parseInt(customer_id)) {
       throw new ValidationError(
         "La dirección no pertenece al cliente especificado"
       );
     }
+  }
 
-    // Validate total (only on updates, not on create)
+  validateTotal(total) {
+    if (total !== undefined && (isNaN(total) || parseFloat(total) < 0)) {
+      return "El total no puede ser negativo";
+    }
+    return null;
+  }
+
+  async validatePaymentMethod(payment_method_id) {
+    if (!payment_method_id || isNaN(payment_method_id)) {
+      return "payment_method_id inválido";
+    }
+    const exists = await ordersRepository.paymentMethodExists(payment_method_id);
+    if (!exists) return "Método de pago no válido o inactivo";
+    return null;
+  }
+
+  async validateStatusId(status_id) {
+    if (!status_id || isNaN(status_id)) {
+      return "status_id inválido";
+    }
+    const exists = await ordersRepository.orderStatusExists(status_id);
+    if (!exists) return "Estado del pedido no válido";
+    return null;
+  }
+
+  async validateOrderData(orderData, isPartial = false, isCreate = false) {
+    const errors = [];
+    const { customer_id, address_id, payment_method_id, status_id, total } = orderData;
+
+    let customer = null;
+    let address = null;
+
+    // Validate customer_id (must be a positive integer that exists in DB)
+    if (!isPartial || customer_id !== undefined) {
+      this.validateCustomerId(customer_id);
+      customer = await this.resolveCustomer(customer_id);
+    }
+
+    // Validate address_id (must be a positive integer that exists in DB)
+    if (!isPartial || address_id !== undefined) {
+      this.validateAddressId(address_id);
+      address = await this.resolveAddress(address_id);
+    }
+
+    if (customer && address) {
+      this.validateAddressBelongsToCustomer(address, customer_id);
+    }
+
+    // Validate total (only on updates, not on creation)
     if (!isCreate && (!isPartial || total !== undefined)) {
-      if (total !== undefined && (isNaN(total) || parseFloat(total) < 0)) {
-        errors.push("El total no puede ser negativo");
-      }
+      const totalError = this.validateTotal(total);
+      if (totalError) errors.push(totalError);
     }
 
-    // Validate payment_method_id
+    // Validate payment method ID
     if (!isPartial || payment_method_id !== undefined) {
-      if (!payment_method_id || isNaN(payment_method_id)) {
-        errors.push("payment_method_id inválido");
-      } else {
-        const exists = await ordersRepository.paymentMethodExists(payment_method_id);
-        if (!exists) {
-          errors.push("Método de pago no válido o inactivo");
-        }
-      }
+      const pmError = await this.validatePaymentMethod(payment_method_id);
+      if (pmError) errors.push(pmError);
     }
 
-    // Validate status_id
+    // Validate status ID
     if (!isPartial || status_id !== undefined) {
-      if (!status_id || isNaN(status_id)) {
-        errors.push("status_id inválido");
-      } else {
-        const exists = await ordersRepository.orderStatusExists(status_id);
-        if (!exists) {
-          errors.push("Estado del pedido no válido");
-        }
-      }
+      const statusError = await this.validateStatusId(status_id);
+      if (statusError) errors.push(statusError);
     }
 
     if (errors.length > 0) {
@@ -104,7 +133,7 @@ class OrdersService {
   }
 
   /**
-   * Recalcula y actualiza el total de una orden desde order_items
+   * Recalculates and updates the order total from order_items
    */
   async updateTotalOrder(id) {
     this.validateId(id);
@@ -115,7 +144,7 @@ class OrdersService {
   }
 
   /**
-   * Obtiene todas las órdenes con paginación
+   * Gets all orders with pagination
    */
   async getAllOrders(limit = 100, offset = 0) {
     limit = parseInt(limit);
@@ -132,7 +161,7 @@ class OrdersService {
   }
 
   /**
-   * Obtiene una orden por ID
+   * Gets an order by ID
    */
   async getOrderById(id) {
     this.validateId(id);
@@ -142,7 +171,7 @@ class OrdersService {
   }
 
   /**
-   * Obtiene todas las órdenes de un cliente
+   * Gets all orders for a customer
    */
   async getOrdersByCustomerId(customer_id) {
     this.validateId(customer_id);
@@ -150,7 +179,7 @@ class OrdersService {
   }
 
   /**
-   * Elimina una orden por ID
+   * Deletes an order by ID
    */
   async deleteOrderById(id) {
     this.validateId(id);
@@ -188,7 +217,7 @@ class OrdersService {
   }
 
   /**
-   * Actualiza el estado de una orden
+   * Updates the status of an order
    */
   async updateStatusOrder(id, status_id) {
     this.validateId(id);
@@ -209,7 +238,7 @@ class OrdersService {
   }
 
   /**
-   * Cuenta las órdenes del día actual
+   * Counts orders for the current day
    */
   async countOrdersForDay() {
     return await ordersRepository.countForDay();

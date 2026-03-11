@@ -2,17 +2,17 @@ const express = require('express');
 const router = express.Router();
 const ordersItemsController = require('../controllers/orderItemsController');
 
-// Crear un item de orden
+// Create an order item
 router.post('/', ordersItemsController.addOrderItem);
-// Obtener todos los items de orden
+// Get all order items
 router.get('/', ordersItemsController.getAllOrderItems);
-// Obtener items de orden por ID de orden
+// Get order items by order ID
 router.get('/order/:orderId', ordersItemsController.getOrderItemByOrderId);
-// Eliminar todos items de orden por ID de orden
+// Delete all order items by order ID
 router.delete('/order/:orderId', ordersItemsController.deleteAllItemsInOrder);
-// Eliminar un item de orden por ID de orden y ID de producto
+// Delete an order item by order ID and product ID
 router.delete('/order/:orderId/product/:productId', ordersItemsController.deleteItemInOrderByIdProduct);
-// Actualizar cantidad o precio en un item de orden
+// Update quantity or price in an order item
 router.patch('/order/:orderId/product/:productId', ordersItemsController.updateQuantityOrPriceInOrderItem);
 
 module.exports = router;

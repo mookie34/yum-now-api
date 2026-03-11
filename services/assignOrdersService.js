@@ -8,10 +8,10 @@ const {
 
 class AssignOrdersService {
   /**
-   * Validar ID numérico
-   * @param {*} id - ID a validar
-   * @param {string} fieldName - Nombre del campo para mensaje de error
-   * @throws {ValidationError} Si el ID no es válido
+   * Validate numeric ID
+   * @param {*} id - ID to validate
+   * @param {string} fieldName - Field name for error message
+   * @throws {ValidationError} If the ID is not valid
    */
   validateId(id, fieldName = "ID") {
     if (!id || isNaN(id) || parseInt(id) <= 0) {
@@ -20,24 +20,24 @@ class AssignOrdersService {
   }
 
   /**
-   * Validar datos de asignación
-   * @param {Object} assignData - Datos de la asignación
-   * @param {number} assignData.order_id - ID de la orden
-   * @param {number} assignData.courier_id - ID del courier
-   * @throws {ValidationError} Si los datos no son válidos
+   * Validate assignment data
+   * @param {Object} assignData - Assignment data
+   * @param {number} assignData.order_id - Order ID
+   * @param {number} assignData.courier_id - Courier ID
+   * @throws {ValidationError} If the data is not valid
    */
   async validateAssignData(assignData) {
     const errors = [];
     const { order_id, courier_id } = assignData;
 
-    // Validar order_id
+    // Validate order_id
     if (!order_id) {
       errors.push("order_id es requerido");
     } else if (isNaN(order_id) || parseInt(order_id) <= 0) {
       errors.push("order_id debe ser un número positivo");
     }
 
-    // Validar courier_id
+    // Validate courier_id
     if (!courier_id) {
       errors.push("courier_id es requerido");
     } else if (isNaN(courier_id) || parseInt(courier_id) <= 0) {
@@ -50,26 +50,26 @@ class AssignOrdersService {
   }
 
   /**
-   * Crear una nueva asignación de orden a courier
-   * @param {Object} assignData - Datos de la asignación
-   * @returns {Object} Asignación creada
-   * @throws {ValidationError} Si los datos no son válidos
-   * @throws {NotFoundError} Si la orden o courier no existen
-   * @throws {DuplicateError} Si la orden ya está asignada
+   * Create a new order-to-courier assignment
+   * @param {Object} assignData - Assignment data
+   * @returns {Object} Created assignment
+   * @throws {ValidationError} If the data is not valid
+   * @throws {NotFoundError} If the order or courier does not exist
+   * @throws {DuplicateError} If the order is already assigned
    */
   async createAssignment(assignData) {
-    // Validar datos de entrada
+    // Validate input data
     await this.validateAssignData(assignData);
 
     const { order_id, courier_id } = assignData;
 
-    // Verificar que la orden existe
+    // Verify the order exists
     const orderExists = await assignOrdersRepository.checkOrderExists(order_id);
     if (!orderExists) {
       throw new NotFoundError("No existe la orden");
     }
 
-    // Verificar que el courier existe
+    // Verify the courier exists
     const courierExists = await assignOrdersRepository.checkCourierExists(
       courier_id
     );
@@ -77,21 +77,21 @@ class AssignOrdersService {
       throw new NotFoundError("Repartidor no encontrado");
     }
 
-    // Verificar que la orden no esté ya asignada
+    // Verify the order is not already assigned
     const existingAssignment =
       await assignOrdersRepository.checkExistingAssignment(order_id);
     if (existingAssignment) {
       throw new DuplicateError("La orden ya ha sido asignada a un repartidor");
     }
 
-    // Crear la asignación
+    // Create the assignment
     return await assignOrdersRepository.create({ order_id, courier_id });
   }
 
   /**
-   * Obtener todas las asignaciones
-   * @returns {Array} Lista de asignaciones
-   * @throws {NotFoundError} Si no hay asignaciones
+   * Get all assignments
+   * @returns {Array} List of assignments
+   * @throws {NotFoundError} If no assignments exist
    */
   async getAllAssignments() {
     const assignments = await assignOrdersRepository.getAll();
@@ -104,17 +104,17 @@ class AssignOrdersService {
   }
 
   /**
-   * Obtener asignaciones por ID de courier
-   * @param {number} courier_id - ID del courier
-   * @returns {Array} Lista de asignaciones del courier
-   * @throws {ValidationError} Si el ID no es válido
-   * @throws {NotFoundError} Si el courier no existe o no tiene asignaciones
+   * Get assignments by courier ID
+   * @param {number} courier_id - Courier ID
+   * @returns {Array} List of courier assignments
+   * @throws {ValidationError} If the ID is not valid
+   * @throws {NotFoundError} If the courier does not exist or has no assignments
    */
   async getAssignmentsByCourierId(courier_id) {
-    // Validar ID
+    // Validate ID
     this.validateId(courier_id, "ID de repartidor");
 
-    // Verificar que el courier existe
+    // Verify the courier exists
     const courierExists = await assignOrdersRepository.checkCourierExists(
       courier_id
     );
@@ -122,7 +122,7 @@ class AssignOrdersService {
       throw new NotFoundError("Repartidor no encontrado");
     }
 
-    // Obtener asignaciones
+    // Get assignments
     const assignments = await assignOrdersRepository.getByCourierId(courier_id);
 
     if (assignments.length === 0) {
@@ -133,23 +133,23 @@ class AssignOrdersService {
   }
 
   /**
-   * Obtener asignación por ID de orden
-   * @param {number} order_id - ID de la orden
-   * @returns {Object} Asignación de la orden
-   * @throws {ValidationError} Si el ID no es válido
-   * @throws {NotFoundError} Si la orden no existe o no tiene asignación
+   * Get assignment by order ID
+   * @param {number} order_id - Order ID
+   * @returns {Object} Order assignment
+   * @throws {ValidationError} If the ID is not valid
+   * @throws {NotFoundError} If the order does not exist or has no assignment
    */
   async getAssignmentByOrderId(order_id) {
-    // Validar ID
+    // Validate ID
     this.validateId(order_id, "ID de orden");
 
-    // Verificar que la orden existe
+    // Verify the order exists
     const orderExists = await assignOrdersRepository.checkOrderExists(order_id);
     if (!orderExists) {
       throw new NotFoundError("No existe la orden");
     }
 
-    // Obtener asignación
+    // Get assignment
     const assignment = await assignOrdersRepository.getByOrderId(order_id);
 
     if (!assignment) {
@@ -160,25 +160,25 @@ class AssignOrdersService {
   }
 
   /**
-   * Actualizar el courier asignado a una orden
-   * @param {number} order_id - ID de la orden
-   * @param {number} courier_id - Nuevo ID del courier
-   * @returns {Object} Asignación actualizada
-   * @throws {ValidationError} Si los IDs no son válidos
-   * @throws {NotFoundError} Si la orden, courier o asignación no existen
+   * Update the courier assigned to an order
+   * @param {number} order_id - Order ID
+   * @param {number} courier_id - New courier ID
+   * @returns {Object} Updated assignment
+   * @throws {ValidationError} If the IDs are not valid
+   * @throws {NotFoundError} If the order, courier, or assignment does not exist
    */
   async updateAssignmentCourier(order_id, courier_id) {
-    // Validar IDs
+    // Validate IDs
     this.validateId(order_id, "ID de orden");
     this.validateId(courier_id, "ID de repartidor");
 
-    // Verificar que la orden existe
+    // Verify the order exists
     const orderExists = await assignOrdersRepository.checkOrderExists(order_id);
     if (!orderExists) {
       throw new NotFoundError("No existe la orden");
     }
 
-    // Verificar que el nuevo courier existe
+    // Verify the new courier exists
     const courierExists = await assignOrdersRepository.checkCourierExists(
       courier_id
     );
@@ -186,7 +186,7 @@ class AssignOrdersService {
       throw new NotFoundError("Repartidor no encontrado");
     }
 
-    // Actualizar asignación
+    // Update assignment
     const updatedAssignment =
       await assignOrdersRepository.updateCourierByOrderId(order_id, courier_id);
 
@@ -198,23 +198,23 @@ class AssignOrdersService {
   }
 
   /**
-   * Eliminar asignación de una orden
-   * @param {number} order_id - ID de la orden
-   * @returns {Object} Asignación eliminada
-   * @throws {ValidationError} Si el ID no es válido
-   * @throws {NotFoundError} Si la orden o asignación no existen
+   * Delete an order assignment
+   * @param {number} order_id - Order ID
+   * @returns {Object} Deleted assignment
+   * @throws {ValidationError} If the ID is not valid
+   * @throws {NotFoundError} If the order or assignment does not exist
    */
   async deleteAssignment(order_id) {
-    // Validar ID
+    // Validate ID
     this.validateId(order_id, "ID de orden");
 
-    // Verificar que la orden existe
+    // Verify the order exists
     const orderExists = await assignOrdersRepository.checkOrderExists(order_id);
     if (!orderExists) {
       throw new NotFoundError("No existe la orden");
     }
 
-    // Eliminar asignación
+    // Delete assignment
     const deletedAssignment = await assignOrdersRepository.deleteByOrderId(
       order_id
     );
@@ -227,10 +227,10 @@ class AssignOrdersService {
   }
 
   /**
-   * Obtener cantidad de asignaciones activas de un courier
-   * @param {number} courier_id - ID del courier
-   * @returns {number} Cantidad de asignaciones activas
-   * @throws {ValidationError} Si el ID no es válido
+   * Get count of active assignments for a courier
+   * @param {number} courier_id - Courier ID
+   * @returns {number} Number of active assignments
+   * @throws {ValidationError} If the ID is not valid
    */
   async getActiveCourierAssignments(courier_id) {
     this.validateId(courier_id, "ID de repartidor");

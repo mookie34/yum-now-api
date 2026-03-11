@@ -22,7 +22,7 @@ const addAssignOrder = async (req, res) => {
     if (err instanceof DuplicateError) {
       return res.status(409).json({ error: err.message });
     }
-    console.error("Error asignando una orden a un repartidor:", err);
+    console.error("Error assigning order to courier:", err);
     res.status(500).json({ error: "Error interno del servidor" });
   }
 }
@@ -35,7 +35,7 @@ const getAssignOrders = async (req, res) => {
     if (err instanceof NotFoundError) {
       return res.status(404).json({ error: err.message });
     }
-    console.error("Error obteniendo las asignaciones de orden:", err);
+    console.error("Error fetching order assignments:", err);
     res.status(500).json({ error: "Error interno del servidor" });
   }
 }
@@ -55,7 +55,7 @@ const getAssignOrderByCourierId = async (req, res) => {
     if (err instanceof NotFoundError) {
       return res.status(404).json({ error: err.message });
     }
-    console.error("Error obteniendo las asignaciones de orden por ID de repartidor:", err);
+    console.error("Error fetching assignments by courier ID:", err);
     res.status(500).json({ error: "Error interno del servidor" });
   }
 }
@@ -74,7 +74,7 @@ const getAssignOrderByOrderId = async (req, res) => {
     if (err instanceof NotFoundError) {
       return res.status(404).json({ error: err.message });
     }
-    console.error("Error obteniendo las asignaciones de orden por ID de orden:", err);
+    console.error("Error fetching assignment by order ID:", err);
     res.status(500).json({ error: "Error interno del servidor" });
   }
 }
@@ -98,7 +98,7 @@ const updateAssignOrderCourier = async (req, res) => {
     if (err instanceof NotFoundError) {
       return res.status(404).json({ error: err.message });
     }
-    console.error("Error actualizando la asignación de orden:", err);
+    console.error("Error updating order assignment:", err);
     res.status(500).json({ error: "Error interno del servidor" });
   }
 }
@@ -120,7 +120,7 @@ const deleteAssignOrder = async (req, res) => {
     if (err instanceof NotFoundError) {
       return res.status(404).json({ error: err.message });
     }
-    console.error("Error eliminando la asignación de orden:", err);
+    console.error("Error deleting order assignment:", err);
     res.status(500).json({ error: "Error interno del servidor" });
   }
 }

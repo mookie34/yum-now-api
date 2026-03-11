@@ -8,10 +8,10 @@ const addAddress = async (req, res) => {
         const newAddress  = await addressesService.addAddress(req.body);
         res.status(201).json({
             message: 'Dirección creada exitosamente',
-            address: newAddress 
+            address: newAddress
         });
     }
-    catch (error) {      
+    catch (error) {
         if (error instanceof ValidationError) {
             return res.status(400).json({ error: error.message });
         } else if (error instanceof NotFoundError) {
@@ -19,7 +19,7 @@ const addAddress = async (req, res) => {
         } else if (error instanceof DuplicateError) {
             return res.status(409).json({ error: error.message });
         }
-        console.error('Error al crear la dirección:', error);
+        console.error('Error creating address:', error);
         res.status(500).json({ error: 'Error interno del servidor' });
     }
 };
@@ -33,7 +33,7 @@ const getAddresses = async (req, res) => {
         if (error instanceof ValidationError) {
             return res.status(400).json({ error: error.message });
         }
-        console.error('Error al obtener las direcciones:', error);
+        console.error('Error fetching addresses:', error);
         res.status(500).json({ error: 'Error interno del servidor' });
     }
 };
@@ -51,7 +51,7 @@ const getAddressesByCustomerId = async (req, res) => {
         if (error instanceof NotFoundError) {
             return res.status(404).json({ error: error.message });
         }
-        console.error('Error al obtener las direcciones del cliente:', error);
+        console.error('Error fetching addresses by customer:', error);
         res.status(500).json({ error: 'Error interno del servidor' });
     }
 };
@@ -69,7 +69,7 @@ const getPrimaryAddressByCustomerId = async (req, res) => {
         if (error instanceof NotFoundError) {
             return res.status(404).json({ error: error.message });
         }
-        console.error('Error al obtener la dirección primaria del cliente:', error);
+        console.error('Error fetching primary address by customer:', error);
         res.status(500).json({ error: 'Error interno del servidor' });
     }
 };
@@ -90,7 +90,7 @@ const deleteAddress = async (req, res) => {
         if (error instanceof NotFoundError) {
             return res.status(404).json({ error: error.message });
         }
-        console.error('Error al eliminar la dirección:', error);
+        console.error('Error deleting address:', error);
         res.status(500).json({ error: 'Error interno del servidor' });
     }
 };
@@ -111,7 +111,7 @@ const updateAddressPartial = async (req, res) => {
         if (error instanceof NotFoundError) {
             return res.status(404).json({ error: error.message });
         }
-        console.error('Error al actualizar la dirección:', error);
+        console.error('Error partially updating address:', error);
         res.status(500).json({ error: 'Error interno del servidor' });
     }
 };
@@ -133,7 +133,7 @@ const updateAddress = async (req, res) => {
         if (error instanceof NotFoundError) {
             return res.status(404).json({ error: error.message });
         }
-        console.error('Error al actualizar la dirección:', error);
+        console.error('Error updating address:', error);
         res.status(500).json({ error: 'Error interno del servidor' });
     }
 };
@@ -151,7 +151,7 @@ const getAddressById = async (req, res) => {
         if (error instanceof NotFoundError) {
             return res.status(404).json({ error: error.message });
         }
-        console.error('Error al obtener la dirección:', error);
+        console.error('Error fetching address by ID:', error);
         res.status(500).json({ error: 'Error interno del servidor' });
     }
 };

@@ -2,17 +2,17 @@ const express = require('express');
 const router = express.Router();
 const assignOrdersController = require('../controllers/assignOrdersController');
 
-// Crear una nueva asignación de orden
+// Create a new order assignment
 router.post('/', assignOrdersController.addAssignOrder);
-// Obtener todas las asignaciones de orden
+// Get all order assignments
 router.get('/', assignOrdersController.getAssignOrders);
-// Obtener asignaciones de orden por ID de repartidor
+// Get order assignments by courier ID
 router.get('/courier/:courier_id', assignOrdersController.getAssignOrderByCourierId);
-// Obtener asignaciones de orden por ID de orden
+// Get order assignment by order ID
 router.get('/order/:order_id', assignOrdersController.getAssignOrderByOrderId);
-// Actualizar el repartidor asignado a una orden
+// Update the courier assigned to an order
 router.put('/:order_id', assignOrdersController.updateAssignOrderCourier);
-// Eliminar una asignación de orden
+// Delete an order assignment
 router.delete('/:order_id', assignOrdersController.deleteAssignOrder);
 
 
