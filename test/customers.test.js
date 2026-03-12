@@ -3,7 +3,7 @@ jest.mock('../services/customer-service');
 const request = require('supertest');
 const app = require('../app');
 const customerService = require('../services/customer-service');
-const { ValidationError, NotFoundError, DuplicateError } = require('../errors/customErrors');
+const { ValidationError, NotFoundError, DuplicateError } = require('../errors/custom-errors');
 
 describe('POST /api/customers', () => {
     
@@ -148,7 +148,7 @@ describe('GET /api/customers', () => {
         const res = await request(app).get('/api/customers');
         
         expect(res.status).toBe(500);
-        expect(res.body.error).toBe('Error al obtener los clientes');
+        expect(res.body.error).toBe('Error interno del servidor');
     });
 });
 

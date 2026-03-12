@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const customerPreferencesController = require("../controllers/customerPreferencesController");
+const customerPreferencesController = require("../controllers/customer-preferences-controller");
 
 // Create a new customer preference
 router.post("/", customerPreferencesController.createCustomerPreference);

@@ -1,14 +1,14 @@
 // Mock del service en lugar del db
-jest.mock('../services/assignOrdersService');
+jest.mock('../services/assign-orders-service');
 
-const assignOrdersService = require('../services/assignOrdersService');
+const assignOrdersService = require('../services/assign-orders-service');
 const request = require('supertest');
 const app = require('../app');
 const {
   ValidationError,
   NotFoundError,
   DuplicateError,
-} = require('../errors/customErrors'); 
+} = require('../errors/custom-errors'); 
 
 describe('POST /assignOrders', () => {
     beforeEach(() => {

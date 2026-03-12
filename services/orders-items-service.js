@@ -1,7 +1,7 @@
-const ordersItemsRepository = require('../repositories/orderItemsRepository');
-const productsRepository = require('../repositories/productsRepository');
-const ordersRepository = require('../repositories/ordersRepository');
-const { ValidationError, NotFoundError } = require('../errors/customErrors');
+const ordersItemsRepository = require('../repositories/order-items-repository');
+const productsRepository = require('../repositories/products-repository');
+const ordersRepository = require('../repositories/orders-repository');
+const { ValidationError, NotFoundError } = require('../errors/custom-errors');
 
 class OrdersItemsService {
 

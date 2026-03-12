@@ -1,5 +1,5 @@
-const couriersRepository = require("../repositories/couriersRepository");
-const { ValidationError, NotFoundError } = require("../errors/customErrors");
+const couriersRepository = require("../repositories/couriers-repository");
+const { ValidationError, NotFoundError } = require("../errors/custom-errors");
 
 class CouriersService {
   validateName(name, isPartial) {

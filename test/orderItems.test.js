@@ -1,10 +1,10 @@
 // Mock del service en lugar de db
-jest.mock('../services/ordersItemsService');
+jest.mock('../services/orders-items-service');
 
 const request = require('supertest');
 const app = require('../app');
-const ordersItemsService = require('../services/ordersItemsService');
-const { ValidationError, NotFoundError } = require('../errors/customErrors');
+const ordersItemsService = require('../services/orders-items-service');
+const { ValidationError, NotFoundError } = require('../errors/custom-errors');
 
 describe('Order Items API', () => {
     // Limpiar mocks después de cada test
@@ -131,7 +131,7 @@ describe('Order Items API', () => {
                 .send({ order_id: 1, product_id: 1, quantity: 2 });
 
             expect(res.statusCode).toEqual(500);
-            expect(res.body).toHaveProperty('error', 'Error al guardar el item de orden en la base de datos');
+            expect(res.body).toHaveProperty('error', 'Error interno del servidor');
         });
     });
 
@@ -200,7 +200,7 @@ describe('Order Items API', () => {
             const res = await request(app).get('/api/order-items');
 
             expect(res.statusCode).toEqual(500);
-            expect(res.body).toHaveProperty('error', 'Error al obtener los items de orden desde la base de datos');
+            expect(res.body).toHaveProperty('error', 'Error interno del servidor');
         });
     });
 
@@ -255,7 +255,7 @@ describe('Order Items API', () => {
             const res = await request(app).get('/api/order-items/order/1');
 
             expect(res.statusCode).toEqual(500);
-            expect(res.body).toHaveProperty('error', 'Error al obtener los items de orden desde la base de datos');
+            expect(res.body).toHaveProperty('error', 'Error interno del servidor');
         });
     });
 
@@ -312,7 +312,7 @@ describe('Order Items API', () => {
             const res = await request(app).delete('/api/order-items/order/1');
 
             expect(res.statusCode).toEqual(500);
-            expect(res.body).toHaveProperty('error', 'Error al eliminar los items de orden desde la base de datos');
+            expect(res.body).toHaveProperty('error', 'Error interno del servidor');
         });
     });
 
@@ -404,7 +404,7 @@ describe('Order Items API', () => {
             const res = await request(app).delete('/api/order-items/order/1/product/1');
 
             expect(res.statusCode).toEqual(500);
-            expect(res.body).toHaveProperty('error', 'Error al eliminar el item de orden desde la base de datos');
+            expect(res.body).toHaveProperty('error', 'Error interno del servidor');
         });
     });
 
@@ -591,7 +591,7 @@ describe('Order Items API', () => {
                 .send({ quantity: 5 });
 
             expect(res.statusCode).toEqual(500);
-            expect(res.body).toHaveProperty('error', 'Error al actualizar el item de orden en la base de datos');
+            expect(res.body).toHaveProperty('error', 'Error interno del servidor');
         });
     });
 });

@@ -1,8 +1,8 @@
-jest.mock("../services/productService");
+jest.mock("../services/product-service");
 
 const request = require("supertest");
 const app = require("../app");
-const productService = require("../services/productService");
+const productService = require("../services/product-service");
 
 describe("POST /api/products", () => {
   beforeEach(() => {
@@ -34,7 +34,7 @@ describe("POST /api/products", () => {
   });
 
   it("Debe fallar si falta el nombre", async () => {
-    const { ValidationError } = require("../errors/customErrors");
+    const { ValidationError } = require("../errors/custom-errors");
 
     productService.addProduct.mockRejectedValueOnce(
       new ValidationError("El nombre es requerido")
@@ -50,7 +50,7 @@ describe("POST /api/products", () => {
   });
 
   it("Debe fallar si falta el precio", async () => {
-    const { ValidationError } = require("../errors/customErrors");
+    const { ValidationError } = require("../errors/custom-errors");
 
     productService.addProduct.mockRejectedValueOnce(
       new ValidationError("El precio es requerido")
@@ -66,7 +66,7 @@ describe("POST /api/products", () => {
   });
 
   it("Debe fallar si el precio es negativo", async () => {
-    const { ValidationError } = require("../errors/customErrors");
+    const { ValidationError } = require("../errors/custom-errors");
 
     productService.addProduct.mockRejectedValueOnce(
       new ValidationError("El precio no puede ser negativo")
@@ -83,7 +83,7 @@ describe("POST /api/products", () => {
   });
 
   it("Debe fallar si el nombre es muy corto", async () => {
-    const { ValidationError } = require("../errors/customErrors");
+    const { ValidationError } = require("../errors/custom-errors");
 
     productService.addProduct.mockRejectedValueOnce(
       new ValidationError("El nombre debe tener mínimo 2 caracteres")
@@ -100,7 +100,7 @@ describe("POST /api/products", () => {
   });
 
   it("Debe fallar si el producto ya existe", async () => {
-    const { DuplicateError } = require("../errors/customErrors");
+    const { DuplicateError } = require("../errors/custom-errors");
 
     productService.addProduct.mockRejectedValueOnce(
       new DuplicateError("Ya existe un producto con ese nombre")
@@ -126,7 +126,7 @@ describe("POST /api/products", () => {
     });
 
     expect(res.status).toBe(500);
-    expect(res.body.error).toBe("Error al crear el producto");
+    expect(res.body.error).toBe("Error interno del servidor");
   });
 });
 
@@ -189,7 +189,7 @@ describe("GET /api/products", () => {
     const res = await request(app).get("/api/products");
 
     expect(res.status).toBe(500);
-    expect(res.body.error).toBe("Error al obtener los productos");
+    expect(res.body.error).toBe("Error interno del servidor");
   });
 });
 
@@ -285,7 +285,7 @@ describe("GET /api/products/filter", () => {
   });
 
   it("Debe fallar si no se proporciona ningún filtro", async () => {
-    const { ValidationError } = require("../errors/customErrors");
+    const { ValidationError } = require("../errors/custom-errors");
 
     productService.searchProducts.mockRejectedValueOnce(
       new ValidationError("Se requiere al menos un filtro")
@@ -298,7 +298,7 @@ describe("GET /api/products/filter", () => {
   });
 
   it("Debe fallar si min_price es mayor que max_price", async () => {
-    const { ValidationError } = require("../errors/customErrors");
+    const { ValidationError } = require("../errors/custom-errors");
 
     productService.searchProducts.mockRejectedValueOnce(
       new ValidationError("El precio mínimo no puede ser mayor que el máximo")
@@ -320,7 +320,7 @@ describe("GET /api/products/filter", () => {
       .query({ name: "Producto 1" });
 
     expect(res.status).toBe(500);
-    expect(res.body.error).toBe("Error al obtener los productos con filtros");
+    expect(res.body.error).toBe("Error interno del servidor");
   });
 });
 
@@ -348,7 +348,7 @@ describe("GET /api/products/:id", () => {
   });
 
   it("Debe fallar con ID inválido", async () => {
-    const { ValidationError } = require("../errors/customErrors");
+    const { ValidationError } = require("../errors/custom-errors");
 
     productService.getProductById.mockRejectedValueOnce(
       new ValidationError("ID inválido")
@@ -361,7 +361,7 @@ describe("GET /api/products/:id", () => {
   });
 
   it("Debe manejar producto no encontrado", async () => {
-    const { NotFoundError } = require("../errors/customErrors");
+    const { NotFoundError } = require("../errors/custom-errors");
 
     productService.getProductById.mockRejectedValueOnce(
       new NotFoundError("Producto no encontrado")
@@ -379,7 +379,7 @@ describe("GET /api/products/:id", () => {
     const res = await request(app).get("/api/products/1");
 
     expect(res.status).toBe(500);
-    expect(res.body.error).toBe("Error al obtener el producto");
+    expect(res.body.error).toBe("Error interno del servidor");
   });
 });
 
@@ -407,7 +407,7 @@ describe("DELETE /api/products/:id", () => {
   });
 
   it("Debe fallar con ID inválido", async () => {
-    const { ValidationError } = require("../errors/customErrors");
+    const { ValidationError } = require("../errors/custom-errors");
 
     productService.hardDelete.mockRejectedValueOnce(
       new ValidationError("ID inválido")
@@ -420,7 +420,7 @@ describe("DELETE /api/products/:id", () => {
   });
 
   it("Debe manejar producto no encontrado", async () => {
-    const { NotFoundError } = require("../errors/customErrors");
+    const { NotFoundError } = require("../errors/custom-errors");
 
     productService.hardDelete.mockRejectedValueOnce(
       new NotFoundError("Producto no encontrado")
@@ -438,7 +438,7 @@ describe("DELETE /api/products/:id", () => {
     const res = await request(app).delete("/api/products/1");
 
     expect(res.status).toBe(500);
-    expect(res.body.error).toBe("Error al eliminar el producto");
+    expect(res.body.error).toBe("Error interno del servidor");
   });
 });
 
@@ -471,7 +471,7 @@ describe("PUT /api/products/:id", () => {
   });
 
   it("Debe fallar si falta el nombre", async () => {
-    const { ValidationError } = require("../errors/customErrors");
+    const { ValidationError } = require("../errors/custom-errors");
 
     productService.updateProduct.mockRejectedValueOnce(
       new ValidationError("El nombre es requerido")
@@ -487,7 +487,7 @@ describe("PUT /api/products/:id", () => {
   });
 
   it("Debe fallar si falta el precio", async () => {
-    const { ValidationError } = require("../errors/customErrors");
+    const { ValidationError } = require("../errors/custom-errors");
 
     productService.updateProduct.mockRejectedValueOnce(
       new ValidationError("El precio es requerido")
@@ -503,7 +503,7 @@ describe("PUT /api/products/:id", () => {
   });
 
   it("Debe fallar si el producto no existe", async () => {
-    const { NotFoundError } = require("../errors/customErrors");
+    const { NotFoundError } = require("../errors/custom-errors");
 
     productService.updateProduct.mockRejectedValueOnce(
       new NotFoundError("Producto no encontrado")
@@ -520,7 +520,7 @@ describe("PUT /api/products/:id", () => {
   });
 
   it("Debe fallar si el nuevo nombre ya existe", async () => {
-    const { DuplicateError } = require("../errors/customErrors");
+    const { DuplicateError } = require("../errors/custom-errors");
 
     productService.updateProduct.mockRejectedValueOnce(
       new DuplicateError("Ya existe un producto con ese nombre")
@@ -546,7 +546,7 @@ describe("PUT /api/products/:id", () => {
     });
 
     expect(res.status).toBe(500);
-    expect(res.body.error).toBe("Error al actualizar el producto");
+    expect(res.body.error).toBe("Error interno del servidor");
   });
 });
 
@@ -595,7 +595,7 @@ describe("PATCH /api/products/:id", () => {
   });
 
   it("Debe fallar si no se proporciona ningún campo", async () => {
-    const { ValidationError } = require("../errors/customErrors");
+    const { ValidationError } = require("../errors/custom-errors");
 
     productService.updateProductPartial.mockRejectedValueOnce(
       new ValidationError("Se requiere al menos un campo para actualizar")
@@ -608,7 +608,7 @@ describe("PATCH /api/products/:id", () => {
   });
 
   it("Debe fallar si el producto no existe", async () => {
-    const { NotFoundError } = require("../errors/customErrors");
+    const { NotFoundError } = require("../errors/custom-errors");
 
     productService.updateProductPartial.mockRejectedValueOnce(
       new NotFoundError("Producto no encontrado")
@@ -623,7 +623,7 @@ describe("PATCH /api/products/:id", () => {
   });
 
   it("Debe fallar si el nuevo nombre ya existe", async () => {
-    const { DuplicateError } = require("../errors/customErrors");
+    const { DuplicateError } = require("../errors/custom-errors");
 
     productService.updateProductPartial.mockRejectedValueOnce(
       new DuplicateError("Ya existe un producto con ese nombre")
@@ -647,6 +647,6 @@ describe("PATCH /api/products/:id", () => {
       .send({ price: 120.0 });
 
     expect(res.status).toBe(500);
-    expect(res.body.error).toBe("Error al actualizar el producto");
+    expect(res.body.error).toBe("Error interno del servidor");
   });
 });

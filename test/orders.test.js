@@ -1,13 +1,13 @@
 // Mockear las dependencias ANTES de importarlas
-jest.mock("../repositories/ordersRepository");
-jest.mock("../repositories/customerRepository");
-jest.mock("../repositories/addressesRepository");
+jest.mock("../repositories/orders-repository");
+jest.mock("../repositories/customer-repository");
+jest.mock("../repositories/addresses-repository");
 
 const request = require("supertest");
 const app = require("../app");
-const ordersRepository = require("../repositories/ordersRepository");
-const customerRepository = require("../repositories/customerRepository");
-const addressRepository = require("../repositories/addressesRepository");
+const ordersRepository = require("../repositories/orders-repository");
+const customerRepository = require("../repositories/customer-repository");
+const addressRepository = require("../repositories/addresses-repository");
 
 describe("Orders Controller Tests", () => {
   // Limpiar mocks después de cada test
@@ -212,7 +212,7 @@ describe("Orders Controller Tests", () => {
       });
 
       expect(res.status).toBe(500);
-      expect(res.body).toHaveProperty("error", "Error al crear la orden");
+      expect(res.body).toHaveProperty("error", "Error interno del servidor");
     });
   });
 
@@ -269,10 +269,7 @@ describe("Orders Controller Tests", () => {
       const res = await request(app).put("/api/orders/1/total");
 
       expect(res.status).toBe(500);
-      expect(res.body).toHaveProperty(
-        "error",
-        "Error al actualizar el total de la orden"
-      );
+      expect(res.body).toHaveProperty("error", "Error interno del servidor");
     });
   });
 
@@ -317,7 +314,7 @@ describe("Orders Controller Tests", () => {
       const res = await request(app).get("/api/orders");
 
       expect(res.status).toBe(500);
-      expect(res.body).toHaveProperty("error", "Error al obtener las órdenes");
+      expect(res.body).toHaveProperty("error", "Error interno del servidor");
     });
   });
 
@@ -362,7 +359,7 @@ describe("Orders Controller Tests", () => {
       const res = await request(app).get("/api/orders/1");
 
       expect(res.status).toBe(500);
-      expect(res.body).toHaveProperty("error", "Error al obtener la orden");
+      expect(res.body).toHaveProperty("error", "Error interno del servidor");
     });
   });
 
@@ -404,10 +401,7 @@ describe("Orders Controller Tests", () => {
       const res = await request(app).get("/api/orders/customer/1");
 
       expect(res.status).toBe(500);
-      expect(res.body).toHaveProperty(
-        "error",
-        "Error al obtener las órdenes del cliente"
-      );
+      expect(res.body).toHaveProperty("error", "Error interno del servidor");
     });
   });
 
@@ -460,7 +454,7 @@ describe("Orders Controller Tests", () => {
       const res = await request(app).delete("/api/orders/1");
 
       expect(res.status).toBe(500);
-      expect(res.body).toHaveProperty("error", "Error al eliminar la orden");
+      expect(res.body).toHaveProperty("error", "Error interno del servidor");
     });
   });
 
@@ -555,7 +549,7 @@ describe("Orders Controller Tests", () => {
         .send({ status_id: 2 });
 
       expect(res.status).toBe(500);
-      expect(res.body).toHaveProperty("error", "Error al actualizar la orden");
+      expect(res.body).toHaveProperty("error", "Error interno del servidor");
     });
   });
 
@@ -635,10 +629,7 @@ describe("Orders Controller Tests", () => {
         .send({ status_id: 2 });
 
       expect(res.status).toBe(500);
-      expect(res.body).toHaveProperty(
-        "error",
-        "Error al actualizar el estado de la orden"
-      );
+      expect(res.body).toHaveProperty("error", "Error interno del servidor");
     });
   });
 
@@ -670,10 +661,7 @@ describe("Orders Controller Tests", () => {
       const res = await request(app).get("/api/orders/count");
 
       expect(res.status).toBe(500);
-      expect(res.body).toHaveProperty(
-        "error",
-        "Error al contar las órdenes del día"
-      );
+      expect(res.body).toHaveProperty("error", "Error interno del servidor");
     });
   });
 
@@ -733,10 +721,7 @@ describe("Orders Controller Tests", () => {
       const res = await request(app).get("/api/orders/status/1");
 
       expect(res.status).toBe(500);
-      expect(res.body).toHaveProperty(
-        "error",
-        "Error al obtener las órdenes por estado"
-      );
+      expect(res.body).toHaveProperty("error", "Error interno del servidor");
     });
   });
 });

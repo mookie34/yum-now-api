@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const courierController = require("../controllers/couriersController");
+const courierController = require("../controllers/couriers-controller");
 
 // List couriers by filter
 router.get("/filter", courierController.getCouriersByFilter);

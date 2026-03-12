@@ -1,6 +1,6 @@
-const addressesRepository = require('../repositories/addressesRepository');
-const customerRepository = require('../repositories/customerRepository');
-const {ValidationError, NotFoundError, DuplicateError} = require('../errors/customErrors');
+const addressesRepository = require('../repositories/addresses-repository');
+const customerRepository = require('../repositories/customer-repository');
+const {ValidationError, NotFoundError, DuplicateError} = require('../errors/custom-errors');
 
 class AddressesService {
     validateCustomerId(customer_id, isPartial) {
@@ -60,29 +60,31 @@ class AddressesService {
         return errors;
     }
 
-    validateAddressData(customer_id, label, address_text, reference, latitude, longitude, is_primary, isPartial = false){
-        const errors = [];
-
-        const customerErr = this.validateCustomerId(customer_id, isPartial);
-        if (customerErr) errors.push(customerErr);
-
-        const labelErr = this.validateLabel(label, isPartial);
-        if (labelErr) errors.push(labelErr);
-
-        const addressErr = this.validateAddressText(address_text, isPartial);
-        if (addressErr) errors.push(addressErr);
-
-        const refErr = this.validateReference(reference);
-        if (refErr) errors.push(refErr);
-
-        errors.push(...this.validateCoordinates(latitude, longitude));
-
+    validateIsPrimary(is_primary, isPartial) {
         if (!isPartial || is_primary !== undefined) {
             if (is_primary !== undefined && typeof is_primary !== 'boolean') {
-                errors.push('is_primary debe ser un valor booleano');
+                return 'is_primary debe ser un valor booleano';
             }
         }
+        return null;
+    }
 
+    collectAddressErrors(customer_id, label, address_text, reference, latitude, longitude, is_primary, isPartial) {
+        const errors = [];
+        const validators = [
+            this.validateCustomerId(customer_id, isPartial),
+            this.validateLabel(label, isPartial),
+            this.validateAddressText(address_text, isPartial),
+            this.validateReference(reference),
+            this.validateIsPrimary(is_primary, isPartial)
+        ];
+        validators.filter(Boolean).forEach(err => errors.push(err));
+        errors.push(...this.validateCoordinates(latitude, longitude));
+        return errors;
+    }
+
+    validateAddressData(customer_id, label, address_text, reference, latitude, longitude, is_primary, isPartial = false){
+        const errors = this.collectAddressErrors(customer_id, label, address_text, reference, latitude, longitude, is_primary, isPartial);
         if (errors.length > 0) {
             throw new ValidationError(errors.join('; '));
         }

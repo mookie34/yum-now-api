@@ -1,5 +1,5 @@
-const customerPreferencesService = require("../services/customerPreferencesService");
-const { ValidationError, NotFoundError } = require("../errors/customErrors");
+const customerPreferencesService = require("../services/customer-preferences-service");
+const { ValidationError, NotFoundError } = require("../errors/custom-errors");
 
 const createCustomerPreference = async (req, res) => {
   try {

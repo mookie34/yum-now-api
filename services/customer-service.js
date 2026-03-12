@@ -1,5 +1,5 @@
-const customerRepository = require('../repositories/customerRepository');
-const {ValidationError, NotFoundError, DuplicateError} = require('../errors/customErrors');
+const customerRepository = require('../repositories/customer-repository');
+const {ValidationError, NotFoundError, DuplicateError} = require('../errors/custom-errors');
 
 // Service class
 class CustomerService {

@@ -1,9 +1,9 @@
 // Mock del repository (debe ir ANTES de los requires)
-jest.mock("../repositories/couriersRepository");
+jest.mock("../repositories/couriers-repository");
 
 const request = require("supertest");
 const app = require("../app");
-const couriersRepository = require("../repositories/couriersRepository");
+const couriersRepository = require("../repositories/couriers-repository");
 
 describe("POST /api/couriers", () => {
   beforeEach(() => {
@@ -165,7 +165,7 @@ describe("POST /api/couriers", () => {
 
     expect(res.status).toBe(500);
     expect(res.body.error).toBe(
-      "Error al guardar el domiciliario en la base de datos"
+      "Error interno del servidor"
     );
   });
 });
@@ -236,7 +236,7 @@ describe("GET /api/couriers", () => {
     const res = await request(app).get("/api/couriers");
 
     expect(res.status).toBe(500);
-    expect(res.body.error).toBe("Error al obtener los Domiciliarios");
+    expect(res.body.error).toBe("Error interno del servidor");
   });
 });
 
@@ -283,7 +283,7 @@ describe("GET /api/couriers/available", () => {
 
     expect(res.status).toBe(500);
     expect(res.body.error).toBe(
-      "Error al obtener los Domiciliarios disponibles"
+      "Error interno del servidor"
     );
   });
 });
@@ -389,7 +389,7 @@ describe("GET /api/couriers/filter", () => {
 
     expect(res.status).toBe(500);
     expect(res.body.error).toBe(
-      "Error al obtener los Domiciliarios por filtro"
+      "Error interno del servidor"
     );
   });
 });
@@ -481,7 +481,7 @@ describe("DELETE /api/couriers/:id", () => {
     const res = await request(app).delete("/api/couriers/1");
 
     expect(res.status).toBe(500);
-    expect(res.body.error).toBe("Error al eliminar el Domiciliario");
+    expect(res.body.error).toBe("Error interno del servidor");
   });
 });
 
@@ -553,7 +553,7 @@ describe("PUT /api/couriers/:id", () => {
     });
 
     expect(res.status).toBe(500);
-    expect(res.body.error).toBe("Error al actualizar el Domiciliario");
+    expect(res.body.error).toBe("Error interno del servidor");
   });
 });
 
@@ -632,6 +632,6 @@ describe("PATCH /api/couriers/:id", () => {
       .send({ phone: "1112223333" });
 
     expect(res.status).toBe(500);
-    expect(res.body.error).toBe("Error al actualizar el Domiciliario");
+    expect(res.body.error).toBe("Error interno del servidor");
   });
 });

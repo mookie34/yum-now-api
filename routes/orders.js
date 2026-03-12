@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const controllers = require("../controllers/ordersController");
+const controllers = require("../controllers/orders-controller");
 
 router.get("/count", controllers.countOrdersForDay);
 router.get("/customer/:customer_id", controllers.getOrderByCustomerId);

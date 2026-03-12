@@ -1,5 +1,5 @@
-const OrdersService = require("../services/ordersService");
-const { ValidationError, NotFoundError } = require("../errors/customErrors");
+const OrdersService = require("../services/orders-service");
+const { ValidationError, NotFoundError } = require("../errors/custom-errors");
 
 const addOrder = async (req, res) => {
   try {

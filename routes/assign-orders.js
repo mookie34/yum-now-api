@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const assignOrdersController = require('../controllers/assignOrdersController');
+const assignOrdersController = require('../controllers/assign-orders-controller');
 
 // Create a new order assignment
 router.post('/', assignOrdersController.addAssignOrder);

@@ -1,9 +1,9 @@
-const assignOrdersService = require("../services/assignOrdersService");
+const assignOrdersService = require("../services/assign-orders-service");
 const {
   ValidationError,
   NotFoundError,
   DuplicateError,
-} = require("../errors/customErrors");
+} = require("../errors/custom-errors");
 
 const addAssignOrder = async (req, res) => {
   try {

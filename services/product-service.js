@@ -1,5 +1,5 @@
-const {ValidationError, NotFoundError, DuplicateError} = require('../errors/customErrors');
-const productsRepository = require('../repositories/productsRepository');
+const {ValidationError, NotFoundError, DuplicateError} = require('../errors/custom-errors');
+const productsRepository = require('../repositories/products-repository');
 
 class ProductService{
     validateName(name, isPartial) {

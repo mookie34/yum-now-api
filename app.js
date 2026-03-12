@@ -6,12 +6,12 @@ const rateLimit = require('express-rate-limit');
 
 const productsRouter = require('./routes/products');
 const ordersRouter = require('./routes/orders');
-const orderItemsRouter = require('./routes/orderItems');
+const orderItemsRouter = require('./routes/order-items');
 const customersRouter = require('./routes/customers');
 const couriersRouter = require('./routes/couriers');
-const assignOrdersRouter = require('./routes/assignOrders');
+const assignOrdersRouter = require('./routes/assign-orders');
 const addressesRouter = require('./routes/addresses');
-const customerPreferencesRouter = require('./routes/customerPreferences');
+const customerPreferencesRouter = require('./routes/customer-preferences');
 
 const app = express();
 // ============================================

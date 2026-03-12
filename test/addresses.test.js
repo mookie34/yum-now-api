@@ -1,8 +1,8 @@
-jest.mock('../services/addressesService');
+jest.mock('../services/addresses-service');
 const request = require('supertest');
 const app = require('../app');
-const addressesService = require('../services/addressesService');
-const { ValidationError, NotFoundError, DuplicateError } = require('../errors/customErrors');
+const addressesService = require('../services/addresses-service');
+const { ValidationError, NotFoundError, DuplicateError } = require('../errors/custom-errors');
 
 describe('POST /api/addresses', () => {
     beforeEach(() => {

@@ -126,49 +126,53 @@ yum-now-api/
 ├── app.js                    # Configuracion de Express, middlewares y rutas
 ├── server.js                 # Punto de entrada, startup y graceful shutdown
 ├── db.js                     # Pool de conexiones PostgreSQL
-├── test-connection.js        # Script para verificar conexion a la DB
 │
 ├── routes/                   # Definicion de endpoints HTTP
 │   ├── addresses.js
-│   ├── assignOrders.js
+│   ├── assign-orders.js
 │   ├── couriers.js
-│   ├── customerPreferences.js
+│   ├── customer-preferences.js
 │   ├── customers.js
-│   ├── orderItems.js
+│   ├── order-items.js
 │   ├── orders.js
 │   └── products.js
 │
 ├── controllers/              # Manejo de requests/responses HTTP
-│   ├── addressesController.js
-│   ├── assignOrdersController.js
-│   ├── couriersController.js
-│   ├── customerController.js
-│   ├── customerPreferencesController.js
-│   ├── orderItemsController.js
-│   ├── ordersController.js
-│   └── productsController.js
+│   ├── addresses-controller.js
+│   ├── assign-orders-controller.js
+│   ├── couriers-controller.js
+│   ├── customer-controller.js
+│   ├── customer-preferences-controller.js
+│   ├── order-items-controller.js
+│   ├── orders-controller.js
+│   └── products-controller.js
 │
 ├── services/                 # Logica de negocio y validacion
-│   ├── addressesService.js
-│   ├── couriersService.js
-│   ├── CustomerService.js
-│   ├── ordersItemsService.js
-│   ├── ordersService.js
-│   └── productService.js
+│   ├── addresses-service.js
+│   ├── assign-orders-service.js
+│   ├── couriers-service.js
+│   ├── customer-service.js
+│   ├── customer-preferences-service.js
+│   ├── orders-items-service.js
+│   ├── orders-service.js
+│   └── product-service.js
 │
 ├── repositories/             # Capa de persistencia (queries SQL)
-│   ├── addressesRepository.js
-│   ├── couriersRepository.js
-│   ├── customerRepository.js
-│   ├── orderItemsRepository.js
-│   ├── ordersRepository.js
-│   └── productsRepository.js
+│   ├── addresses-repository.js
+│   ├── assign-orders-repository.js
+│   ├── couriers-repository.js
+│   ├── customer-repository.js
+│   ├── customer-preferences-repository.js
+│   ├── order-items-repository.js
+│   ├── orders-repository.js
+│   └── products-repository.js
 │
 ├── errors/                   # Clases de error personalizadas
-│   └── customErrors.js
+│   └── custom-errors.js
 │
 ├── test/                     # Tests de integracion (Jest + Supertest)
 │   ├── setupTests.js
+│   ├── test-connection.js
 │   ├── addresses.test.js
 │   ├── assignOrders.test.js
 │   ├── couriers.test.js
@@ -307,7 +311,7 @@ npm install
 
 ### 4. Verificar conexion a la base de datos
 ```bash
-node test-connection.js
+node test/test-connection.js
 ```
 
 ### 5. Ejecutar el servidor

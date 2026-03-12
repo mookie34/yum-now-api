@@ -1,5 +1,5 @@
-const addressesService = require('../services/addressesService');
-const { ValidationError, NotFoundError, DuplicateError } = require('../errors/customErrors');
+const addressesService = require('../services/addresses-service');
+const { ValidationError, NotFoundError, DuplicateError } = require('../errors/custom-errors');
 
 
 

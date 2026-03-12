@@ -1,5 +1,5 @@
-const customerPreferencesRepository = require("../repositories/customerPreferencesRepository");
-const { ValidationError, NotFoundError } = require("../errors/customErrors");
+const customerPreferencesRepository = require("../repositories/customer-preferences-repository");
+const { ValidationError, NotFoundError } = require("../errors/custom-errors");
 
 class CustomerPreferencesService {
   validateId(id) {

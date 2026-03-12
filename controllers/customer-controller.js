@@ -1,5 +1,5 @@
 const customerService = require('../services/customer-service');
-const { ValidationError, NotFoundError, DuplicateError } = require('../errors/customErrors');
+const { ValidationError, NotFoundError, DuplicateError } = require('../errors/custom-errors');
 
 const addCustomer = async (req, res) => {
     try {

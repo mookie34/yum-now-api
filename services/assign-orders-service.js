@@ -1,10 +1,10 @@
-const assignOrdersRepository = require("../repositories/assignOrdersRepository");
+const assignOrdersRepository = require("../repositories/assign-orders-repository");
 const {
   ValidationError,
   NotFoundError,
   DuplicateError,
   BusinessRuleError,
-} = require("../errors/customErrors");
+} = require("../errors/custom-errors");
 
 class AssignOrdersService {
   /**

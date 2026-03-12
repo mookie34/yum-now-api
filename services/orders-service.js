@@ -1,7 +1,7 @@
-const ordersRepository = require("../repositories/ordersRepository");
-const customerRepository = require("../repositories/customerRepository");
-const addressRepository = require("../repositories/addressesRepository");
-const { ValidationError, NotFoundError } = require("../errors/customErrors");
+const ordersRepository = require("../repositories/orders-repository");
+const customerRepository = require("../repositories/customer-repository");
+const addressRepository = require("../repositories/addresses-repository");
+const { ValidationError, NotFoundError } = require("../errors/custom-errors");
 
 class OrdersService {
   validateCustomerId(customer_id) {
@@ -65,46 +65,46 @@ class OrdersService {
     return null;
   }
 
-  async validateOrderData(orderData, isPartial = false, isCreate = false) {
-    const errors = [];
-    const { customer_id, address_id, payment_method_id, status_id, total } = orderData;
-
+  async validateCustomerAndAddress(orderData, isPartial) {
+    const { customer_id, address_id } = orderData;
     let customer = null;
     let address = null;
 
-    // Validate customer_id (must be a positive integer that exists in DB)
     if (!isPartial || customer_id !== undefined) {
       this.validateCustomerId(customer_id);
       customer = await this.resolveCustomer(customer_id);
     }
-
-    // Validate address_id (must be a positive integer that exists in DB)
     if (!isPartial || address_id !== undefined) {
       this.validateAddressId(address_id);
       address = await this.resolveAddress(address_id);
     }
-
     if (customer && address) {
       this.validateAddressBelongsToCustomer(address, customer_id);
     }
+  }
 
-    // Validate total (only on updates, not on creation)
+  async collectFieldErrors(orderData, isPartial, isCreate) {
+    const errors = [];
+    const { payment_method_id, status_id, total } = orderData;
+
     if (!isCreate && (!isPartial || total !== undefined)) {
       const totalError = this.validateTotal(total);
       if (totalError) errors.push(totalError);
     }
-
-    // Validate payment method ID
     if (!isPartial || payment_method_id !== undefined) {
       const pmError = await this.validatePaymentMethod(payment_method_id);
       if (pmError) errors.push(pmError);
     }
-
-    // Validate status ID
     if (!isPartial || status_id !== undefined) {
       const statusError = await this.validateStatusId(status_id);
       if (statusError) errors.push(statusError);
     }
+    return errors;
+  }
+
+  async validateOrderData(orderData, isPartial = false, isCreate = false) {
+    await this.validateCustomerAndAddress(orderData, isPartial);
+    const errors = await this.collectFieldErrors(orderData, isPartial, isCreate);
 
     if (errors.length > 0) {
       throw new ValidationError(errors.join(", "));

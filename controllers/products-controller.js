@@ -1,9 +1,9 @@
-const productService = require("../services/productService");
+const productService = require("../services/product-service");
 const {
   ValidationError,
   NotFoundError,
   DuplicateError,
-} = require("../errors/customErrors");
+} = require("../errors/custom-errors");
 
 // ============================================================================
 // CREATE
