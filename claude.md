@@ -164,6 +164,7 @@ All code must strictly follow **Clean Code principles**.
 - Keep business logic inside services
 - Keep SQL inside repositories
 - Prefer early returns over nested conditions
+- No emojis 
 
 ## Naming Conventions
 
