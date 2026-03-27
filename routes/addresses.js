@@ -1,21 +1,17 @@
 const express = require('express');
 const router = express.Router();
 const addressesController = require('../controllers/addresses-controller');
+const authenticate = require('../middleware/authenticate');
 
-// Create an address
+// Public - bot needs to read and create addresses
 router.post('/', addressesController.addAddress);
-// List all addresses
-router.get('/', addressesController.getAddresses);
-// Get primary address by customer ID
 router.get('/primary/:customer_id', addressesController.getPrimaryAddressByCustomerId);
-// Get addresses by customer ID
 router.get('/customer/:customer_id', addressesController.getAddressesByCustomerId);
-// Get address by ID
 router.get('/:id', addressesController.getAddressById);
-// Partially update an address
-router.patch('/:id', addressesController.updateAddressPartial);
-// Update an address
-router.put('/:id', addressesController.updateAddress);
-// Delete an address
-router.delete('/:id', addressesController.deleteAddress);
+
+// Admin only - address management
+router.get('/', authenticate, addressesController.getAddresses);
+router.patch('/:id', authenticate, addressesController.updateAddressPartial);
+router.put('/:id', authenticate, addressesController.updateAddress);
+router.delete('/:id', authenticate, addressesController.deleteAddress);
 module.exports = router;

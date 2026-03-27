@@ -1,18 +1,16 @@
 const express = require("express");
 const router = express.Router();
 const customerPreferencesController = require("../controllers/customer-preferences-controller");
+const authenticate = require("../middleware/authenticate");
 
-// Create a new customer preference
+// Public - bot creates and reads customer preferences
 router.post("/", customerPreferencesController.createCustomerPreference);
-// Get all preferences for a customer
 router.get("/:customer_id", customerPreferencesController.getCustomerPreferences);
-// Get a specific preference for a customer
 router.get("/customer/:customer_id/preference_key/:preference_key", customerPreferencesController.getCustomerSpecificPreference);
-// Update a customer preference
-router.put("/customer/:customer_id/preference_key/:preference_key", customerPreferencesController.updateCustomerPreference);
-// Delete a customer preference
-router.delete("/customer/:customer_id/preference_key/:preference_key", customerPreferencesController.deleteCustomerPreference);
-// Delete all preferences for a customer
-router.delete("/customer/:customer_id", customerPreferencesController.deleteAllCustomerPreferences);
+
+// Admin only - preference management
+router.put("/customer/:customer_id/preference_key/:preference_key", authenticate, customerPreferencesController.updateCustomerPreference);
+router.delete("/customer/:customer_id/preference_key/:preference_key", authenticate, customerPreferencesController.deleteCustomerPreference);
+router.delete("/customer/:customer_id", authenticate, customerPreferencesController.deleteAllCustomerPreferences);
 
 module.exports = router;

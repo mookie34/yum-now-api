@@ -1,23 +1,19 @@
 const express = require('express');
 const router = express.Router();
 const productsController = require('../controllers/products-controller');
+const authenticate = require('../middleware/authenticate');
 
-// Create a product
-router.post('/', productsController.addProduct);
-// List products
+// Public - product catalog
 router.get('/', productsController.getProducts);
-// List products by filter
 router.get('/filter', productsController.getProductsByFilter);
-// Get a product by ID
 router.get('/:id', productsController.getProductById);
-// Deactivate a product (soft delete)
-router.patch('/:id/deactivate', productsController.deactivateProduct);
-// Delete a product
-router.delete('/:id', productsController.deleteProduct);
-// Update a product
-router.put('/:id', productsController.updateProduct);
-// Partially update a product
-router.patch('/:id', productsController.updateProductPartial);
+
+// Admin only - product management
+router.post('/', authenticate, productsController.addProduct);
+router.put('/:id', authenticate, productsController.updateProduct);
+router.patch('/:id/deactivate', authenticate, productsController.deactivateProduct);
+router.patch('/:id', authenticate, productsController.updateProductPartial);
+router.delete('/:id', authenticate, productsController.deleteProduct);
 
 
 module.exports = router;

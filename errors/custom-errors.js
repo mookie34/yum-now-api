@@ -26,4 +26,11 @@ class BusinessRuleError extends Error {
     }
 }
 
-module.exports = { ValidationError, NotFoundError, DuplicateError, BusinessRuleError };
+class UnauthorizedError extends Error {
+    constructor(message) {
+        super(message);
+        this.name = 'UnauthorizedError';
+    }
+}
+
+module.exports = { ValidationError, NotFoundError, DuplicateError, BusinessRuleError, UnauthorizedError };

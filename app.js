@@ -12,6 +12,7 @@ const couriersRouter = require('./routes/couriers');
 const assignOrdersRouter = require('./routes/assign-orders');
 const addressesRouter = require('./routes/addresses');
 const customerPreferencesRouter = require('./routes/customer-preferences');
+const authRouter = require('./routes/auth');
 
 const app = express();
 // ============================================
@@ -41,6 +42,7 @@ app.use(express.urlencoded({extended: true}));
 // ============================================
 // ROUTES
 // ============================================
+app.use('/api/auth', authRouter);
 app.use('/api/products', productsRouter);
 app.use('/api/orders', ordersRouter);
 app.use('/api/order-items', orderItemsRouter);

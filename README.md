@@ -15,7 +15,8 @@ y esta disenada para integrarse con una **aplicacion web en Angular** para admin
 - **Base de datos PostgreSQL** con pool de conexiones (max 20)
 - **Tests de integracion** con Jest y Supertest (8 archivos de test)
 - **Seguridad** con Helmet, CORS y Rate Limiting (100 req/15min)
-- **Manejo de errores** centralizado con clases personalizadas (ValidationError, NotFoundError, DuplicateError, BusinessRuleError)
+- **Autenticacion JWT** para proteger los endpoints de administracion (login, token Bearer)
+- **Manejo de errores** centralizado con clases personalizadas (ValidationError, NotFoundError, DuplicateError, BusinessRuleError, UnauthorizedError)
 - **Hot reload** en desarrollo con Nodemon
 - **Health check** endpoint para monitoreo (`GET /health`)
 - **Graceful shutdown** con cierre de conexiones y timeout de 10s
@@ -35,6 +36,7 @@ y esta disenada para integrarse con una **aplicacion web en Angular** para admin
 | CORS | cors | 2.8.5 |
 | Rate Limiting | express-rate-limit | 8.1.0 |
 | Variables de entorno | dotenv | 17.2.1 |
+| Autenticacion JWT | jsonwebtoken | 9.x |
 | Testing | Jest | 30.1.3 |
 | HTTP Testing | Supertest | 7.1.4 |
 | Hot Reload | Nodemon | 3.1.10 |
@@ -76,7 +78,7 @@ Service (captura, valida y lanza error personalizado)
 Controller (mapea error a codigo HTTP)
      |
      v
-  400 ValidationError | 404 NotFoundError | 409 DuplicateError | 500 Error generico
+  400 ValidationError | 404 NotFoundError | 409 DuplicateError | 401 UnauthorizedError | 500 Error generico
 ```
 
 ---
@@ -128,6 +130,7 @@ yum-now-api/
 ├── db.js                     # Pool de conexiones PostgreSQL
 │
 ├── routes/                   # Definicion de endpoints HTTP
+│   ├── auth.js               # POST /api/auth/login
 │   ├── addresses.js
 │   ├── assign-orders.js
 │   ├── couriers.js
@@ -138,6 +141,7 @@ yum-now-api/
 │   └── products.js
 │
 ├── controllers/              # Manejo de requests/responses HTTP
+│   ├── auth-controller.js
 │   ├── addresses-controller.js
 │   ├── assign-orders-controller.js
 │   ├── couriers-controller.js
@@ -148,6 +152,7 @@ yum-now-api/
 │   └── products-controller.js
 │
 ├── services/                 # Logica de negocio y validacion
+│   ├── auth-service.js       # Validacion de credenciales y generacion de token
 │   ├── addresses-service.js
 │   ├── assign-orders-service.js
 │   ├── couriers-service.js
@@ -166,6 +171,9 @@ yum-now-api/
 │   ├── order-items-repository.js
 │   ├── orders-repository.js
 │   └── products-repository.js
+│
+├── middleware/               # Middlewares personalizados
+│   └── authenticate.js       # Verificacion de token JWT
 │
 ├── errors/                   # Clases de error personalizadas
 │   └── custom-errors.js
@@ -189,33 +197,120 @@ yum-now-api/
 
 ---
 
+## Autenticacion
+
+La API usa **JWT (JSON Web Token)** para proteger los endpoints de administracion.
+
+### Como funciona
+
+```
+1. El admin hace POST /api/auth/login con usuario y contrasena
+2. El servidor valida las credenciales contra las variables de entorno
+3. Si son correctas, devuelve un token JWT valido por 8 horas
+4. El admin incluye ese token en cada request protegido
+5. El middleware authenticate.js verifica el token antes de llegar al controlador
+```
+
+### Login
+
+```http
+POST /api/auth/login
+Content-Type: application/json
+
+{
+  "username": "admin",
+  "password": "tu-password"
+}
+```
+
+Respuesta exitosa (`200`):
+
+```json
+{
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+}
+```
+
+Credenciales incorrectas (`401`):
+
+```json
+{
+  "error": "Credenciales incorrectas"
+}
+```
+
+### Usar el token en requests protegidos
+
+Incluye el token en el header `Authorization` con el prefijo `Bearer`:
+
+```http
+DELETE /api/products/1
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+```
+
+Sin token o token invalido, la API responde `401`:
+
+```json
+{
+  "error": "Token de autenticacion requerido"
+}
+```
+
+### Endpoints publicos vs protegidos
+
+Los endpoints **publicos** no requieren token porque los usan el bot de WhatsApp o la app del repartidor:
+
+| Recurso | Publico | Protegido (admin) |
+|---------|---------|-------------------|
+| Productos | GET (ver catalogo) | POST, PUT, PATCH, DELETE |
+| Pedidos | POST (bot crea), GET por cliente/ID | GET lista completa, PATCH estado, DELETE |
+| Repartidores | GET (app repartidor) | POST, PUT, PATCH, DELETE |
+| Asignaciones | GET por repartidor/pedido | GET lista, POST, PUT, DELETE |
+
+### Variables de entorno requeridas
+
+```env
+JWT_SECRET=una-clave-secreta-larga-y-aleatoria
+ADMIN_USERNAME=admin
+ADMIN_PASSWORD=tu-password-seguro
+```
+
+> El token expira en **8 horas**. Vuelve a hacer login para obtener uno nuevo.
+
+---
+
 ## Endpoints de la API
 
+### Autenticacion (`/api/auth`)
+| Metodo | Ruta | Auth | Descripcion |
+|--------|------|------|-------------|
+| POST | `/api/auth/login` | No | Obtener token JWT |
+
 ### Productos (`/api/products`)
-| Metodo | Ruta | Descripcion |
-|--------|------|-------------|
-| GET | `/api/products` | Listar productos (soporta filtros por nombre, precio, activo) |
-| GET | `/api/products/:id` | Obtener producto por ID |
-| GET | `/api/products/search` | Buscar productos |
-| POST | `/api/products` | Crear producto |
-| PUT | `/api/products/:id` | Actualizar producto completo |
-| PATCH | `/api/products/:id` | Actualizar producto parcialmente |
-| DELETE | `/api/products/:id/soft` | Soft delete (desactivar) |
-| DELETE | `/api/products/:id/hard` | Hard delete (eliminar permanentemente) |
+| Metodo | Ruta | Auth | Descripcion |
+|--------|------|------|-------------|
+| GET | `/api/products` | No | Listar productos (paginacion: ?limit=&offset=) |
+| GET | `/api/products/filter` | No | Buscar productos por filtros |
+| GET | `/api/products/:id` | No | Obtener producto por ID |
+| POST | `/api/products` | **Si** | Crear producto |
+| PUT | `/api/products/:id` | **Si** | Actualizar producto completo |
+| PATCH | `/api/products/:id` | **Si** | Actualizar producto parcialmente |
+| PATCH | `/api/products/:id/deactivate` | **Si** | Desactivar producto (soft delete) |
+| DELETE | `/api/products/:id` | **Si** | Eliminar producto permanentemente |
 
 ### Pedidos (`/api/orders`)
-| Metodo | Ruta | Descripcion |
-|--------|------|-------------|
-| GET | `/api/orders` | Listar todos los pedidos |
-| GET | `/api/orders/:id` | Obtener pedido por ID |
-| GET | `/api/orders/customer/:customerId` | Pedidos por cliente |
-| GET | `/api/orders/status/:status` | Pedidos por estado |
-| GET | `/api/orders/count/today` | Contar pedidos del dia |
-| POST | `/api/orders` | Crear pedido |
-| PATCH | `/api/orders/:id` | Actualizar pedido parcialmente |
-| PATCH | `/api/orders/:id/status` | Cambiar estado del pedido |
-| PATCH | `/api/orders/:id/total` | Recalcular total del pedido |
-| DELETE | `/api/orders/:id` | Eliminar pedido |
+| Metodo | Ruta | Auth | Descripcion |
+|--------|------|------|-------------|
+| POST | `/api/orders` | No | Crear pedido (usado por el bot) |
+| GET | `/api/orders/:id` | No | Obtener pedido por ID |
+| GET | `/api/orders/customer/:customerId` | No | Pedidos por cliente |
+| GET | `/api/orders` | **Si** | Listar todos los pedidos |
+| GET | `/api/orders/count` | **Si** | Contar pedidos del dia |
+| GET | `/api/orders/status/:statusId` | **Si** | Pedidos por estado |
+| PUT | `/api/orders/:id/total` | **Si** | Actualizar total del pedido |
+| PATCH | `/api/orders/:id/status` | **Si** | Cambiar estado del pedido |
+| PATCH | `/api/orders/:id` | **Si** | Actualizar pedido parcialmente |
+| DELETE | `/api/orders/:id` | **Si** | Eliminar pedido |
 
 ### Items de Pedido (`/api/order-items`)
 | Metodo | Ruta | Descripcion |
@@ -239,27 +334,26 @@ yum-now-api/
 | DELETE | `/api/customers/:id` | Eliminar cliente |
 
 ### Domiciliarios (`/api/couriers`)
-| Metodo | Ruta | Descripcion |
-|--------|------|-------------|
-| GET | `/api/couriers` | Listar domiciliarios |
-| GET | `/api/couriers/available` | Listar disponibles |
-| GET | `/api/couriers/filter` | Filtrar por nombre, telefono, placa |
-| GET | `/api/couriers/:id` | Obtener por ID |
-| POST | `/api/couriers` | Crear domiciliario |
-| PUT | `/api/couriers/:id` | Actualizar completo |
-| PATCH | `/api/couriers/:id` | Actualizar parcialmente |
-| DELETE | `/api/couriers/:id` | Eliminar domiciliario |
+| Metodo | Ruta | Auth | Descripcion |
+|--------|------|------|-------------|
+| GET | `/api/couriers` | No | Listar domiciliarios |
+| GET | `/api/couriers/available` | No | Listar disponibles |
+| GET | `/api/couriers/filter` | No | Filtrar por nombre, telefono, placa |
+| GET | `/api/couriers/:id` | No | Obtener por ID |
+| POST | `/api/couriers` | **Si** | Crear domiciliario |
+| PUT | `/api/couriers/:id` | **Si** | Actualizar completo |
+| PATCH | `/api/couriers/:id` | **Si** | Actualizar parcialmente |
+| DELETE | `/api/couriers/:id` | **Si** | Eliminar domiciliario |
 
 ### Asignacion de Pedidos (`/api/assign-orders`)
-| Metodo | Ruta | Descripcion |
-|--------|------|-------------|
-| GET | `/api/assign-orders` | Listar asignaciones |
-| GET | `/api/assign-orders/:id` | Obtener asignacion por ID |
-| GET | `/api/assign-orders/order/:orderId` | Asignacion por pedido |
-| GET | `/api/assign-orders/courier/:courierId` | Asignaciones por domiciliario |
-| POST | `/api/assign-orders` | Asignar pedido a domiciliario |
-| PUT | `/api/assign-orders/:id` | Reasignar pedido |
-| DELETE | `/api/assign-orders/:id` | Eliminar asignacion |
+| Metodo | Ruta | Auth | Descripcion |
+|--------|------|------|-------------|
+| GET | `/api/assign-orders/courier/:courierId` | No | Pedidos asignados a un repartidor |
+| GET | `/api/assign-orders/order/:orderId` | No | Quien lleva un pedido |
+| GET | `/api/assign-orders` | **Si** | Listar todas las asignaciones |
+| POST | `/api/assign-orders` | **Si** | Asignar pedido a domiciliario |
+| PUT | `/api/assign-orders/:orderId` | **Si** | Reasignar pedido |
+| DELETE | `/api/assign-orders/:orderId` | **Si** | Eliminar asignacion |
 
 ### Direcciones (`/api/addresses`)
 | Metodo | Ruta | Descripcion |
@@ -346,7 +440,9 @@ npm test
 | `DB_NAME` | Nombre de la base de datos | `domicilios_db` |
 | `DB_USER` | Usuario de PostgreSQL | `postgres` |
 | `DB_PASSWORD` | Contrasena de PostgreSQL | - |
-| `JWT_SECRET` | Secret para JWT (no implementado aun) | - |
+| `JWT_SECRET` | Clave secreta para firmar tokens JWT | - |
+| `ADMIN_USERNAME` | Usuario del panel de administracion | `admin` |
+| `ADMIN_PASSWORD` | Contrasena del panel de administracion | - |
 | `TWILIO_ACCOUNT_SID` | SID de Twilio (no implementado aun) | - |
 | `TWILIO_AUTH_TOKEN` | Token de Twilio (no implementado aun) | - |
 | `TWILIO_WHATSAPP_NUMBER` | Numero WhatsApp de Twilio | - |
@@ -358,8 +454,9 @@ npm test
 ## Middlewares de Seguridad
 
 - **Helmet**: Proteccion de headers HTTP contra ataques comunes
-- **CORS**: Control de origenes permitidos (actualmente permite todos)
+- **CORS**: Control de origenes permitidos segun `FRONTEND_URL`
 - **Rate Limiting**: 100 requests por IP cada 15 minutos en rutas `/api/*`
+- **JWT authenticate**: Verifica token Bearer en endpoints de administracion
 - **Body Parsing**: JSON y URL-encoded via Express built-in
 
 ---
@@ -378,7 +475,8 @@ npm test
 - Tracking en mapa en tiempo real
 - Asignacion automatica de domiciliarios
 - Metricas y dashboards avanzados
-- Autenticacion y autorizacion con JWT
+- Refresh tokens y lista negra de tokens expirados
+- Tabla de usuarios para multiples administradores con roles
 
 ---
 

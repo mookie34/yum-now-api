@@ -1,26 +1,17 @@
 const express = require('express');
 const router = express.Router();
 const customerController = require('../controllers/customer-controller');
+const authenticate = require('../middleware/authenticate');
 
-// Create a customer
+// Public - used by WhatsApp bot
 router.post('/', customerController.addCustomer);
-
-// List customers
-router.get('/', customerController.getCustomers);
-
-// Get customer by phone
 router.get('/phone/:phone', customerController.getCustomerByPhone);
-
-// Get customer by ID
 router.get('/:id', customerController.getCustomerById);
 
-// Update a customer
-router.put('/:id', customerController.updateCustomer);
-
-// Partially update a customer
-router.patch('/:id', customerController.updateCustomerPartial);
-
-// Delete a customer
-router.delete('/:id', customerController.deleteCustomer);
+// Admin only - customer management
+router.get('/', authenticate, customerController.getCustomers);
+router.put('/:id', authenticate, customerController.updateCustomer);
+router.patch('/:id', authenticate, customerController.updateCustomerPartial);
+router.delete('/:id', authenticate, customerController.deleteCustomer);
 
 module.exports = router;

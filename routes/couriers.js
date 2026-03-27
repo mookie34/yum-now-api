@@ -1,23 +1,18 @@
 const express = require("express");
 const router = express.Router();
 const courierController = require("../controllers/couriers-controller");
+const authenticate = require("../middleware/authenticate");
 
-// List couriers by filter
+// Public - courier app reads
 router.get("/filter", courierController.getCouriersByFilter);
-// List available couriers
 router.get("/available", courierController.getCouriersAvailable);
-// Create a courier
-router.post("/", courierController.addCourier);
-// List all couriers (with optional pagination)
 router.get("/", courierController.getCouriers);
-
-// Get a courier by ID
 router.get("/:id", courierController.getCourierById);
-// Fully update a courier
-router.put("/:id", courierController.updateCourier);
-// Partially update a courier
-router.patch("/:id", courierController.updateCourierPartial);
-// Delete a courier
-router.delete("/:id", courierController.deleteCourier);
+
+// Admin only - courier management
+router.post("/", authenticate, courierController.addCourier);
+router.put("/:id", authenticate, courierController.updateCourier);
+router.patch("/:id", authenticate, courierController.updateCourierPartial);
+router.delete("/:id", authenticate, courierController.deleteCourier);
 
 module.exports = router;
