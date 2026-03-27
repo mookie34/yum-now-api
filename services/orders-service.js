@@ -2,6 +2,7 @@ const ordersRepository = require("../repositories/orders-repository");
 const customerRepository = require("../repositories/customer-repository");
 const addressRepository = require("../repositories/addresses-repository");
 const { ValidationError, NotFoundError } = require("../errors/custom-errors");
+const { sanitizeForErrorMessage, parsePagination } = require("../utils/sanitize");
 
 class OrdersService {
   validateCustomerId(customer_id) {
@@ -146,18 +147,9 @@ class OrdersService {
   /**
    * Gets all orders with pagination
    */
-  async getAllOrders(limit = 100, offset = 0) {
-    limit = parseInt(limit);
-    offset = parseInt(offset);
-
-    if (isNaN(limit) || limit <= 0) {
-      throw new ValidationError("El límite debe ser un número positivo");
-    }
-    if (isNaN(offset) || offset < 0) {
-      throw new ValidationError("El offset debe ser un número no negativo");
-    }
-
-    return await ordersRepository.getAll(limit, offset);
+  async getAllOrders(limit, offset) {
+    const pagination = parsePagination(limit, offset);
+    return await ordersRepository.getAll(pagination.limit, pagination.offset);
   }
 
   /**
@@ -198,8 +190,9 @@ class OrdersService {
     );
 
     if (invalidFields.length > 0) {
+      const sanitizedFields = invalidFields.map(sanitizeForErrorMessage);
       throw new ValidationError(
-        `Solo se puede actualizar el estado de la orden. Campos no permitidos: ${invalidFields.join(
+        `Solo se puede actualizar el estado de la orden. Campos no permitidos: ${sanitizedFields.join(
           ", "
         )}. Use updateStatusOrder() en su lugar.`
       );
@@ -244,25 +237,17 @@ class OrdersService {
     return await ordersRepository.countForDay();
   }
 
-  async getOrdersByStatus(status_id, limit = 100, offset = 0) {
+  async getOrdersByStatus(status_id, limit, offset) {
     this.validateId(status_id);
 
-    limit = parseInt(limit);
-    offset = parseInt(offset);
-
-    if (isNaN(limit) || limit <= 0) {
-      throw new ValidationError("El límite debe ser un número positivo");
-    }
-    if (isNaN(offset) || offset < 0) {
-      throw new ValidationError("El offset debe ser un número no negativo");
-    }
+    const pagination = parsePagination(limit, offset);
 
     const statusExists = await ordersRepository.orderStatusExists(status_id);
     if (!statusExists) {
       throw new ValidationError("Estado del pedido no válido");
     }
 
-    return await ordersRepository.getByStatus(status_id, limit, offset);
+    return await ordersRepository.getByStatus(status_id, pagination.limit, pagination.offset);
   }
 }
 

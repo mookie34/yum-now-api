@@ -1,5 +1,6 @@
 const {ValidationError, NotFoundError, DuplicateError} = require('../errors/custom-errors');
 const productsRepository = require('../repositories/products-repository');
+const { sanitizeForErrorMessage, parsePagination } = require('../utils/sanitize');
 
 class ProductService{
     validateName(name, isPartial) {
@@ -208,16 +209,15 @@ class ProductService{
         const normalizedData = this.normalizeProductData(name,description,price,is_active);
          const existingProduct = await productsRepository.findByName(normalizedData.name);
         if (existingProduct) {
-            throw new DuplicateError(`Ya existe un producto con el nombre "${normalizedData.name}"`);
+            throw new DuplicateError(`Ya existe un producto con el nombre "${sanitizeForErrorMessage(normalizedData.name)}"`);
         }
 
         return await productsRepository.create(normalizedData);
     };
 
-    async getAllProducts(limit = 100, offset = 0){
-        const validLimit = Math.min(parseInt(limit) || 50, 100);
-        const validOffset = parseInt(offset) || 0;
-        return await productsRepository.getAll(validLimit,validOffset);
+    async getAllProducts(limit, offset){
+        const pagination = parsePagination(limit, offset);
+        return await productsRepository.getAll(pagination.limit, pagination.offset);
     };
 
     async getProductById(id){
@@ -236,7 +236,7 @@ class ProductService{
 
         const product = await productsRepository.findByName(name.trim());
         if (!product) {
-            throw new NotFoundError(`No se encontró un producto con el nombre "${name}"`);
+            throw new NotFoundError(`No se encontró un producto con el nombre "${sanitizeForErrorMessage(name)}"`);
         }
         return product;
     };
@@ -282,7 +282,7 @@ class ProductService{
         if (normalizedData.name && normalizedData.name !== existingProduct.name) {
             const duplicateProduct = await productsRepository.findByName(normalizedData.name);
             if (duplicateProduct) {
-                throw new DuplicateError(`Ya existe un producto con el nombre "${normalizedData.name}"`);
+                throw new DuplicateError(`Ya existe un producto con el nombre "${sanitizeForErrorMessage(normalizedData.name)}"`);
             }
         }
         return await productsRepository.update(id, normalizedData);
@@ -309,7 +309,7 @@ class ProductService{
         if (normalizedData.name && normalizedData.name !== existingProduct.name) {
             const duplicateProduct = await productsRepository.findByName(normalizedData.name);
             if (duplicateProduct) {
-                throw new DuplicateError(`Ya existe un producto con el nombre "${normalizedData.name}"`);
+                throw new DuplicateError(`Ya existe un producto con el nombre "${sanitizeForErrorMessage(normalizedData.name)}"`);
             }
         }
         return await productsRepository.updatePartial(id, normalizedData);

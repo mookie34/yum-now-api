@@ -153,7 +153,7 @@ describe('Order Items API', () => {
             expect(res.statusCode).toEqual(200);
             expect(res.body.length).toBeGreaterThan(0);
             expect(res.body).toEqual(mockOrderItems);
-            expect(ordersItemsService.getAllOrderItems).toHaveBeenCalledWith(100, 0);
+            expect(ordersItemsService.getAllOrderItems).toHaveBeenCalledWith(undefined, undefined);
         });
 
         it('Debería obtener items con paginación personalizada', async () => {
@@ -167,7 +167,7 @@ describe('Order Items API', () => {
 
             expect(res.statusCode).toEqual(200);
             expect(res.body).toEqual(mockOrderItems);
-            expect(ordersItemsService.getAllOrderItems).toHaveBeenCalledWith('10', '10');
+            expect(ordersItemsService.getAllOrderItems).toHaveBeenCalledWith("10", "10");
         });
 
         it('Debería validar limit inválido', async () => {

@@ -1,6 +1,7 @@
 const addressesRepository = require('../repositories/addresses-repository');
 const customerRepository = require('../repositories/customer-repository');
 const {ValidationError, NotFoundError, DuplicateError} = require('../errors/custom-errors');
+const { parsePagination } = require('../utils/sanitize');
 
 class AddressesService {
     validateCustomerId(customer_id, isPartial) {
@@ -116,12 +117,9 @@ class AddressesService {
             return newAddress;
         };
 
-        async getAllAddresses(limit = 100) {
-            limit = parseInt(limit);
-            if (isNaN(limit) || limit <= 0) {
-                throw new ValidationError('El límite debe ser un número positivo');
-            }
-            const addresses = await addressesRepository.getAll(limit);
+        async getAllAddresses(limit) {
+            const pagination = parsePagination(limit, 0);
+            const addresses = await addressesRepository.getAll(pagination.limit);
             return addresses;
         };
 

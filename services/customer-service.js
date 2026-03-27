@@ -1,5 +1,6 @@
 const customerRepository = require('../repositories/customer-repository');
 const {ValidationError, NotFoundError, DuplicateError} = require('../errors/custom-errors');
+const { parsePagination } = require('../utils/sanitize');
 
 // Service class
 class CustomerService {
@@ -81,9 +82,9 @@ class CustomerService {
         }
     };
 
-    async getAllCustomers(limit = 100) {
-        const validLimit = Math.min(parseInt(limit) || 50, 100);
-        return await customerRepository.getAll(validLimit);
+    async getAllCustomers(limit) {
+        const pagination = parsePagination(limit, 0);
+        return await customerRepository.getAll(pagination.limit);
     };
 
     async getCustomerByPhone(phone) {

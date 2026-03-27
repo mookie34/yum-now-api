@@ -1,5 +1,6 @@
 const couriersRepository = require("../repositories/couriers-repository");
 const { ValidationError, NotFoundError } = require("../errors/custom-errors");
+const { parsePagination } = require("../utils/sanitize");
 
 class CouriersService {
   validateName(name, isPartial) {
@@ -88,18 +89,9 @@ class CouriersService {
     return await couriersRepository.create(data);
   }
 
-  async getAllCouriers(limit = 100, offset = 0) {
-    limit = parseInt(limit);
-    offset = parseInt(offset);
-
-    if (isNaN(limit) || limit <= 0) {
-      throw new ValidationError("El límite debe ser un número positivo");
-    }
-    if (isNaN(offset) || offset < 0) {
-      throw new ValidationError("El offset debe ser un número no negativo");
-    }
-
-    return await couriersRepository.getAll(limit, offset);
+  async getAllCouriers(limit, offset) {
+    const pagination = parsePagination(limit, offset);
+    return await couriersRepository.getAll(pagination.limit, pagination.offset);
   }
 
   async getAvailableCouriers() {

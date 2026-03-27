@@ -2,6 +2,7 @@ const ordersItemsRepository = require('../repositories/order-items-repository');
 const productsRepository = require('../repositories/products-repository');
 const ordersRepository = require('../repositories/orders-repository');
 const { ValidationError, NotFoundError } = require('../errors/custom-errors');
+const { parsePagination } = require('../utils/sanitize');
 
 class OrdersItemsService {
 
@@ -70,18 +71,9 @@ class OrdersItemsService {
         });
     }
 
-    async getAllOrderItems(limit = 100, offset = 0) {
-        limit = parseInt(limit);
-        offset = parseInt(offset);
-        
-        if (isNaN(limit) || limit <= 0) {
-            throw new ValidationError("El límite debe ser un número positivo");
-        }
-        if (isNaN(offset) || offset < 0) {
-            throw new ValidationError("El offset debe ser un número no negativo");
-        }
-        
-        return await ordersItemsRepository.getAll(limit, offset);
+    async getAllOrderItems(limit, offset) {
+        const pagination = parsePagination(limit, offset);
+        return await ordersItemsRepository.getAll(pagination.limit, pagination.offset);
     }
 
     async getOrderItemsByOrderId(order_id) {

@@ -32,8 +32,8 @@ const getAllOrderItems = async (req, res) => {
         const { limit, offset } = req.query;
 
         const orderItems = await ordersItemsService.getAllOrderItems(
-            limit || 100,
-            offset || 0
+            limit,
+            offset
         );
 
         res.status(200).json(orderItems);
