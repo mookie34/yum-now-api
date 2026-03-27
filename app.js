@@ -13,6 +13,7 @@ const assignOrdersRouter = require('./routes/assign-orders');
 const addressesRouter = require('./routes/addresses');
 const customerPreferencesRouter = require('./routes/customer-preferences');
 const authRouter = require('./routes/auth');
+const paymentsRouter = require('./routes/payments');
 
 const app = express();
 // ============================================
@@ -51,6 +52,7 @@ app.use('/api/couriers', couriersRouter);
 app.use('/api/assign-orders', assignOrdersRouter);
 app.use('/api/addresses', addressesRouter);
 app.use('/api/customer-preferences', customerPreferencesRouter);
+app.use('/api/payments', paymentsRouter);
 
 // ============================================
 // HEALTH CHECK
