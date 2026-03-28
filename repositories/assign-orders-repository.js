@@ -17,20 +17,20 @@ const BASE_ASSIGNMENT_QUERY = `
     cust.name AS customer_name,
     cust.phone AS customer_phone,
     addr.address_text AS delivery_address
-  FROM YuNowDataBase.assignment_order ao
-  INNER JOIN YuNowDataBase.couriers c ON ao.courier_id = c.id
-  INNER JOIN YuNowDataBase.orders o ON ao.order_id = o.id
-  LEFT JOIN YuNowDataBase.order_statuses os ON o.status_id = os.id
-  LEFT JOIN YuNowDataBase.payment_methods pm ON o.payment_method_id = pm.id
-  LEFT JOIN YuNowDataBase.customers cust ON o.customer_id = cust.id
-  LEFT JOIN YuNowDataBase.addresses addr ON o.address_id = addr.id
+  FROM yunowdatabase.assignment_order ao
+  INNER JOIN yunowdatabase.couriers c ON ao.courier_id = c.id
+  INNER JOIN yunowdatabase.orders o ON ao.order_id = o.id
+  LEFT JOIN yunowdatabase.order_statuses os ON o.status_id = os.id
+  LEFT JOIN yunowdatabase.payment_methods pm ON o.payment_method_id = pm.id
+  LEFT JOIN yunowdatabase.customers cust ON o.customer_id = cust.id
+  LEFT JOIN yunowdatabase.addresses addr ON o.address_id = addr.id
 `;
 
 class AssignOrdersRepository {
   constructor() {
-    this.tableName = "YuNowDataBase.assignment_order";
-    this.ordersTable = "YuNowDataBase.orders";
-    this.couriersTable = "YuNowDataBase.couriers";
+    this.tableName = "yunowdatabase.assignment_order";
+    this.ordersTable = "yunowdatabase.orders";
+    this.couriersTable = "yunowdatabase.couriers";
   }
 
   /**
@@ -163,7 +163,7 @@ class AssignOrdersRepository {
       INNER JOIN ${this.ordersTable} o ON ao.order_id = o.id
       WHERE ao.courier_id = $1
       AND o.status_id NOT IN (
-        SELECT id FROM YuNowDataBase.order_statuses
+        SELECT id FROM yunowdatabase.order_statuses
         WHERE name IN ('DELIVERED', 'CANCELLED')
       )
     `;

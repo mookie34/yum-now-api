@@ -2,7 +2,7 @@ const db = require("../db");
 
 class CouriersRepository {
   constructor() {
-    this.tableName = "YuNowDataBase.couriers";
+    this.tableName = "yunowdatabase.couriers";
   }
 
   async create(courierData) {

@@ -1,7 +1,7 @@
 const db = require('../db');
 class ProductRepository{
     constructor() {
-        this.tableName = 'YuNowDataBase.products';
+        this.tableName = 'yunowdatabase.products';
     }
 
     async create(productData){

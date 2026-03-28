@@ -3,7 +3,7 @@ class CustomerRepository {
     async create(customerData) {
         const { name, email, phone } = customerData;
         const result = await db.query(
-              'INSERT INTO YuNowDataBase.customers (name, phone, email) VALUES ($1, $2, $3) RETURNING *',
+              'INSERT INTO yunowdatabase.customers (name, phone, email) VALUES ($1, $2, $3) RETURNING *',
               [name, phone, email]
             );
         return result.rows[0];
@@ -11,7 +11,7 @@ class CustomerRepository {
 
     async getAll(limit = 100, offset = 0) {
         const result = await db.query(
-            'SELECT id, name, phone, email, created_at FROM YuNowDataBase.customers ORDER BY id ASC LIMIT $1 OFFSET $2',
+            'SELECT id, name, phone, email, created_at FROM yunowdatabase.customers ORDER BY id ASC LIMIT $1 OFFSET $2',
             [limit, offset]
         );
         return result.rows;
@@ -20,7 +20,7 @@ class CustomerRepository {
     async getByPhone(phone) {
         const sanitizedPhone = phone.replace(/[\s\-\(\)\+]/g, '');
         const result = await db.query(
-              'SELECT id, name, phone, email, created_at FROM YuNowDataBase.customers WHERE REGEXP_REPLACE(phone, \'[\\s\\-\\(\\)\\+]\', \'\', \'g\') LIKE $1',
+              'SELECT id, name, phone, email, created_at FROM yunowdatabase.customers WHERE REGEXP_REPLACE(phone, \'[\\s\\-\\(\\)\\+]\', \'\', \'g\') LIKE $1',
                [`%${sanitizedPhone}%`]
             );
 
@@ -29,7 +29,7 @@ class CustomerRepository {
 
     async getById(id) {
         const result = await db.query(
-              'SELECT id, name, phone, email, created_at FROM YuNowDataBase.customers WHERE id = $1',
+              'SELECT id, name, phone, email, created_at FROM yunowdatabase.customers WHERE id = $1',
               [id]
             );
 
@@ -43,7 +43,7 @@ class CustomerRepository {
           : null;
 
         const result = await db.query(
-          'UPDATE YuNowDataBase.customers SET name = $1, phone = $2, email = $3 WHERE id = $4 RETURNING *',
+          'UPDATE yunowdatabase.customers SET name = $1, phone = $2, email = $3 WHERE id = $4 RETURNING *',
           [name, phone, emailValue,id]
         );
         return result.rows[0];
@@ -63,7 +63,7 @@ class CustomerRepository {
         values.push(id);
 
         const result = await db.query(
-          `UPDATE YuNowDataBase.customers SET ${fields.join(', ')} WHERE id = $${index} RETURNING *`,
+          `UPDATE yunowdatabase.customers SET ${fields.join(', ')} WHERE id = $${index} RETURNING *`,
           values
         );
         return result.rows[0];
@@ -71,7 +71,7 @@ class CustomerRepository {
 
     async deleteById(id) {
         const result = await db.query(
-            'DELETE FROM YuNowDataBase.customers WHERE id = $1 RETURNING *', 
+            'DELETE FROM yunowdatabase.customers WHERE id = $1 RETURNING *', 
             [id]
         );
         return result.rows[0];

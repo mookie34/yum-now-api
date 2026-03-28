@@ -3,44 +3,44 @@ class AddressesRepository {
   async create(addressData) {
     const { customer_id,  label, address_text, reference, latitude, longitude,is_primary } = addressData;
     const result = await db.query(
-        'INSERT INTO YuNowDataBase.addresses (customer_id,label, address_text, reference,latitude,longitude,is_primary) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *',
+        'INSERT INTO yunowdatabase.addresses (customer_id,label, address_text, reference,latitude,longitude,is_primary) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *',
         [customer_id, label, address_text, reference, latitude, longitude,is_primary]
     );
     return result.rows[0];
   };
 
     async getAll(limit = 100, offset = 0) {
-        const result = await db.query('SELECT * FROM YuNowDataBase.addresses ORDER BY id ASC LIMIT $1 OFFSET $2', [limit, offset]);
+        const result = await db.query('SELECT * FROM yunowdatabase.addresses ORDER BY id ASC LIMIT $1 OFFSET $2', [limit, offset]);
         return result.rows;
     };
 
     async getByCustomerId(customer_id) {
-        const result = await db.query('SELECT * FROM YuNowDataBase.addresses WHERE customer_id = $1', [customer_id]);
+        const result = await db.query('SELECT * FROM yunowdatabase.addresses WHERE customer_id = $1', [customer_id]);
         return result.rows;
     };
 
     async getPrimaryByCustomerId(customer_id) {
-        const result = await db.query('SELECT * FROM YuNowDataBase.addresses WHERE customer_id = $1 AND is_primary = TRUE', [customer_id]);
+        const result = await db.query('SELECT * FROM yunowdatabase.addresses WHERE customer_id = $1 AND is_primary = TRUE', [customer_id]);
         return result.rows[0] || null;
     };
 
     async getById(id) {
-        const result = await db.query('SELECT * FROM YuNowDataBase.addresses WHERE id = $1', [id]);
+        const result = await db.query('SELECT * FROM yunowdatabase.addresses WHERE id = $1', [id]);
         return result.rows[0] || null;
     }
 
     async deleteById(id) {
-        const result = await db.query('DELETE FROM YuNowDataBase.addresses WHERE id = $1 RETURNING *', [id]);
+        const result = await db.query('DELETE FROM yunowdatabase.addresses WHERE id = $1 RETURNING *', [id]);
         return result.rows[0] || null;
     };
 
     async isPrimaryAddress(id) {
-        const result = await db.query('SELECT is_primary FROM YuNowDataBase.addresses WHERE id = $1', [id]);
+        const result = await db.query('SELECT is_primary FROM yunowdatabase.addresses WHERE id = $1', [id]);
         return result.rows[0] ? result.rows[0].is_primary : null;
     };
 
     async unsetPrimaryAddresses(customer_id) {
-        await db.query('UPDATE YuNowDataBase.addresses SET is_primary = FALSE WHERE customer_id = $1 AND is_primary = TRUE', [customer_id]);
+        await db.query('UPDATE yunowdatabase.addresses SET is_primary = FALSE WHERE customer_id = $1 AND is_primary = TRUE', [customer_id]);
     };
 
     async updatePartial(id, addressData) {
@@ -56,7 +56,7 @@ class AddressesRepository {
         }
         values.push(id);
         const result = await db.query(
-            `UPDATE YuNowDataBase.addresses SET ${fields.join(', ')} WHERE id = $${index} RETURNING *`,
+            `UPDATE yunowdatabase.addresses SET ${fields.join(', ')} WHERE id = $${index} RETURNING *`,
             values
         );
         return result.rows[0] || null;
@@ -65,7 +65,7 @@ class AddressesRepository {
     async update(id, addressData) {
         const { customer_id,  label, address_text, reference, latitude, longitude,is_primary } = addressData;
         const result = await db.query(
-            'UPDATE YuNowDataBase.addresses SET customer_id = $1, label = $2, address_text = $3, reference = $4, latitude = $5, longitude = $6, is_primary = $7 WHERE id = $8 RETURNING *',
+            'UPDATE yunowdatabase.addresses SET customer_id = $1, label = $2, address_text = $3, reference = $4, latitude = $5, longitude = $6, is_primary = $7 WHERE id = $8 RETURNING *',
             [customer_id, label, address_text, reference, latitude, longitude,is_primary, id]
         );
         return result.rows[0] || null;

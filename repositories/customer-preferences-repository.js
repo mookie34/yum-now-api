@@ -2,8 +2,8 @@ const db = require("../db");
 
 class CustomerPreferencesRepository {
   constructor() {
-    this.tableName = "YuNowDataBase.customer_preferences";
-    this.customersTable = "YuNowDataBase.customers";
+    this.tableName = "yunowdatabase.customer_preferences";
+    this.customersTable = "yunowdatabase.customers";
   }
 
   async findCustomerById(customerId) {
