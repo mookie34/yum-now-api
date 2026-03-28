@@ -13,7 +13,7 @@ y esta disenada para integrarse con una **aplicacion web en Angular** para admin
 - **API REST completa** con CRUD para todos los recursos del dominio
 - **Arquitectura en capas** (Routes -> Controllers -> Services -> Repositories)
 - **Base de datos PostgreSQL** con pool de conexiones (max 20)
-- **Tests de integracion** con Jest y Supertest (8 archivos de test)
+- **Tests de integracion** con Jest y Supertest (9 archivos de test)
 - **Seguridad** con Helmet, CORS y Rate Limiting (100 req/15min)
 - **Autenticacion JWT** para proteger los endpoints de administracion (login, token Bearer)
 - **Manejo de errores** centralizado con clases personalizadas (ValidationError, NotFoundError, DuplicateError, BusinessRuleError, UnauthorizedError)
@@ -138,6 +138,7 @@ yum-now-api/
 │   ├── customers.js
 │   ├── order-items.js
 │   ├── orders.js
+│   ├── payments.js
 │   └── products.js
 │
 ├── controllers/              # Manejo de requests/responses HTTP
@@ -149,6 +150,7 @@ yum-now-api/
 │   ├── customer-preferences-controller.js
 │   ├── order-items-controller.js
 │   ├── orders-controller.js
+│   ├── payments-controller.js
 │   └── products-controller.js
 │
 ├── services/                 # Logica de negocio y validacion
@@ -160,6 +162,7 @@ yum-now-api/
 │   ├── customer-preferences-service.js
 │   ├── orders-items-service.js
 │   ├── orders-service.js
+│   ├── payments-service.js
 │   └── product-service.js
 │
 ├── repositories/             # Capa de persistencia (queries SQL)
@@ -170,10 +173,14 @@ yum-now-api/
 │   ├── customer-preferences-repository.js
 │   ├── order-items-repository.js
 │   ├── orders-repository.js
+│   ├── payments-repository.js
 │   └── products-repository.js
 │
 ├── middleware/               # Middlewares personalizados
 │   └── authenticate.js       # Verificacion de token JWT
+│
+├── utils/                    # Utilidades compartidas
+│   └── sanitize.js           # Sanitizacion de inputs y parseo de paginacion
 │
 ├── errors/                   # Clases de error personalizadas
 │   └── custom-errors.js
@@ -188,6 +195,7 @@ yum-now-api/
 │   ├── customers.test.js
 │   ├── orderItems.test.js
 │   ├── orders.test.js
+│   ├── payments.test.js
 │   └── products.test.js
 │
 ├── .env.example              # Plantilla de variables de entorno
@@ -377,6 +385,17 @@ ADMIN_PASSWORD=tu-password-seguro
 | PUT | `/api/customer-preferences/:id` | Actualizar preferencia |
 | DELETE | `/api/customer-preferences/:id` | Eliminar preferencia |
 
+### Pagos (`/api/payments`)
+| Metodo | Ruta | Auth | Descripcion |
+|--------|------|------|-------------|
+| POST | `/api/payments` | No | Registrar pago (usado por el bot) |
+| PATCH | `/api/payments/order/:order_id/receipt` | No | Actualizar comprobante de pago |
+| GET | `/api/payments` | **Si** | Listar todos los pagos (paginacion: ?limit=&offset=) |
+| GET | `/api/payments/status/:status` | **Si** | Pagos por estado (pending, verified, rejected) |
+| GET | `/api/payments/order/:order_id` | **Si** | Obtener pago por ID de orden |
+| PATCH | `/api/payments/order/:order_id/verify` | **Si** | Verificar o rechazar un pago |
+| PATCH | `/api/payments/order/:order_id/amount` | **Si** | Actualizar monto reportado |
+
 ### Health Check
 | Metodo | Ruta | Descripcion |
 |--------|------|-------------|
@@ -458,6 +477,7 @@ npm test
 - **Rate Limiting**: 100 requests por IP cada 15 minutos en rutas `/api/*`
 - **JWT authenticate**: Verifica token Bearer en endpoints de administracion
 - **Body Parsing**: JSON y URL-encoded via Express built-in
+- **Sanitizacion de inputs**: Limpieza de caracteres especiales en mensajes de error y validacion de parametros de paginacion (`utils/sanitize.js`)
 
 ---
 
