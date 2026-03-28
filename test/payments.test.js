@@ -13,7 +13,7 @@ describe("Payments Controller Tests", () => {
   // POST /api/payments
   // ============================================
   describe("POST /api/payments", () => {
-    it("Deberia crear un pago digital exitosamente", async () => {
+    it("should create a digital payment successfully", async () => {
       paymentsRepository.getOrderWithPaymentMethod.mockResolvedValue({
         id: 1,
         total: 25000,
@@ -46,7 +46,7 @@ describe("Payments Controller Tests", () => {
       );
     });
 
-    it("Deberia crear un pago digital sin URL de comprobante", async () => {
+    it("should create a digital payment without receipt URL", async () => {
       paymentsRepository.getOrderWithPaymentMethod.mockResolvedValue({
         id: 1,
         total: 25000,
@@ -69,7 +69,7 @@ describe("Payments Controller Tests", () => {
       expect(paymentsRepository.create).toHaveBeenCalledWith({ order_id: 1 });
     });
 
-    it("Deberia crear un pago en efectivo y calcular el cambio", async () => {
+    it("should create a cash payment and calculate change", async () => {
       paymentsRepository.getOrderWithPaymentMethod.mockResolvedValue({
         id: 2,
         total: 18000,
@@ -100,7 +100,7 @@ describe("Payments Controller Tests", () => {
       );
     });
 
-    it("Deberia crear un pago en efectivo sin cash_given", async () => {
+    it("should create a cash payment without cash_given", async () => {
       paymentsRepository.getOrderWithPaymentMethod.mockResolvedValue({
         id: 2,
         total: 18000,
@@ -122,7 +122,7 @@ describe("Payments Controller Tests", () => {
       expect(paymentsRepository.create).toHaveBeenCalledWith({ order_id: 2 });
     });
 
-    it("Deberia devolver error cuando order_id es invalido", async () => {
+    it("should return error when order_id is invalid", async () => {
       const res = await request(app).post("/api/payments").send({
         order_id: "abc",
       });
@@ -132,14 +132,14 @@ describe("Payments Controller Tests", () => {
       expect(paymentsRepository.create).not.toHaveBeenCalled();
     });
 
-    it("Deberia devolver error cuando falta order_id", async () => {
+    it("should return error when order_id is missing", async () => {
       const res = await request(app).post("/api/payments").send({});
 
       expect(res.status).toBe(400);
       expect(res.body.error).toContain("order_id invalido");
     });
 
-    it("Deberia devolver 404 cuando la orden no existe", async () => {
+    it("should return 404 when order does not exist", async () => {
       paymentsRepository.getOrderWithPaymentMethod.mockResolvedValue(null);
 
       const res = await request(app).post("/api/payments").send({
@@ -150,7 +150,7 @@ describe("Payments Controller Tests", () => {
       expect(res.body.error).toContain("Orden no encontrada");
     });
 
-    it("Deberia devolver 409 cuando ya existe un pago para la orden", async () => {
+    it("should return 409 when payment already exists for order", async () => {
       paymentsRepository.getOrderWithPaymentMethod.mockResolvedValue({
         id: 1,
         total: 25000,
@@ -172,7 +172,7 @@ describe("Payments Controller Tests", () => {
       expect(paymentsRepository.create).not.toHaveBeenCalled();
     });
 
-    it("Deberia devolver error cuando cash_given es negativo en pago efectivo", async () => {
+    it("should return error when cash_given is negative for cash payment", async () => {
       paymentsRepository.getOrderWithPaymentMethod.mockResolvedValue({
         id: 1,
         total: 18000,
@@ -190,7 +190,7 @@ describe("Payments Controller Tests", () => {
       expect(res.body.error).toContain("cash_given debe ser un numero valido");
     });
 
-    it("Deberia manejar error de base de datos al crear", async () => {
+    it("should handle database errors on create", async () => {
       paymentsRepository.getOrderWithPaymentMethod.mockResolvedValue({
         id: 1,
         total: 25000,
@@ -213,7 +213,7 @@ describe("Payments Controller Tests", () => {
   // GET /api/payments
   // ============================================
   describe("GET /api/payments", () => {
-    it("Deberia traer todos los pagos", async () => {
+    it("should fetch all payments", async () => {
       const mockPayments = [
         { id: 1, order_id: 1, status: "pending" },
         { id: 2, order_id: 2, status: "verified" },
@@ -227,7 +227,7 @@ describe("Payments Controller Tests", () => {
       expect(paymentsRepository.getAll).toHaveBeenCalledWith(100, 0);
     });
 
-    it("Deberia traer pagos con paginacion", async () => {
+    it("should fetch payments with pagination", async () => {
       paymentsRepository.getAll.mockResolvedValue([]);
 
       const res = await request(app).get("/api/payments?limit=10&offset=5");
@@ -236,14 +236,14 @@ describe("Payments Controller Tests", () => {
       expect(paymentsRepository.getAll).toHaveBeenCalledWith(10, 5);
     });
 
-    it("Deberia devolver error con limite invalido", async () => {
+    it("should return error with invalid limit", async () => {
       const res = await request(app).get("/api/payments?limit=-5");
 
       expect(res.status).toBe(400);
       expect(res.body.error).toContain("límite");
     });
 
-    it("Deberia manejar error de base de datos", async () => {
+    it("should handle database errors", async () => {
       paymentsRepository.getAll.mockRejectedValue(new Error("DB error"));
 
       const res = await request(app).get("/api/payments");
@@ -257,7 +257,7 @@ describe("Payments Controller Tests", () => {
   // GET /api/payments/status/:status
   // ============================================
   describe("GET /api/payments/status/:status", () => {
-    it("Deberia traer pagos por estado pending", async () => {
+    it("should fetch payments by pending status", async () => {
       const mockPayments = [
         { id: 1, order_id: 1, status: "pending" },
         { id: 3, order_id: 3, status: "pending" },
@@ -271,7 +271,7 @@ describe("Payments Controller Tests", () => {
       expect(paymentsRepository.getByStatus).toHaveBeenCalledWith("pending", 100, 0);
     });
 
-    it("Deberia traer pagos por estado verified", async () => {
+    it("should fetch payments by verified status", async () => {
       paymentsRepository.getByStatus.mockResolvedValue([]);
 
       const res = await request(app).get("/api/payments/status/verified");
@@ -280,7 +280,7 @@ describe("Payments Controller Tests", () => {
       expect(paymentsRepository.getByStatus).toHaveBeenCalledWith("verified", 100, 0);
     });
 
-    it("Deberia traer pagos por estado con paginacion", async () => {
+    it("should fetch payments by status with pagination", async () => {
       paymentsRepository.getByStatus.mockResolvedValue([]);
 
       const res = await request(app).get(
@@ -291,14 +291,14 @@ describe("Payments Controller Tests", () => {
       expect(paymentsRepository.getByStatus).toHaveBeenCalledWith("pending", 20, 10);
     });
 
-    it("Deberia devolver error con estado invalido", async () => {
+    it("should return error with invalid status", async () => {
       const res = await request(app).get("/api/payments/status/invalid_status");
 
       expect(res.status).toBe(400);
       expect(res.body.error).toContain("Estado invalido");
     });
 
-    it("Deberia manejar error de base de datos", async () => {
+    it("should handle database errors", async () => {
       paymentsRepository.getByStatus.mockRejectedValue(new Error("DB error"));
 
       const res = await request(app).get("/api/payments/status/pending");
@@ -312,7 +312,7 @@ describe("Payments Controller Tests", () => {
   // GET /api/payments/order/:order_id
   // ============================================
   describe("GET /api/payments/order/:order_id", () => {
-    it("Deberia traer el pago de una orden", async () => {
+    it("should fetch payment for an order", async () => {
       paymentsRepository.getByOrderId.mockResolvedValue({
         id: 1,
         order_id: 1,
@@ -329,7 +329,7 @@ describe("Payments Controller Tests", () => {
       expect(paymentsRepository.getByOrderId).toHaveBeenCalledWith("1");
     });
 
-    it("Deberia devolver 404 cuando no existe pago para la orden", async () => {
+    it("should return 404 when no payment exists for order", async () => {
       paymentsRepository.getByOrderId.mockResolvedValue(null);
 
       const res = await request(app).get("/api/payments/order/999");
@@ -338,14 +338,14 @@ describe("Payments Controller Tests", () => {
       expect(res.body.error).toContain("Pago no encontrado para esta orden");
     });
 
-    it("Deberia devolver error con order_id invalido", async () => {
+    it("should return error with invalid order_id", async () => {
       const res = await request(app).get("/api/payments/order/abc");
 
       expect(res.status).toBe(400);
       expect(res.body.error).toContain("order_id invalido");
     });
 
-    it("Deberia manejar error de base de datos", async () => {
+    it("should handle database errors", async () => {
       paymentsRepository.getByOrderId.mockRejectedValue(new Error("DB error"));
 
       const res = await request(app).get("/api/payments/order/1");
@@ -359,7 +359,7 @@ describe("Payments Controller Tests", () => {
   // PATCH /api/payments/order/:order_id/verify
   // ============================================
   describe("PATCH /api/payments/order/:order_id/verify", () => {
-    it("Deberia verificar un pago exitosamente", async () => {
+    it("should verify a payment successfully", async () => {
       paymentsRepository.getByOrderId.mockResolvedValue({
         id: 1,
         order_id: 1,
@@ -387,7 +387,7 @@ describe("Payments Controller Tests", () => {
       });
     });
 
-    it("Deberia rechazar un pago exitosamente", async () => {
+    it("should reject a payment successfully", async () => {
       paymentsRepository.getByOrderId.mockResolvedValue({
         id: 1,
         order_id: 1,
@@ -415,7 +415,7 @@ describe("Payments Controller Tests", () => {
       expect(res.body.payment).toHaveProperty("admin_notes", "Comprobante ilegible");
     });
 
-    it("Deberia devolver error cuando el pago no esta pendiente", async () => {
+    it("should return error when payment is not pending", async () => {
       paymentsRepository.getByOrderId.mockResolvedValue({
         id: 1,
         order_id: 1,
@@ -431,7 +431,7 @@ describe("Payments Controller Tests", () => {
       expect(paymentsRepository.verify).not.toHaveBeenCalled();
     });
 
-    it("Deberia devolver 404 cuando no existe el pago", async () => {
+    it("should return 404 when payment does not exist", async () => {
       paymentsRepository.getByOrderId.mockResolvedValue(null);
 
       const res = await request(app)
@@ -442,7 +442,7 @@ describe("Payments Controller Tests", () => {
       expect(res.body.error).toContain("Pago no encontrado para esta orden");
     });
 
-    it("Deberia devolver error cuando falta verified_by", async () => {
+    it("should return error when verified_by is missing", async () => {
       const res = await request(app)
         .patch("/api/payments/order/1/verify")
         .send({ status: "verified" });
@@ -451,7 +451,7 @@ describe("Payments Controller Tests", () => {
       expect(res.body.error).toContain("verified_by es obligatorio");
     });
 
-    it("Deberia devolver error cuando status de verificacion es invalido", async () => {
+    it("should return error when verification status is invalid", async () => {
       const res = await request(app)
         .patch("/api/payments/order/1/verify")
         .send({ verified_by: "admin", status: "pending" });
@@ -460,7 +460,7 @@ describe("Payments Controller Tests", () => {
       expect(res.body.error).toContain("El estado de verificacion debe ser");
     });
 
-    it("Deberia devolver error con order_id invalido", async () => {
+    it("should return error with invalid order_id", async () => {
       const res = await request(app)
         .patch("/api/payments/order/abc/verify")
         .send({ verified_by: "admin", status: "verified" });
@@ -469,7 +469,7 @@ describe("Payments Controller Tests", () => {
       expect(res.body.error).toContain("order_id invalido");
     });
 
-    it("Deberia manejar error de base de datos", async () => {
+    it("should handle database errors", async () => {
       paymentsRepository.getByOrderId.mockResolvedValue({
         id: 1,
         order_id: 1,
@@ -490,7 +490,7 @@ describe("Payments Controller Tests", () => {
   // PATCH /api/payments/order/:order_id/receipt
   // ============================================
   describe("PATCH /api/payments/order/:order_id/receipt", () => {
-    it("Deberia actualizar la imagen del comprobante exitosamente", async () => {
+    it("should update receipt image successfully", async () => {
       paymentsRepository.getByOrderId.mockResolvedValue({
         id: 1,
         order_id: 1,
@@ -515,7 +515,7 @@ describe("Payments Controller Tests", () => {
       );
     });
 
-    it("Deberia devolver error cuando el pago no esta pendiente", async () => {
+    it("should return error when payment is not pending", async () => {
       paymentsRepository.getByOrderId.mockResolvedValue({
         id: 1,
         order_id: 1,
@@ -533,7 +533,7 @@ describe("Payments Controller Tests", () => {
       expect(paymentsRepository.updateReceiptImage).not.toHaveBeenCalled();
     });
 
-    it("Deberia devolver 404 cuando no existe el pago", async () => {
+    it("should return 404 when payment does not exist", async () => {
       paymentsRepository.getByOrderId.mockResolvedValue(null);
 
       const res = await request(app)
@@ -544,7 +544,7 @@ describe("Payments Controller Tests", () => {
       expect(res.body.error).toContain("Pago no encontrado para esta orden");
     });
 
-    it("Deberia devolver error cuando falta receipt_image_url", async () => {
+    it("should return error when receipt_image_url is missing", async () => {
       const res = await request(app)
         .patch("/api/payments/order/1/receipt")
         .send({});
@@ -553,7 +553,7 @@ describe("Payments Controller Tests", () => {
       expect(res.body.error).toContain("La URL del comprobante es obligatoria");
     });
 
-    it("Deberia devolver error cuando receipt_image_url excede 500 caracteres", async () => {
+    it("should return error when receipt_image_url exceeds 500 characters", async () => {
       const longUrl = "https://example.com/" + "a".repeat(500);
 
       const res = await request(app)
@@ -564,7 +564,7 @@ describe("Payments Controller Tests", () => {
       expect(res.body.error).toContain("no puede exceder 500 caracteres");
     });
 
-    it("Deberia devolver error con order_id invalido", async () => {
+    it("should return error with invalid order_id", async () => {
       const res = await request(app)
         .patch("/api/payments/order/abc/receipt")
         .send({ receipt_image_url: "https://example.com/receipt.jpg" });
@@ -573,7 +573,7 @@ describe("Payments Controller Tests", () => {
       expect(res.body.error).toContain("order_id invalido");
     });
 
-    it("Deberia manejar error de base de datos", async () => {
+    it("should handle database errors", async () => {
       paymentsRepository.getByOrderId.mockResolvedValue({
         id: 1,
         order_id: 1,
@@ -596,7 +596,7 @@ describe("Payments Controller Tests", () => {
   // PATCH /api/payments/order/:order_id/amount
   // ============================================
   describe("PATCH /api/payments/order/:order_id/amount", () => {
-    it("Deberia actualizar el monto reportado exitosamente", async () => {
+    it("should update reported amount successfully", async () => {
       paymentsRepository.getByOrderId.mockResolvedValue({
         id: 1,
         order_id: 1,
@@ -621,7 +621,7 @@ describe("Payments Controller Tests", () => {
       expect(res.body.payment).toHaveProperty("amount_reported", 25000);
     });
 
-    it("Deberia devolver error cuando el pago no esta pendiente", async () => {
+    it("should return error when payment is not pending", async () => {
       paymentsRepository.getByOrderId.mockResolvedValue({
         id: 1,
         order_id: 1,
@@ -639,7 +639,7 @@ describe("Payments Controller Tests", () => {
       expect(paymentsRepository.updateAmountReported).not.toHaveBeenCalled();
     });
 
-    it("Deberia devolver 404 cuando no existe el pago", async () => {
+    it("should return 404 when payment does not exist", async () => {
       paymentsRepository.getByOrderId.mockResolvedValue(null);
 
       const res = await request(app)
@@ -650,7 +650,7 @@ describe("Payments Controller Tests", () => {
       expect(res.body.error).toContain("Pago no encontrado para esta orden");
     });
 
-    it("Deberia devolver error cuando falta amount_reported", async () => {
+    it("should return error when amount_reported is missing", async () => {
       const res = await request(app)
         .patch("/api/payments/order/1/amount")
         .send({});
@@ -659,7 +659,7 @@ describe("Payments Controller Tests", () => {
       expect(res.body.error).toContain("El monto reportado es obligatorio");
     });
 
-    it("Deberia devolver error cuando amount_reported es negativo", async () => {
+    it("should return error when amount_reported is negative", async () => {
       const res = await request(app)
         .patch("/api/payments/order/1/amount")
         .send({ amount_reported: -100 });
@@ -668,7 +668,7 @@ describe("Payments Controller Tests", () => {
       expect(res.body.error).toContain("numero valido no negativo");
     });
 
-    it("Deberia devolver error con order_id invalido", async () => {
+    it("should return error with invalid order_id", async () => {
       const res = await request(app)
         .patch("/api/payments/order/abc/amount")
         .send({ amount_reported: 25000 });
@@ -677,7 +677,7 @@ describe("Payments Controller Tests", () => {
       expect(res.body.error).toContain("order_id invalido");
     });
 
-    it("Deberia manejar error de base de datos", async () => {
+    it("should handle database errors", async () => {
       paymentsRepository.getByOrderId.mockResolvedValue({
         id: 1,
         order_id: 1,

@@ -9,7 +9,7 @@ describe("POST /api/products", () => {
     jest.clearAllMocks();
   });
 
-  it("Debe crear un producto válido", async () => {
+  it("should create a valid product", async () => {
     const mockProduct = {
       id: 1,
       name: "Producto 1",
@@ -33,7 +33,7 @@ describe("POST /api/products", () => {
     expect(res.body.product.price).toBe(100.5);
   });
 
-  it("Debe fallar si falta el nombre", async () => {
+  it("should fail if name is missing", async () => {
     const { ValidationError } = require("../errors/custom-errors");
 
     productService.addProduct.mockRejectedValueOnce(
@@ -49,7 +49,7 @@ describe("POST /api/products", () => {
     expect(res.body.error).toContain("nombre es requerido");
   });
 
-  it("Debe fallar si falta el precio", async () => {
+  it("should fail if price is missing", async () => {
     const { ValidationError } = require("../errors/custom-errors");
 
     productService.addProduct.mockRejectedValueOnce(
@@ -65,7 +65,7 @@ describe("POST /api/products", () => {
     expect(res.body.error).toContain("precio es requerido");
   });
 
-  it("Debe fallar si el precio es negativo", async () => {
+  it("should fail if price is negative", async () => {
     const { ValidationError } = require("../errors/custom-errors");
 
     productService.addProduct.mockRejectedValueOnce(
@@ -82,7 +82,7 @@ describe("POST /api/products", () => {
     expect(res.body.error).toContain("precio no puede ser negativo");
   });
 
-  it("Debe fallar si el nombre es muy corto", async () => {
+  it("should fail if name is too short", async () => {
     const { ValidationError } = require("../errors/custom-errors");
 
     productService.addProduct.mockRejectedValueOnce(
@@ -99,7 +99,7 @@ describe("POST /api/products", () => {
     expect(res.body.error).toContain("nombre debe tener mínimo 2 caracteres");
   });
 
-  it("Debe fallar si el producto ya existe", async () => {
+  it("should fail if product already exists", async () => {
     const { DuplicateError } = require("../errors/custom-errors");
 
     productService.addProduct.mockRejectedValueOnce(
@@ -116,7 +116,7 @@ describe("POST /api/products", () => {
     expect(res.body.error).toContain("Ya existe un producto");
   });
 
-  it("Debe manejar errores de base de datos", async () => {
+  it("should handle database errors", async () => {
     productService.addProduct.mockRejectedValueOnce(new Error("DB error"));
 
     const res = await request(app).post("/api/products").send({
@@ -135,7 +135,7 @@ describe("GET /api/products", () => {
     jest.clearAllMocks();
   });
 
-  it("Debe obtener todos los productos", async () => {
+  it("should get all products", async () => {
     const mockProducts = [
       {
         id: 1,
@@ -162,7 +162,7 @@ describe("GET /api/products", () => {
     expect(res.body[0].name).toBe("Producto 1");
   });
 
-  it("Debe obtener productos con limit y offset", async () => {
+  it("should get products with limit and offset", async () => {
     const mockProducts = [
       {
         id: 1,
@@ -183,7 +183,7 @@ describe("GET /api/products", () => {
     expect(productService.getAllProducts).toHaveBeenCalledWith("10", "0");
   });
 
-  it("Debe manejar errores al obtener productos", async () => {
+  it("should handle errors when fetching products", async () => {
     productService.getAllProducts.mockRejectedValueOnce(new Error("DB error"));
 
     const res = await request(app).get("/api/products");
@@ -198,7 +198,7 @@ describe("GET /api/products/filter", () => {
     jest.clearAllMocks();
   });
 
-  it("Debe filtrar productos por precio mínimo", async () => {
+  it("should filter products by minimum price", async () => {
     const mockProducts = [
       {
         id: 2,
@@ -220,7 +220,7 @@ describe("GET /api/products/filter", () => {
     expect(res.body[0].name).toBe("Producto 2");
   });
 
-  it("Debe filtrar productos por nombre", async () => {
+  it("should filter products by name", async () => {
     const mockProducts = [
       {
         id: 1,
@@ -242,7 +242,7 @@ describe("GET /api/products/filter", () => {
     expect(res.body[0].name).toBe("Producto 1");
   });
 
-  it("Debe filtrar productos por rango de precio", async () => {
+  it("should filter products by price range", async () => {
     const mockProducts = [
       {
         id: 2,
@@ -263,7 +263,7 @@ describe("GET /api/products/filter", () => {
     expect(res.body.length).toBe(1);
   });
 
-  it("Debe filtrar productos por is_active", async () => {
+  it("should filter products by is_active", async () => {
     const mockProducts = [
       {
         id: 1,
@@ -284,7 +284,7 @@ describe("GET /api/products/filter", () => {
     expect(res.body.length).toBe(1);
   });
 
-  it("Debe fallar si no se proporciona ningún filtro", async () => {
+  it("should fail if no filter is provided", async () => {
     const { ValidationError } = require("../errors/custom-errors");
 
     productService.searchProducts.mockRejectedValueOnce(
@@ -297,7 +297,7 @@ describe("GET /api/products/filter", () => {
     expect(res.body.error).toContain("al menos un filtro");
   });
 
-  it("Debe fallar si min_price es mayor que max_price", async () => {
+  it("should fail if min_price is greater than max_price", async () => {
     const { ValidationError } = require("../errors/custom-errors");
 
     productService.searchProducts.mockRejectedValueOnce(
@@ -312,7 +312,7 @@ describe("GET /api/products/filter", () => {
     expect(res.body.error).toContain("precio mínimo no puede ser mayor");
   });
 
-  it("Debe manejar errores al filtrar productos", async () => {
+  it("should handle errors when filtering products", async () => {
     productService.searchProducts.mockRejectedValueOnce(new Error("DB error"));
 
     const res = await request(app)
@@ -329,7 +329,7 @@ describe("GET /api/products/:id", () => {
     jest.clearAllMocks();
   });
 
-  it("Debe obtener un producto por ID", async () => {
+  it("should get a product by ID", async () => {
     const mockProduct = {
       id: 1,
       name: "Producto 1",
@@ -347,7 +347,7 @@ describe("GET /api/products/:id", () => {
     expect(res.body.id).toBe(1);
   });
 
-  it("Debe fallar con ID inválido", async () => {
+  it("should fail with invalid ID", async () => {
     const { ValidationError } = require("../errors/custom-errors");
 
     productService.getProductById.mockRejectedValueOnce(
@@ -360,7 +360,7 @@ describe("GET /api/products/:id", () => {
     expect(res.body.error).toContain("ID inválido");
   });
 
-  it("Debe manejar producto no encontrado", async () => {
+  it("should handle product not found", async () => {
     const { NotFoundError } = require("../errors/custom-errors");
 
     productService.getProductById.mockRejectedValueOnce(
@@ -373,7 +373,7 @@ describe("GET /api/products/:id", () => {
     expect(res.body.error).toBe("Producto no encontrado");
   });
 
-  it("Debe manejar errores de base de datos", async () => {
+  it("should handle database errors", async () => {
     productService.getProductById.mockRejectedValueOnce(new Error("DB error"));
 
     const res = await request(app).get("/api/products/1");
@@ -388,7 +388,7 @@ describe("DELETE /api/products/:id", () => {
     jest.clearAllMocks();
   });
 
-  it("Debe eliminar un producto por ID", async () => {
+  it("should delete a product by ID", async () => {
     const mockProduct = {
       id: 1,
       name: "Producto 1",
@@ -406,7 +406,7 @@ describe("DELETE /api/products/:id", () => {
     expect(res.body.product.id).toBe(1);
   });
 
-  it("Debe fallar con ID inválido", async () => {
+  it("should fail with invalid ID", async () => {
     const { ValidationError } = require("../errors/custom-errors");
 
     productService.hardDelete.mockRejectedValueOnce(
@@ -419,7 +419,7 @@ describe("DELETE /api/products/:id", () => {
     expect(res.body.error).toContain("ID inválido");
   });
 
-  it("Debe manejar producto no encontrado", async () => {
+  it("should handle product not found", async () => {
     const { NotFoundError } = require("../errors/custom-errors");
 
     productService.hardDelete.mockRejectedValueOnce(
@@ -432,7 +432,7 @@ describe("DELETE /api/products/:id", () => {
     expect(res.body.error).toBe("Producto no encontrado");
   });
 
-  it("Debe manejar errores de base de datos", async () => {
+  it("should handle database errors", async () => {
     productService.hardDelete.mockRejectedValueOnce(new Error("DB error"));
 
     const res = await request(app).delete("/api/products/1");
@@ -447,7 +447,7 @@ describe("PUT /api/products/:id", () => {
     jest.clearAllMocks();
   });
 
-  it("Debe actualizar un producto completamente", async () => {
+  it("should fully update a product", async () => {
     const updatedProduct = {
       id: 1,
       name: "Producto Actualizado",
@@ -470,7 +470,7 @@ describe("PUT /api/products/:id", () => {
     expect(res.body.product.name).toBe("Producto Actualizado");
   });
 
-  it("Debe fallar si falta el nombre", async () => {
+  it("should fail if name is missing", async () => {
     const { ValidationError } = require("../errors/custom-errors");
 
     productService.updateProduct.mockRejectedValueOnce(
@@ -486,7 +486,7 @@ describe("PUT /api/products/:id", () => {
     expect(res.body.error).toContain("nombre es requerido");
   });
 
-  it("Debe fallar si falta el precio", async () => {
+  it("should fail if price is missing", async () => {
     const { ValidationError } = require("../errors/custom-errors");
 
     productService.updateProduct.mockRejectedValueOnce(
@@ -502,7 +502,7 @@ describe("PUT /api/products/:id", () => {
     expect(res.body.error).toContain("precio es requerido");
   });
 
-  it("Debe fallar si el producto no existe", async () => {
+  it("should fail if product does not exist", async () => {
     const { NotFoundError } = require("../errors/custom-errors");
 
     productService.updateProduct.mockRejectedValueOnce(
@@ -519,7 +519,7 @@ describe("PUT /api/products/:id", () => {
     expect(res.body.error).toBe("Producto no encontrado");
   });
 
-  it("Debe fallar si el nuevo nombre ya existe", async () => {
+  it("should fail if new name already exists", async () => {
     const { DuplicateError } = require("../errors/custom-errors");
 
     productService.updateProduct.mockRejectedValueOnce(
@@ -536,7 +536,7 @@ describe("PUT /api/products/:id", () => {
     expect(res.body.error).toContain("Ya existe un producto");
   });
 
-  it("Debe manejar errores de base de datos", async () => {
+  it("should handle database errors", async () => {
     productService.updateProduct.mockRejectedValueOnce(new Error("DB error"));
 
     const res = await request(app).put("/api/products/1").send({
@@ -555,7 +555,7 @@ describe("PATCH /api/products/:id", () => {
     jest.clearAllMocks();
   });
 
-  it("Debe actualizar parcialmente solo el precio", async () => {
+  it("should partially update only price", async () => {
     const updatedProduct = {
       id: 1,
       name: "Producto 1",
@@ -575,7 +575,7 @@ describe("PATCH /api/products/:id", () => {
     expect(res.body.product.price).toBe(120.0);
   });
 
-  it("Debe actualizar parcialmente solo el nombre", async () => {
+  it("should partially update only name", async () => {
     const updatedProduct = {
       id: 1,
       name: "Producto Modificado",
@@ -594,7 +594,7 @@ describe("PATCH /api/products/:id", () => {
     expect(res.body.product.name).toBe("Producto Modificado");
   });
 
-  it("Debe fallar si no se proporciona ningún campo", async () => {
+  it("should fail if no field is provided", async () => {
     const { ValidationError } = require("../errors/custom-errors");
 
     productService.updateProductPartial.mockRejectedValueOnce(
@@ -607,7 +607,7 @@ describe("PATCH /api/products/:id", () => {
     expect(res.body.error).toContain("al menos un campo para actualizar");
   });
 
-  it("Debe fallar si el producto no existe", async () => {
+  it("should fail if product does not exist", async () => {
     const { NotFoundError } = require("../errors/custom-errors");
 
     productService.updateProductPartial.mockRejectedValueOnce(
@@ -622,7 +622,7 @@ describe("PATCH /api/products/:id", () => {
     expect(res.body.error).toBe("Producto no encontrado");
   });
 
-  it("Debe fallar si el nuevo nombre ya existe", async () => {
+  it("should fail if new name already exists", async () => {
     const { DuplicateError } = require("../errors/custom-errors");
 
     productService.updateProductPartial.mockRejectedValueOnce(
@@ -637,7 +637,7 @@ describe("PATCH /api/products/:id", () => {
     expect(res.body.error).toContain("Ya existe un producto");
   });
 
-  it("Debe manejar errores de base de datos", async () => {
+  it("should handle database errors", async () => {
     productService.updateProductPartial.mockRejectedValueOnce(
       new Error("DB error")
     );

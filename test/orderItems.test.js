@@ -1,4 +1,4 @@
-// Mock del service en lugar de db
+// Mock the service instead of db
 jest.mock('../services/orders-items-service');
 
 const request = require('supertest');
@@ -7,17 +7,17 @@ const ordersItemsService = require('../services/orders-items-service');
 const { ValidationError, NotFoundError } = require('../errors/custom-errors');
 
 describe('Order Items API', () => {
-    // Limpiar mocks después de cada test
+    // Clear mocks after each test
     afterEach(() => {
         jest.clearAllMocks();
     });
 
     // ============================================
-    // POST /api/order-items - Crear item de orden
+    // POST /api/order-items - Create order item
     // ============================================
-    
+
     describe('POST /api/order-items', () => {
-        it('Debería agregar un item de orden', async () => {
+        it('should add an order item', async () => {
             const mockOrderItem = {
                 id: 1,
                 order_id: 1,
@@ -43,7 +43,7 @@ describe('Order Items API', () => {
             });
         });
 
-        it('Debería validar datos faltantes al agregar item de orden (order_id)', async () => {
+        it('should validate missing fields when adding order item (order_id)', async () => {
             ordersItemsService.addOrderItem.mockRejectedValue(
                 new ValidationError('order_id inválido')
             );
@@ -56,7 +56,7 @@ describe('Order Items API', () => {
             expect(res.body).toHaveProperty('error', 'order_id inválido');
         });
 
-        it('Debería validar datos faltantes al agregar item de orden (product_id)', async () => {
+        it('should validate missing fields when adding order item (product_id)', async () => {
             ordersItemsService.addOrderItem.mockRejectedValue(
                 new ValidationError('product_id inválido')
             );
@@ -69,7 +69,7 @@ describe('Order Items API', () => {
             expect(res.body).toHaveProperty('error', 'product_id inválido');
         });
 
-        it('Debería validar datos faltantes al agregar item de orden (quantity)', async () => {
+        it('should validate missing fields when adding order item (quantity)', async () => {
             ordersItemsService.addOrderItem.mockRejectedValue(
                 new ValidationError('quantity inválido')
             );
@@ -82,7 +82,7 @@ describe('Order Items API', () => {
             expect(res.body).toHaveProperty('error', 'quantity inválido');
         });
 
-        it('Debería retornar error si el order_id no existe al agregar item de orden', async () => {
+        it('should return error if order_id does not exist when adding order item', async () => {
             ordersItemsService.addOrderItem.mockRejectedValue(
                 new NotFoundError('Orden no encontrada')
             );
@@ -95,7 +95,7 @@ describe('Order Items API', () => {
             expect(res.body).toHaveProperty('error', 'Orden no encontrada');
         });
 
-        it('Debería retornar error si el product_id no existe al agregar item de orden', async () => {
+        it('should return error if product_id does not exist when adding order item', async () => {
             ordersItemsService.addOrderItem.mockRejectedValue(
                 new NotFoundError('Producto no encontrado')
             );
@@ -108,7 +108,7 @@ describe('Order Items API', () => {
             expect(res.body).toHaveProperty('error', 'Producto no encontrado');
         });
 
-        it('Debería validar quantity negativo', async () => {
+        it('should validate negative quantity', async () => {
             ordersItemsService.addOrderItem.mockRejectedValue(
                 new ValidationError('quantity inválido')
             );
@@ -121,7 +121,7 @@ describe('Order Items API', () => {
             expect(res.body).toHaveProperty('error', 'quantity inválido');
         });
 
-        it('Debería devolver error 500 si hay un problema inesperado al agregar item de orden', async () => {
+        it('should return 500 error on unexpected problem when adding order item', async () => {
             ordersItemsService.addOrderItem.mockRejectedValue(
                 new Error('Error inesperado en la base de datos')
             );
@@ -136,11 +136,11 @@ describe('Order Items API', () => {
     });
 
     // ============================================
-    // GET /api/order-items - Obtener todos
+    // GET /api/order-items - Get all
     // ============================================
 
     describe('GET /api/order-items', () => {
-        it('Debería obtener todos los items de orden', async () => {
+        it('should get all order items', async () => {
             const mockOrderItems = [
                 { id: 1, order_id: 1, product_id: 1, quantity: 2, price: 50 },
                 { id: 2, order_id: 1, product_id: 2, quantity: 1, price: 30 }
@@ -156,7 +156,7 @@ describe('Order Items API', () => {
             expect(ordersItemsService.getAllOrderItems).toHaveBeenCalledWith(undefined, undefined);
         });
 
-        it('Debería obtener items con paginación personalizada', async () => {
+        it('should get items with custom pagination', async () => {
             const mockOrderItems = [
                 { id: 11, order_id: 2, product_id: 1, quantity: 3, price: 75 }
             ];
@@ -170,7 +170,7 @@ describe('Order Items API', () => {
             expect(ordersItemsService.getAllOrderItems).toHaveBeenCalledWith("10", "10");
         });
 
-        it('Debería validar limit inválido', async () => {
+        it('should validate invalid limit', async () => {
             ordersItemsService.getAllOrderItems.mockRejectedValue(
                 new ValidationError('El límite debe ser un número positivo')
             );
@@ -181,7 +181,7 @@ describe('Order Items API', () => {
             expect(res.body).toHaveProperty('error', 'El límite debe ser un número positivo');
         });
 
-        it('Debería validar offset inválido', async () => {
+        it('should validate invalid offset', async () => {
             ordersItemsService.getAllOrderItems.mockRejectedValue(
                 new ValidationError('El offset debe ser un número no negativo')
             );
@@ -192,7 +192,7 @@ describe('Order Items API', () => {
             expect(res.body).toHaveProperty('error', 'El offset debe ser un número no negativo');
         });
 
-        it('Debería devolver error 500 si hay un problema con la base de datos al obtener todos los items', async () => {
+        it('should return 500 error on database problem when fetching all items', async () => {
             ordersItemsService.getAllOrderItems.mockRejectedValue(
                 new Error('DB error')
             );
@@ -209,7 +209,7 @@ describe('Order Items API', () => {
     // ============================================
 
     describe('GET /api/order-items/order/:orderId', () => {
-        it('Debería obtener items de orden por order_id', async () => {
+        it('should get order items by order_id', async () => {
             const mockOrderItems = [
                 { id: 1, order_id: 1, product_id: 1, quantity: 2, price: 50 },
                 { id: 2, order_id: 1, product_id: 2, quantity: 1, price: 30 }
@@ -225,7 +225,7 @@ describe('Order Items API', () => {
             expect(ordersItemsService.getOrderItemsByOrderId).toHaveBeenCalledWith('1');
         });
 
-        it('Debería devolver 404 si no se encuentran items de orden para el order_id proporcionado', async () => {
+        it('should return 404 if no order items found for given order_id', async () => {
             ordersItemsService.getOrderItemsByOrderId.mockRejectedValue(
                 new NotFoundError('No se encontraron items de orden para el ID de orden proporcionado')
             );
@@ -236,7 +236,7 @@ describe('Order Items API', () => {
             expect(res.body).toHaveProperty('error', 'No se encontraron items de orden para el ID de orden proporcionado');
         });
 
-        it('Debería validar order_id inválido', async () => {
+        it('should validate invalid order_id', async () => {
             ordersItemsService.getOrderItemsByOrderId.mockRejectedValue(
                 new ValidationError('order_id inválido')
             );
@@ -247,7 +247,7 @@ describe('Order Items API', () => {
             expect(res.body).toHaveProperty('error', 'order_id inválido');
         });
 
-        it('Debería devolver error 500 si hay un problema con la base de datos al obtener items por order_id', async () => {
+        it('should return 500 error on database problem when fetching items by order_id', async () => {
             ordersItemsService.getOrderItemsByOrderId.mockRejectedValue(
                 new Error('DB error')
             );
@@ -264,7 +264,7 @@ describe('Order Items API', () => {
     // ============================================
 
     describe('DELETE /api/order-items/order/:orderId', () => {
-        it('Debería eliminar todos los items de orden', async () => {
+        it('should delete all order items', async () => {
             const mockDeletedItems = [
                 { id: 1, order_id: 1, product_id: 1, quantity: 2, price: 50 },
                 { id: 2, order_id: 1, product_id: 2, quantity: 1, price: 30 },
@@ -282,7 +282,7 @@ describe('Order Items API', () => {
             expect(ordersItemsService.deleteOrderItemsByOrderId).toHaveBeenCalledWith('1');
         });
 
-        it('Debería retornar 404 si no hay items de orden para eliminar', async () => {
+        it('should return 404 if no order items to delete', async () => {
             ordersItemsService.deleteOrderItemsByOrderId.mockRejectedValue(
                 new NotFoundError('No se encontraron items de orden para el ID de orden proporcionado')
             );
@@ -293,7 +293,7 @@ describe('Order Items API', () => {
             expect(res.body).toHaveProperty('error', 'No se encontraron items de orden para el ID de orden proporcionado');
         });
 
-        it('Debería validar order_id inválido al eliminar', async () => {
+        it('should validate invalid order_id when deleting', async () => {
             ordersItemsService.deleteOrderItemsByOrderId.mockRejectedValue(
                 new ValidationError('order_id inválido')
             );
@@ -304,7 +304,7 @@ describe('Order Items API', () => {
             expect(res.body).toHaveProperty('error', 'order_id inválido');
         });
 
-        it('Debería devolver error 500 si hay un problema con la base de datos al eliminar items', async () => {
+        it('should return 500 error on database problem when deleting items', async () => {
             ordersItemsService.deleteOrderItemsByOrderId.mockRejectedValue(
                 new Error('DB error')
             );
@@ -321,7 +321,7 @@ describe('Order Items API', () => {
     // ============================================
 
     describe('DELETE /api/order-items/order/:orderId/product/:productId', () => {
-        it('Debería eliminar un item de orden por order_id y product_id', async () => {
+        it('should delete an order item by order_id and product_id', async () => {
             const mockDeletedItem = {
                 id: 1,
                 order_id: 1,
@@ -341,7 +341,7 @@ describe('Order Items API', () => {
             expect(ordersItemsService.deleteOrderItemByOrderIdAndProductId).toHaveBeenCalledWith('1', '1');
         });
 
-        it('Debería retornar 404 si el order_id no existe al eliminar item', async () => {
+        it('should return 404 if order_id does not exist when deleting item', async () => {
             ordersItemsService.deleteOrderItemByOrderIdAndProductId.mockRejectedValue(
                 new NotFoundError('Orden no encontrada')
             );
@@ -352,7 +352,7 @@ describe('Order Items API', () => {
             expect(res.body).toHaveProperty('error', 'Orden no encontrada');
         });
 
-        it('Debería retornar 404 si el product_id no existe al eliminar item', async () => {
+        it('should return 404 if product_id does not exist when deleting item', async () => {
             ordersItemsService.deleteOrderItemByOrderIdAndProductId.mockRejectedValue(
                 new NotFoundError('Producto no encontrado')
             );
@@ -363,7 +363,7 @@ describe('Order Items API', () => {
             expect(res.body).toHaveProperty('error', 'Producto no encontrado');
         });
 
-        it('Debería devolver 404 si no se encuentra el item de orden para eliminar', async () => {
+        it('should return 404 if order item not found for deletion', async () => {
             ordersItemsService.deleteOrderItemByOrderIdAndProductId.mockRejectedValue(
                 new NotFoundError('No se encontró el item de orden para el ID de orden y producto proporcionados')
             );
@@ -374,7 +374,7 @@ describe('Order Items API', () => {
             expect(res.body).toHaveProperty('error', 'No se encontró el item de orden para el ID de orden y producto proporcionados');
         });
 
-        it('Debería validar order_id inválido al eliminar item específico', async () => {
+        it('should validate invalid order_id when deleting specific item', async () => {
             ordersItemsService.deleteOrderItemByOrderIdAndProductId.mockRejectedValue(
                 new ValidationError('order_id inválido')
             );
@@ -385,7 +385,7 @@ describe('Order Items API', () => {
             expect(res.body).toHaveProperty('error', 'order_id inválido');
         });
 
-        it('Debería validar product_id inválido al eliminar item específico', async () => {
+        it('should validate invalid product_id when deleting specific item', async () => {
             ordersItemsService.deleteOrderItemByOrderIdAndProductId.mockRejectedValue(
                 new ValidationError('product_id inválido')
             );
@@ -396,7 +396,7 @@ describe('Order Items API', () => {
             expect(res.body).toHaveProperty('error', 'product_id inválido');
         });
 
-        it('Debería devolver error 500 si hay un problema con la base de datos al eliminar item específico', async () => {
+        it('should return 500 error on database problem when deleting specific item', async () => {
             ordersItemsService.deleteOrderItemByOrderIdAndProductId.mockRejectedValue(
                 new Error('DB error')
             );
@@ -413,7 +413,7 @@ describe('Order Items API', () => {
     // ============================================
 
     describe('PATCH /api/order-items/order/:orderId/product/:productId', () => {
-        it('Debería actualizar quantity y price en un item de orden', async () => {
+        it('should update quantity and price on an order item', async () => {
             const mockUpdatedItem = {
                 id: 1,
                 order_id: 1,
@@ -435,7 +435,7 @@ describe('Order Items API', () => {
             expect(ordersItemsService.updateOrderItem).toHaveBeenCalledWith('1', '1', { quantity: 5, price: 100 });
         });
 
-        it('Debería actualizar solo quantity', async () => {
+        it('should update only quantity', async () => {
             const mockUpdatedItem = {
                 id: 1,
                 order_id: 1,
@@ -456,7 +456,7 @@ describe('Order Items API', () => {
             expect(ordersItemsService.updateOrderItem).toHaveBeenCalledWith('1', '1', { quantity: 10 });
         });
 
-        it('Debería actualizar solo price', async () => {
+        it('should update only price', async () => {
             const mockUpdatedItem = {
                 id: 1,
                 order_id: 1,
@@ -477,7 +477,7 @@ describe('Order Items API', () => {
             expect(ordersItemsService.updateOrderItem).toHaveBeenCalledWith('1', '1', { price: 75 });
         });
 
-        it('Debería retornar 400 si no se envían quantity o price al actualizar', async () => {
+        it('should return 400 if neither quantity nor price is sent when updating', async () => {
             ordersItemsService.updateOrderItem.mockRejectedValue(
                 new ValidationError('Debe proporcionar quantity o price para actualizar')
             );
@@ -490,7 +490,7 @@ describe('Order Items API', () => {
             expect(res.body).toHaveProperty('error', 'Debe proporcionar quantity o price para actualizar');
         });
 
-        it('Debería validar quantity inválido al actualizar', async () => {
+        it('should validate invalid quantity when updating', async () => {
             ordersItemsService.updateOrderItem.mockRejectedValue(
                 new ValidationError('quantity inválido')
             );
@@ -503,7 +503,7 @@ describe('Order Items API', () => {
             expect(res.body).toHaveProperty('error', 'quantity inválido');
         });
 
-        it('Debería validar price inválido al actualizar', async () => {
+        it('should validate invalid price when updating', async () => {
             ordersItemsService.updateOrderItem.mockRejectedValue(
                 new ValidationError('price inválido')
             );
@@ -516,7 +516,7 @@ describe('Order Items API', () => {
             expect(res.body).toHaveProperty('error', 'price inválido');
         });
 
-        it('Debería devolver 404 si no encuentra la orden para actualizar', async () => {
+        it('should return 404 if order not found when updating', async () => {
             ordersItemsService.updateOrderItem.mockRejectedValue(
                 new NotFoundError('Orden no encontrada')
             );
@@ -529,7 +529,7 @@ describe('Order Items API', () => {
             expect(res.body).toHaveProperty('error', 'Orden no encontrada');
         });
 
-        it('Debería devolver 404 si no encuentra el producto para actualizar', async () => {
+        it('should return 404 if product not found when updating', async () => {
             ordersItemsService.updateOrderItem.mockRejectedValue(
                 new NotFoundError('Producto no encontrado')
             );
@@ -542,7 +542,7 @@ describe('Order Items API', () => {
             expect(res.body).toHaveProperty('error', 'Producto no encontrado');
         });
 
-        it('Debería devolver 404 si no se encuentra el item para actualizar', async () => {
+        it('should return 404 if order item not found when updating', async () => {
             ordersItemsService.updateOrderItem.mockRejectedValue(
                 new NotFoundError('No se encontró el item de orden para el ID de orden y producto proporcionados')
             );
@@ -555,7 +555,7 @@ describe('Order Items API', () => {
             expect(res.body).toHaveProperty('error', 'No se encontró el item de orden para el ID de orden y producto proporcionados');
         });
 
-        it('Debería validar order_id inválido al actualizar', async () => {
+        it('should validate invalid order_id when updating', async () => {
             ordersItemsService.updateOrderItem.mockRejectedValue(
                 new ValidationError('order_id inválido')
             );
@@ -568,7 +568,7 @@ describe('Order Items API', () => {
             expect(res.body).toHaveProperty('error', 'order_id inválido');
         });
 
-        it('Debería validar product_id inválido al actualizar', async () => {
+        it('should validate invalid product_id when updating', async () => {
             ordersItemsService.updateOrderItem.mockRejectedValue(
                 new ValidationError('product_id inválido')
             );
@@ -581,7 +581,7 @@ describe('Order Items API', () => {
             expect(res.body).toHaveProperty('error', 'product_id inválido');
         });
 
-        it('Debería devolver error 500 si hay un problema con la base de datos al actualizar', async () => {
+        it('should return 500 error on database problem when updating', async () => {
             ordersItemsService.updateOrderItem.mockRejectedValue(
                 new Error('DB error')
             );

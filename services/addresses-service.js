@@ -117,9 +117,9 @@ class AddressesService {
             return newAddress;
         };
 
-        async getAllAddresses(limit) {
-            const pagination = parsePagination(limit, 0);
-            const addresses = await addressesRepository.getAll(pagination.limit);
+        async getAllAddresses(limit, offset) {
+            const pagination = parsePagination(limit, offset);
+            const addresses = await addressesRepository.getAll(pagination.limit, pagination.offset);
             return addresses;
         };
 

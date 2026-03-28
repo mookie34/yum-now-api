@@ -9,8 +9,8 @@ class AddressesRepository {
     return result.rows[0];
   };
 
-    async getAll(limit) {
-        const result = await db.query('SELECT * FROM YuNowDataBase.addresses ORDER BY id ASC LIMIT $1', [limit]);
+    async getAll(limit = 100, offset = 0) {
+        const result = await db.query('SELECT * FROM YuNowDataBase.addresses ORDER BY id ASC LIMIT $1 OFFSET $2', [limit, offset]);
         return result.rows;
     };
 

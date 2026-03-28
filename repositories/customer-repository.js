@@ -9,10 +9,10 @@ class CustomerRepository {
         return result.rows[0];
     };
 
-    async getAll(limit) {
+    async getAll(limit = 100, offset = 0) {
         const result = await db.query(
-            'SELECT id, name, phone, email, created_at FROM YuNowDataBase.customers ORDER BY id ASC LIMIT $1',
-            [limit]
+            'SELECT id, name, phone, email, created_at FROM YuNowDataBase.customers ORDER BY id ASC LIMIT $1 OFFSET $2',
+            [limit, offset]
         );
         return result.rows;
     };

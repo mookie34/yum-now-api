@@ -9,12 +9,11 @@ jest.mock('../middleware/authenticate', () => {
 });
 
 beforeAll(() => {
-    // Silencia todos los console.error en los tests
+    // Silence all console.error calls in tests
     jest.spyOn(console, 'error').mockImplementation(() => {});
   });
 
   afterAll(() => {
-    // Restaura el comportamiento original
+    // Restore original behavior
     console.error.mockRestore();
   });
-  

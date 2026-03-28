@@ -41,13 +41,6 @@ class OrdersService {
     }
   }
 
-  validateTotal(total) {
-    if (total !== undefined && (isNaN(total) || parseFloat(total) < 0)) {
-      return "El total no puede ser negativo";
-    }
-    return null;
-  }
-
   async validatePaymentMethod(payment_method_id) {
     if (!payment_method_id || isNaN(payment_method_id)) {
       return "payment_method_id inválido";
@@ -89,8 +82,9 @@ class OrdersService {
     const { payment_method_id, status_id, total } = orderData;
 
     if (!isCreate && (!isPartial || total !== undefined)) {
-      const totalError = this.validateTotal(total);
-      if (totalError) errors.push(totalError);
+      if (total !== undefined && (isNaN(total) || parseFloat(total) < 0)) {
+        errors.push("El total no puede ser negativo");
+      }
     }
     if (!isPartial || payment_method_id !== undefined) {
       const pmError = await this.validatePaymentMethod(payment_method_id);
