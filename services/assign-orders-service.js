@@ -3,8 +3,8 @@ const {
   ValidationError,
   NotFoundError,
   DuplicateError,
-  BusinessRuleError,
 } = require("../errors/custom-errors");
+const { parsePagination } = require("../utils/sanitize");
 
 class AssignOrdersService {
   /**
@@ -93,8 +93,9 @@ class AssignOrdersService {
    * @returns {Array} List of assignments
    * @throws {NotFoundError} If no assignments exist
    */
-  async getAllAssignments() {
-    const assignments = await assignOrdersRepository.getAll();
+  async getAllAssignments(limit, offset) {
+    const pagination = parsePagination(limit, offset);
+    const assignments = await assignOrdersRepository.getAll(pagination.limit, pagination.offset);
 
     if (assignments.length === 0) {
       throw new NotFoundError("No hay asignaciones de órdenes disponibles");

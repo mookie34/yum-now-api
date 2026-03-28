@@ -26,8 +26,7 @@ const addAddress = async (req, res) => {
 
 const getAddresses = async (req, res) => {
     try {
-        const limit = req.query.limit ? parseInt(req.query.limit) : 100;
-        const addresses = await addressesService.getAllAddresses(limit);
+        const addresses = await addressesService.getAllAddresses(req.query.limit, req.query.offset);
         res.json(addresses);
     } catch (error) {
         if (error instanceof ValidationError) {

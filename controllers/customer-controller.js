@@ -25,7 +25,7 @@ const addCustomer = async (req, res) => {
 
 const getCustomers = async (req, res) => {
     try {
-        const customers = await customerService.getAllCustomers(req.query.limit);
+        const customers = await customerService.getAllCustomers(req.query.limit, req.query.offset);
         res.json(customers);
     } catch (err) {
         console.error('Error fetching customers:', err.message);

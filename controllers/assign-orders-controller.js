@@ -29,7 +29,7 @@ const addAssignOrder = async (req, res) => {
 
 const getAssignOrders = async (req, res) => {
   try {
-    const assignments = await assignOrdersService.getAllAssignments();
+    const assignments = await assignOrdersService.getAllAssignments(req.query.limit, req.query.offset);
     res.status(200).json(assignments);
   } catch (err) {
     if (err instanceof NotFoundError) {

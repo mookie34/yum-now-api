@@ -55,9 +55,9 @@ class AssignOrdersRepository {
    * Gets all assignments with full details
    * @returns {Array} List of assignments with courier and order data
    */
-  async getAll() {
-    const query = `${BASE_ASSIGNMENT_QUERY} ORDER BY ao.assigned_at DESC`;
-    const result = await db.query(query);
+  async getAll(limit = 100, offset = 0) {
+    const query = `${BASE_ASSIGNMENT_QUERY} ORDER BY ao.assigned_at DESC LIMIT $1 OFFSET $2`;
+    const result = await db.query(query, [limit, offset]);
     return result.rows;
   }
 

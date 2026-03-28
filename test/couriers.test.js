@@ -1,4 +1,4 @@
-// Mock del repository (debe ir ANTES de los requires)
+// Mock repository BEFORE requires
 jest.mock("../repositories/couriers-repository");
 
 const request = require("supertest");
@@ -10,7 +10,7 @@ describe("POST /api/couriers", () => {
     jest.clearAllMocks();
   });
 
-  it("Debe crear un Domiciliario válido", async () => {
+  it("should create a valid courier", async () => {
     const mockCourier = {
       id: 1,
       name: "Juan Pérez",
@@ -42,7 +42,7 @@ describe("POST /api/couriers", () => {
     });
   });
 
-  it("Debe usar available=true por defecto si no se envía", async () => {
+  it("should default available=true when not sent", async () => {
     const mockCourier = {
       id: 1,
       name: "Juan Pérez",
@@ -59,7 +59,7 @@ describe("POST /api/couriers", () => {
       phone: "1234567890",
       vehicle: "Bicicleta",
       license_plate: "ABC123",
-      // available no enviado
+      // available not sent
     });
 
     expect(res.status).toBe(201);
@@ -68,7 +68,7 @@ describe("POST /api/couriers", () => {
     );
   });
 
-  it("Debe rechazar si falta el nombre", async () => {
+  it("should reject if name is missing", async () => {
     const res = await request(app).post("/api/couriers").send({
       phone: "1234567890",
       vehicle: "Bicicleta",
@@ -79,7 +79,7 @@ describe("POST /api/couriers", () => {
     expect(res.body.error).toContain("nombre");
   });
 
-  it("Debe rechazar si falta el teléfono", async () => {
+  it("should reject if phone is missing", async () => {
     const res = await request(app).post("/api/couriers").send({
       name: "Juan Pérez",
       vehicle: "Bicicleta",
@@ -90,7 +90,7 @@ describe("POST /api/couriers", () => {
     expect(res.body.error).toContain("teléfono");
   });
 
-  it("Debe rechazar si falta el vehículo", async () => {
+  it("should reject if vehicle is missing", async () => {
     const res = await request(app).post("/api/couriers").send({
       name: "Juan Pérez",
       phone: "1234567890",
@@ -101,7 +101,7 @@ describe("POST /api/couriers", () => {
     expect(res.body.error).toContain("vehículo");
   });
 
-  it("Debe rechazar si falta la placa", async () => {
+  it("should reject if license_plate is missing", async () => {
     const res = await request(app).post("/api/couriers").send({
       name: "Juan Pérez",
       phone: "1234567890",
@@ -112,7 +112,7 @@ describe("POST /api/couriers", () => {
     expect(res.body.error).toContain("placa");
   });
 
-  it("Debe rechazar si el nombre excede 100 caracteres", async () => {
+  it("should reject if name exceeds 100 characters", async () => {
     const res = await request(app)
       .post("/api/couriers")
       .send({
@@ -126,7 +126,7 @@ describe("POST /api/couriers", () => {
     expect(res.body.error).toContain("100 caracteres");
   });
 
-  it("Debe rechazar si el teléfono excede 20 caracteres", async () => {
+  it("should reject if phone exceeds 20 characters", async () => {
     const res = await request(app)
       .post("/api/couriers")
       .send({
@@ -140,20 +140,20 @@ describe("POST /api/couriers", () => {
     expect(res.body.error).toContain("20 caracteres");
   });
 
-  it("Debe rechazar si available no es booleano", async () => {
+  it("should reject if available is not boolean", async () => {
     const res = await request(app).post("/api/couriers").send({
       name: "Juan Pérez",
       phone: "1234567890",
       vehicle: "Bicicleta",
       license_plate: "ABC123",
-      available: "yes", // String en vez de boolean
+      available: "yes", // string instead of boolean
     });
 
     expect(res.status).toBe(400);
     expect(res.body.error).toContain("booleano");
   });
 
-  it("Debe manejar error de base de datos", async () => {
+  it("should handle database errors", async () => {
     couriersRepository.create.mockRejectedValue(new Error("DB error"));
 
     const res = await request(app).post("/api/couriers").send({
@@ -164,9 +164,7 @@ describe("POST /api/couriers", () => {
     });
 
     expect(res.status).toBe(500);
-    expect(res.body.error).toBe(
-      "Error interno del servidor"
-    );
+    expect(res.body.error).toBe("Error interno del servidor");
   });
 });
 
@@ -175,7 +173,7 @@ describe("GET /api/couriers", () => {
     jest.clearAllMocks();
   });
 
-  it("Debe obtener todos los Domiciliarios con paginación por defecto", async () => {
+  it("should get all couriers with default pagination", async () => {
     const mockCouriers = [
       {
         id: 1,
@@ -205,7 +203,7 @@ describe("GET /api/couriers", () => {
     expect(couriersRepository.getAll).toHaveBeenCalledWith(100, 0);
   });
 
-  it("Debe obtener Domiciliarios con paginación personalizada", async () => {
+  it("should get couriers with custom pagination", async () => {
     couriersRepository.getAll.mockResolvedValue([]);
 
     const res = await request(app)
@@ -216,21 +214,21 @@ describe("GET /api/couriers", () => {
     expect(couriersRepository.getAll).toHaveBeenCalledWith(10, 20);
   });
 
-  it("Debe rechazar límite inválido", async () => {
+  it("should reject invalid limit", async () => {
     const res = await request(app).get("/api/couriers").query({ limit: -5 });
 
     expect(res.status).toBe(400);
     expect(res.body.error).toContain("límite");
   });
 
-  it("Debe rechazar offset inválido", async () => {
+  it("should reject invalid offset", async () => {
     const res = await request(app).get("/api/couriers").query({ offset: -10 });
 
     expect(res.status).toBe(400);
     expect(res.body.error).toContain("offset");
   });
 
-  it("Debe manejar error de base de datos", async () => {
+  it("should handle database errors", async () => {
     couriersRepository.getAll.mockRejectedValue(new Error("DB error"));
 
     const res = await request(app).get("/api/couriers");
@@ -245,7 +243,7 @@ describe("GET /api/couriers/available", () => {
     jest.clearAllMocks();
   });
 
-  it("Debe obtener Domiciliarios disponibles", async () => {
+  it("should get available couriers", async () => {
     const mockCouriers = [
       {
         id: 1,
@@ -267,7 +265,7 @@ describe("GET /api/couriers/available", () => {
     expect(res.body[0].name).toBe("Juan Pérez");
   });
 
-  it("Debe retornar 404 si no hay Domiciliarios disponibles", async () => {
+  it("should return 404 if no couriers available", async () => {
     couriersRepository.getAvailable.mockResolvedValue([]);
 
     const res = await request(app).get("/api/couriers/available");
@@ -276,15 +274,13 @@ describe("GET /api/couriers/available", () => {
     expect(res.body.error).toBe("No hay Domiciliarios disponibles");
   });
 
-  it("Debe manejar error de base de datos", async () => {
+  it("should handle database errors", async () => {
     couriersRepository.getAvailable.mockRejectedValue(new Error("DB error"));
 
     const res = await request(app).get("/api/couriers/available");
 
     expect(res.status).toBe(500);
-    expect(res.body.error).toBe(
-      "Error interno del servidor"
-    );
+    expect(res.body.error).toBe("Error interno del servidor");
   });
 });
 
@@ -293,7 +289,7 @@ describe("GET /api/couriers/filter", () => {
     jest.clearAllMocks();
   });
 
-  it("Debe filtrar Domiciliarios por nombre", async () => {
+  it("should filter couriers by name", async () => {
     const mockCouriers = [
       {
         id: 1,
@@ -321,7 +317,7 @@ describe("GET /api/couriers/filter", () => {
     });
   });
 
-  it("Debe filtrar Domiciliarios por teléfono", async () => {
+  it("should filter couriers by phone", async () => {
     const mockCouriers = [
       {
         id: 2,
@@ -344,7 +340,7 @@ describe("GET /api/couriers/filter", () => {
     expect(res.body[0].phone).toBe("0987654321");
   });
 
-  it("Debe filtrar Domiciliarios por placa", async () => {
+  it("should filter couriers by license plate", async () => {
     const mockCouriers = [
       {
         id: 2,
@@ -367,7 +363,7 @@ describe("GET /api/couriers/filter", () => {
     expect(res.body[0].license_plate).toBe("XYZ789");
   });
 
-  it("Debe retornar 404 si no hay resultados", async () => {
+  it("should return 404 if no results found", async () => {
     couriersRepository.getForFilter.mockResolvedValue([]);
 
     const res = await request(app)
@@ -375,12 +371,10 @@ describe("GET /api/couriers/filter", () => {
       .query({ name: "NoExiste" });
 
     expect(res.status).toBe(404);
-    expect(res.body.error).toBe(
-      "No se encontraron domiciliarios con esos filtros"
-    );
+    expect(res.body.error).toBe("No se encontraron domiciliarios con esos filtros");
   });
 
-  it("Debe manejar error de base de datos", async () => {
+  it("should handle database errors", async () => {
     couriersRepository.getForFilter.mockRejectedValue(new Error("DB error"));
 
     const res = await request(app)
@@ -388,9 +382,7 @@ describe("GET /api/couriers/filter", () => {
       .query({ name: "Juan" });
 
     expect(res.status).toBe(500);
-    expect(res.body.error).toBe(
-      "Error interno del servidor"
-    );
+    expect(res.body.error).toBe("Error interno del servidor");
   });
 });
 
@@ -399,7 +391,7 @@ describe("GET /api/couriers/:id", () => {
     jest.clearAllMocks();
   });
 
-  it("Debe obtener un Domiciliario por ID", async () => {
+  it("should get a courier by ID", async () => {
     const mockCourier = {
       id: 1,
       name: "Juan Pérez",
@@ -418,7 +410,7 @@ describe("GET /api/couriers/:id", () => {
     expect(couriersRepository.getById).toHaveBeenCalledWith("1");
   });
 
-  it("Debe retornar 404 si el Domiciliario no existe", async () => {
+  it("should return 404 if courier does not exist", async () => {
     couriersRepository.getById.mockResolvedValue(null);
 
     const res = await request(app).get("/api/couriers/999");
@@ -427,14 +419,14 @@ describe("GET /api/couriers/:id", () => {
     expect(res.body.error).toBe("Domiciliario no encontrado");
   });
 
-  it("Debe rechazar ID inválido", async () => {
+  it("should reject invalid ID", async () => {
     const res = await request(app).get("/api/couriers/abc");
 
     expect(res.status).toBe(400);
     expect(res.body.error).toContain("ID");
   });
 
-  it("Debe rechazar ID negativo", async () => {
+  it("should reject negative ID", async () => {
     const res = await request(app).get("/api/couriers/-5");
 
     expect(res.status).toBe(400);
@@ -447,7 +439,7 @@ describe("DELETE /api/couriers/:id", () => {
     jest.clearAllMocks();
   });
 
-  it("Debe eliminar un Domiciliario existente", async () => {
+  it("should delete an existing courier", async () => {
     const mockCourier = {
       id: 1,
       name: "Juan Pérez",
@@ -466,7 +458,7 @@ describe("DELETE /api/couriers/:id", () => {
     expect(res.body.courier.id).toBe(1);
   });
 
-  it("Debe retornar 404 si el Domiciliario no existe", async () => {
+  it("should return 404 if courier does not exist", async () => {
     couriersRepository.delete.mockResolvedValue(null);
 
     const res = await request(app).delete("/api/couriers/999");
@@ -475,7 +467,7 @@ describe("DELETE /api/couriers/:id", () => {
     expect(res.body.error).toBe("Domiciliario no encontrado");
   });
 
-  it("Debe manejar error de base de datos", async () => {
+  it("should handle database errors", async () => {
     couriersRepository.delete.mockRejectedValue(new Error("DB error"));
 
     const res = await request(app).delete("/api/couriers/1");
@@ -490,7 +482,7 @@ describe("PUT /api/couriers/:id", () => {
     jest.clearAllMocks();
   });
 
-  it("Debe actualizar un Domiciliario existente", async () => {
+  it("should update an existing courier", async () => {
     const mockUpdated = {
       id: 1,
       name: "Juan Pérez",
@@ -516,7 +508,7 @@ describe("PUT /api/couriers/:id", () => {
     expect(res.body.courier.vehicle).toBe("Moto");
   });
 
-  it("Debe retornar 404 si el Domiciliario no existe", async () => {
+  it("should return 404 if courier does not exist", async () => {
     couriersRepository.update.mockResolvedValue(null);
 
     const res = await request(app).put("/api/couriers/999").send({
@@ -531,17 +523,17 @@ describe("PUT /api/couriers/:id", () => {
     expect(res.body.error).toBe("Domiciliario no encontrado");
   });
 
-  it("Debe rechazar si faltan campos obligatorios", async () => {
+  it("should reject if required fields are missing", async () => {
     const res = await request(app).put("/api/couriers/1").send({
       name: "Juan Pérez",
       phone: "1112223333",
-      // Faltan vehicle y license_plate
+      // vehicle and license_plate missing
     });
 
     expect(res.status).toBe(400);
   });
 
-  it("Debe manejar error de base de datos", async () => {
+  it("should handle database errors", async () => {
     couriersRepository.update.mockRejectedValue(new Error("DB error"));
 
     const res = await request(app).put("/api/couriers/1").send({
@@ -562,7 +554,7 @@ describe("PATCH /api/couriers/:id", () => {
     jest.clearAllMocks();
   });
 
-  it("Debe actualizar parcialmente un Domiciliario", async () => {
+  it("should partially update a courier", async () => {
     const mockUpdated = {
       id: 1,
       name: "Juan Pérez",
@@ -584,7 +576,7 @@ describe("PATCH /api/couriers/:id", () => {
     expect(res.body.courier.available).toBe(false);
   });
 
-  it("Debe actualizar solo un campo", async () => {
+  it("should update a single field", async () => {
     const mockUpdated = {
       id: 1,
       name: "Juan Pérez",
@@ -604,7 +596,7 @@ describe("PATCH /api/couriers/:id", () => {
     expect(res.body.courier.phone).toBe("9999999999");
   });
 
-  it("Debe retornar 404 si el Domiciliario no existe", async () => {
+  it("should return 404 if courier does not exist", async () => {
     couriersRepository.updatePartial.mockResolvedValue(null);
 
     const res = await request(app)
@@ -615,16 +607,16 @@ describe("PATCH /api/couriers/:id", () => {
     expect(res.body.error).toBe("Domiciliario no encontrado");
   });
 
-  it("Debe validar campos enviados", async () => {
+  it("should validate sent fields", async () => {
     const res = await request(app)
       .patch("/api/couriers/1")
-      .send({ phone: "1".repeat(21) }); // Excede límite
+      .send({ phone: "1".repeat(21) }); // exceeds limit
 
     expect(res.status).toBe(400);
     expect(res.body.error).toContain("20 caracteres");
   });
 
-  it("Debe manejar error de base de datos", async () => {
+  it("should handle database errors", async () => {
     couriersRepository.updatePartial.mockRejectedValue(new Error("DB error"));
 
     const res = await request(app)

@@ -82,9 +82,9 @@ class CustomerService {
         }
     };
 
-    async getAllCustomers(limit) {
-        const pagination = parsePagination(limit, 0);
-        return await customerRepository.getAll(pagination.limit);
+    async getAllCustomers(limit, offset) {
+        const pagination = parsePagination(limit, offset);
+        return await customerRepository.getAll(pagination.limit, pagination.offset);
     };
 
     async getCustomerByPhone(phone) {

@@ -82,6 +82,4 @@ app.use((req, res, next) => {
     res.status(statusCode).json({ error: message });
   });
 
-//console.log("DB host:", process.env.DB_HOST);
-
 module.exports = app;

@@ -1,4 +1,4 @@
-// Mock del service en lugar del db
+// Mock the service instead of db
 jest.mock('../services/assign-orders-service');
 
 const assignOrdersService = require('../services/assign-orders-service');
@@ -8,14 +8,14 @@ const {
   ValidationError,
   NotFoundError,
   DuplicateError,
-} = require('../errors/custom-errors'); 
+} = require('../errors/custom-errors');
 
 describe('POST /assignOrders', () => {
     beforeEach(() => {
         jest.clearAllMocks();
     });
 
-    it('Debe crear una asignación de órdenes correctamente', async () => {
+    it('should create an order assignment correctly', async () => {
         assignOrdersService.createAssignment.mockResolvedValue({
             id: 1,
             order_id: 1,
@@ -36,7 +36,7 @@ describe('POST /assignOrders', () => {
         });
     });
 
-    it('Debe retornar 404 si la orden no existe', async () => {
+    it('should return 404 if order does not exist', async () => {
         assignOrdersService.createAssignment.mockRejectedValue(
             new NotFoundError('No existe la orden')
         );
@@ -49,7 +49,7 @@ describe('POST /assignOrders', () => {
         expect(response.body).toHaveProperty('error', 'No existe la orden');
     });
 
-    it('Debe retornar 404 si el repartidor no existe', async () => {
+    it('should return 404 if courier does not exist', async () => {
         assignOrdersService.createAssignment.mockRejectedValue(
             new NotFoundError('Repartidor no encontrado')
         );
@@ -62,7 +62,7 @@ describe('POST /assignOrders', () => {
         expect(response.body).toHaveProperty('error', 'Repartidor no encontrado');
     });
 
-    it('Debe retornar 400 si la asignación ya existe', async () => {
+    it('should return 409 if assignment already exists', async () => {
         assignOrdersService.createAssignment.mockRejectedValue(
             new DuplicateError('La orden ya ha sido asignada a un repartidor')
         );
@@ -75,7 +75,7 @@ describe('POST /assignOrders', () => {
         expect(response.body).toHaveProperty('error', 'La orden ya ha sido asignada a un repartidor');
     });
 
-    it('Debe retornar 500 en caso de error del servidor', async () => {
+    it('should return 500 on server error', async () => {
         assignOrdersService.createAssignment.mockRejectedValue(
             new Error('DB error')
         );
@@ -88,20 +88,20 @@ describe('POST /assignOrders', () => {
         expect(response.body).toHaveProperty('error', 'Error interno del servidor');
     });
 
-    it('Debe retornar 400 si faltan parámetros', async () => {
+    it('should return 400 if parameters are missing', async () => {
         assignOrdersService.createAssignment.mockRejectedValue(
             new ValidationError('courier_id es requerido')
         );
 
         const response = await request(app)
             .post('/api/assign-orders')
-            .send({ order_id: 1 }); // Falta courier_id
+            .send({ order_id: 1 }); // courier_id missing
 
         expect(response.status).toBe(400);
         expect(response.body).toHaveProperty('error');
     });
 
-    it('Debe consultar las asignaciones de órdenes correctamente', async () => {
+    it('should fetch all order assignments correctly', async () => {
         assignOrdersService.getAllAssignments.mockResolvedValue([
             {
                 assignment_id: 1,
@@ -125,7 +125,7 @@ describe('POST /assignOrders', () => {
         expect(response.body[0]).toHaveProperty('courier_name', 'Juan Perez');
     });
 
-    it('Debe retornar 500 en caso de error del servidor al consultar asignaciones', async () => {
+    it('should return 500 on server error when fetching assignments', async () => {
         assignOrdersService.getAllAssignments.mockRejectedValue(
             new Error('DB error')
         );
@@ -137,7 +137,7 @@ describe('POST /assignOrders', () => {
         expect(response.body).toHaveProperty('error', 'Error interno del servidor');
     });
 
-    it('Debe retornar 404 si no hay asignaciones de órdenes disponibles', async () => {
+    it('should return 404 if no order assignments available', async () => {
         assignOrdersService.getAllAssignments.mockRejectedValue(
             new NotFoundError('No hay asignaciones de órdenes disponibles.')
         );
@@ -149,7 +149,7 @@ describe('POST /assignOrders', () => {
         expect(response.body).toHaveProperty('error', 'No hay asignaciones de órdenes disponibles.');
     });
 
-    it('Debe consultar las asignaciones de órdenes por ID de repartidor correctamente', async () => {
+    it('should fetch order assignments by courier ID correctly', async () => {
         assignOrdersService.getAssignmentsByCourierId.mockResolvedValue([
             {
                 assignment_id: 1,
@@ -173,7 +173,7 @@ describe('POST /assignOrders', () => {
         expect(response.body[0]).toHaveProperty('courier_name', 'Juan Perez');
     });
 
-    it('Debe retornar 404 si el repartidor no existe al consultar por ID', async () => {
+    it('should return 404 if courier does not exist when fetching by ID', async () => {
         assignOrdersService.getAssignmentsByCourierId.mockRejectedValue(
             new NotFoundError('Repartidor no encontrado')
         );
@@ -185,7 +185,7 @@ describe('POST /assignOrders', () => {
         expect(response.body).toHaveProperty('error', 'Repartidor no encontrado');
     });
 
-    it('Debe retornar 404 si no existe asignación para el repartidor', async () => {
+    it('should return 404 if no assignment exists for courier', async () => {
         assignOrdersService.getAssignmentsByCourierId.mockRejectedValue(
             new NotFoundError('No existe asignación para este repartidor')
         );
@@ -197,7 +197,7 @@ describe('POST /assignOrders', () => {
         expect(response.body).toHaveProperty('error', 'No existe asignación para este repartidor');
     });
 
-    it('Debe retornar 500 en caso de error del servidor al consultar por ID de repartidor', async () => {
+    it('should return 500 on server error when fetching by courier ID', async () => {
         assignOrdersService.getAssignmentsByCourierId.mockRejectedValue(
             new Error('DB error')
         );
@@ -209,7 +209,7 @@ describe('POST /assignOrders', () => {
         expect(response.body).toHaveProperty('error', 'Error interno del servidor');
     });
 
-    it('Debe consultar las asignaciones de órdenes por ID de orden correctamente', async () => {
+    it('should fetch order assignment by order ID correctly', async () => {
         assignOrdersService.getAssignmentByOrderId.mockResolvedValue({
             assignment_id: 1,
             assigned_at: '2024-01-01T00:00:00Z',
@@ -230,7 +230,7 @@ describe('POST /assignOrders', () => {
         expect(response.body).toHaveProperty('courier_name', 'Juan Perez');
     });
 
-    it('Debe retornar 404 si la orden no existe al consultar por ID', async () => {
+    it('should return 404 if order does not exist when fetching by ID', async () => {
         assignOrdersService.getAssignmentByOrderId.mockRejectedValue(
             new NotFoundError('No existe la orden')
         );
@@ -242,7 +242,7 @@ describe('POST /assignOrders', () => {
         expect(response.body).toHaveProperty('error', 'No existe la orden');
     });
 
-    it('Debe retornar 404 si no existe asignación para la orden', async () => {
+    it('should return 404 if no assignment exists for order', async () => {
         assignOrdersService.getAssignmentByOrderId.mockRejectedValue(
             new NotFoundError('No existe asignación para esta orden')
         );
@@ -254,7 +254,7 @@ describe('POST /assignOrders', () => {
         expect(response.body).toHaveProperty('error', 'No existe asignación para esta orden');
     });
 
-    it('Debe retornar 500 en caso de error del servidor al consultar por ID de orden', async () => {
+    it('should return 500 on server error when fetching by order ID', async () => {
         assignOrdersService.getAssignmentByOrderId.mockRejectedValue(
             new Error('DB error')
         );
@@ -266,7 +266,7 @@ describe('POST /assignOrders', () => {
         expect(response.body).toHaveProperty('error', 'Error interno del servidor');
     });
 
-    it('Debe actualizar la asignación de orden correctamente', async () => {
+    it('should update order assignment correctly', async () => {
         assignOrdersService.updateAssignmentCourier.mockResolvedValue({
             id: 1,
             order_id: 1,
@@ -283,7 +283,7 @@ describe('POST /assignOrders', () => {
         expect(response.body.assignOrder).toEqual({ id: 1, order_id: 1, courier_id: 2 });
     });
 
-    it('Debe retornar 404 si la orden no existe al actualizar', async () => {
+    it('should return 404 if order does not exist when updating', async () => {
         assignOrdersService.updateAssignmentCourier.mockRejectedValue(
             new NotFoundError('No existe la orden')
         );
@@ -296,7 +296,7 @@ describe('POST /assignOrders', () => {
         expect(response.body).toHaveProperty('error', 'No existe la orden');
     });
 
-    it('Debe retornar 404 si el repartidor no existe al actualizar', async () => {
+    it('should return 404 if courier does not exist when updating', async () => {
         assignOrdersService.updateAssignmentCourier.mockRejectedValue(
             new NotFoundError('Repartidor no encontrado')
         );
@@ -309,7 +309,7 @@ describe('POST /assignOrders', () => {
         expect(response.body).toHaveProperty('error', 'Repartidor no encontrado');
     });
 
-    it('Debe retornar 404 si no existe asignación para la orden al actualizar', async () => {
+    it('should return 404 if no assignment exists for order when updating', async () => {
         assignOrdersService.updateAssignmentCourier.mockRejectedValue(
             new NotFoundError('No existe asignación para esta orden')
         );
@@ -322,7 +322,7 @@ describe('POST /assignOrders', () => {
         expect(response.body).toHaveProperty('error', 'No existe asignación para esta orden');
     });
 
-    it('Debe retornar 500 en caso de error del servidor al actualizar', async () => {
+    it('should return 500 on server error when updating', async () => {
         assignOrdersService.updateAssignmentCourier.mockRejectedValue(
             new Error('DB error')
         );
@@ -335,7 +335,7 @@ describe('POST /assignOrders', () => {
         expect(response.body).toHaveProperty('error', 'Error interno del servidor');
     });
 
-    it('Debe eliminar la asignación de orden correctamente', async () => {
+    it('should delete order assignment correctly', async () => {
         assignOrdersService.deleteAssignment.mockResolvedValue({
             id: 1,
             order_id: 1,
@@ -351,7 +351,7 @@ describe('POST /assignOrders', () => {
         expect(response.body.assignOrder).toEqual({ id: 1, order_id: 1, courier_id: 1 });
     });
 
-    it('Debe retornar 404 si la orden no existe al eliminar', async () => {
+    it('should return 404 if order does not exist when deleting', async () => {
         assignOrdersService.deleteAssignment.mockRejectedValue(
             new NotFoundError('No existe la orden')
         );
@@ -363,7 +363,7 @@ describe('POST /assignOrders', () => {
         expect(response.body).toHaveProperty('error', 'No existe la orden');
     });
 
-    it('Debe retornar 404 si no existe asignación para la orden al eliminar', async () => {
+    it('should return 404 if no assignment exists for order when deleting', async () => {
         assignOrdersService.deleteAssignment.mockRejectedValue(
             new NotFoundError('Asignamiento no encontrado')
         );
@@ -375,7 +375,7 @@ describe('POST /assignOrders', () => {
         expect(response.body).toHaveProperty('error', 'Asignamiento no encontrado');
     });
 
-    it('Debe retornar 500 en caso de error del servidor al eliminar', async () => {
+    it('should return 500 on server error when deleting', async () => {
         assignOrdersService.deleteAssignment.mockRejectedValue(
             new Error('DB error')
         );
