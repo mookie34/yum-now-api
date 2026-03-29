@@ -56,8 +56,8 @@ const getAvailableCouriersCount = async (req, res) => {
 
 const getCouriersByFilter = async (req, res) => {
   try {
-    const { name, phone, license_plate } = req.query;
-    const filters = { name, phone, license_plate };
+    const { name, phone, license_plate, vehicle } = req.query;
+    const filters = { name, phone, license_plate, vehicle };
 
     const couriers = await couriersService.getCouriersByFilter(filters);
     res.status(200).json(couriers);

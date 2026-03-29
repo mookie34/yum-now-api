@@ -33,7 +33,8 @@ function timingSafeCompare(a, b) {
 }
 
 function generateToken(username) {
-  return jwt.sign({ username }, process.env.JWT_SECRET, { expiresIn: '8h' });
+  const expiresIn = process.env.JWT_EXPIRES_IN || '8h';
+  return jwt.sign({ username }, process.env.JWT_SECRET, { expiresIn });
 }
 
 module.exports = { login };

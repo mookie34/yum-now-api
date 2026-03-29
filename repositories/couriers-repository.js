@@ -35,7 +35,7 @@ class CouriersRepository {
   }
 
   async getForFilter(filters) {
-    const { name, phone, license_plate } = filters;
+    const { name, phone, license_plate, vehicle } = filters;
     const params = [];
     let query = `SELECT * FROM ${this.tableName} WHERE 1=1`;
 
@@ -50,6 +50,10 @@ class CouriersRepository {
     if (license_plate) {
       params.push(`%${license_plate}%`);
       query += ` AND license_plate ILIKE $${params.length}`;
+    }
+    if (vehicle) {
+      params.push(`%${vehicle}%`);
+      query += ` AND vehicle ILIKE $${params.length}`;
     }
 
     const result = await db.query(query, params);

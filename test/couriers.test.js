@@ -403,6 +403,7 @@ describe("GET /api/couriers/filter", () => {
       name: "Juan",
       phone: undefined,
       license_plate: undefined,
+      vehicle: undefined,
     });
   });
 
@@ -450,6 +451,51 @@ describe("GET /api/couriers/filter", () => {
     expect(res.status).toBe(200);
     expect(res.body.length).toBe(1);
     expect(res.body[0].license_plate).toBe("XYZ789");
+  });
+
+  it("should filter couriers by vehicle", async () => {
+    const mockCouriers = [
+      {
+        id: 1,
+        name: "Juan Pérez",
+        phone: "1234567890",
+        vehicle: "Moto",
+        license_plate: "ABC123",
+        available: true,
+      },
+      {
+        id: 3,
+        name: "Pedro Ríos",
+        phone: "3001112222",
+        vehicle: "Moto",
+        license_plate: "DEF456",
+        available: false,
+      },
+    ];
+
+    couriersRepository.getForFilter.mockResolvedValue(mockCouriers);
+
+    const res = await request(app)
+      .get("/api/couriers/filter")
+      .query({ vehicle: "Moto" });
+
+    expect(res.status).toBe(200);
+    expect(res.body.length).toBe(2);
+    expect(res.body.every((c) => c.vehicle === "Moto")).toBe(true);
+    expect(couriersRepository.getForFilter).toHaveBeenCalledWith(
+      expect.objectContaining({ vehicle: "Moto" })
+    );
+  });
+
+  it("should filter couriers by vehicle with no results", async () => {
+    couriersRepository.getForFilter.mockResolvedValue([]);
+
+    const res = await request(app)
+      .get("/api/couriers/filter")
+      .query({ vehicle: "Bicicleta eléctrica" });
+
+    expect(res.status).toBe(404);
+    expect(res.body.error).toBe("No se encontraron domiciliarios con esos filtros");
   });
 
   it("should return 404 if no results found", async () => {

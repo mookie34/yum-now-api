@@ -279,11 +279,12 @@ Los endpoints **publicos** no requieren token porque los usan el bot de WhatsApp
 
 ```env
 JWT_SECRET=una-clave-secreta-larga-y-aleatoria
+JWT_EXPIRES_IN=4h
 ADMIN_USERNAME=admin
 ADMIN_PASSWORD=tu-password-seguro
 ```
 
-> El token expira en **8 horas**. Vuelve a hacer login para obtener uno nuevo.
+> El token expira segun el valor de `JWT_EXPIRES_IN` (por defecto **4 horas**). Vuelve a hacer login para obtener uno nuevo. Acepta formatos como `30m`, `4h`, `1d`.
 
 ---
 
@@ -346,7 +347,8 @@ ADMIN_PASSWORD=tu-password-seguro
 |--------|------|------|-------------|
 | GET | `/api/couriers` | No | Listar domiciliarios |
 | GET | `/api/couriers/available` | No | Listar disponibles |
-| GET | `/api/couriers/filter` | No | Filtrar por nombre, telefono, placa |
+| GET | `/api/couriers/available/count` | No | Cantidad de domiciliarios disponibles |
+| GET | `/api/couriers/filter` | No | Filtrar por nombre, telefono, placa, vehiculo |
 | GET | `/api/couriers/:id` | No | Obtener por ID |
 | POST | `/api/couriers` | **Si** | Crear domiciliario |
 | PUT | `/api/couriers/:id` | **Si** | Actualizar completo |
@@ -460,6 +462,7 @@ npm test
 | `DB_USER` | Usuario de PostgreSQL | `postgres` |
 | `DB_PASSWORD` | Contrasena de PostgreSQL | - |
 | `JWT_SECRET` | Clave secreta para firmar tokens JWT | - |
+| `JWT_EXPIRES_IN` | Tiempo de expiracion del token JWT | `4h` |
 | `ADMIN_USERNAME` | Usuario del panel de administracion | `admin` |
 | `ADMIN_PASSWORD` | Contrasena del panel de administracion | - |
 | `TWILIO_ACCOUNT_SID` | SID de Twilio (no implementado aun) | - |
