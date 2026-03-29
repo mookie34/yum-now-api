@@ -45,11 +45,17 @@ class CouriersService {
     return errors;
   }
 
-  validateLicensePlate(license_plate, isPartial) {
+  requiresLicensePlate(vehicle) {
+    return vehicle === "Carro" || vehicle === "Moto";
+  }
+
+  validateLicensePlate(license_plate, isPartial, vehicle) {
     const errors = [];
-    if (!isPartial || license_plate !== undefined) {
-      if (!license_plate || license_plate.trim() === "") {
-        errors.push("La placa es obligatoria");
+    if (this.requiresLicensePlate(vehicle)) {
+      if (!isPartial || license_plate !== undefined) {
+        if (!license_plate || license_plate.trim() === "") {
+          errors.push("La placa es obligatoria para Carro y Moto");
+        }
       }
     }
     if (license_plate && license_plate.length > 20) {
@@ -65,7 +71,7 @@ class CouriersService {
       ...this.validateName(name, isPartial),
       ...this.validatePhone(phone, isPartial),
       ...this.validateVehicle(vehicle, isPartial),
-      ...this.validateLicensePlate(license_plate, isPartial),
+      ...this.validateLicensePlate(license_plate, isPartial, vehicle),
     ];
 
     if (available !== undefined && typeof available !== "boolean") {
@@ -100,6 +106,10 @@ class CouriersService {
       throw new NotFoundError("No hay Domiciliarios disponibles");
     }
     return couriers;
+  }
+
+  async countAvailableCouriers() {
+    return await couriersRepository.countAvailable();
   }
 
   async getCouriersByFilter(filters) {

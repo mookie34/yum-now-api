@@ -44,6 +44,16 @@ const getCouriersAvailable = async (req, res) => {
   }
 };
 
+const getAvailableCouriersCount = async (req, res) => {
+  try {
+    const count = await couriersService.countAvailableCouriers();
+    res.json({ count });
+  } catch (err) {
+    console.error("Error counting available couriers:", err.message);
+    res.status(500).json({ error: "Error interno del servidor" });
+  }
+};
+
 const getCouriersByFilter = async (req, res) => {
   try {
     const { name, phone, license_plate } = req.query;
@@ -144,6 +154,7 @@ module.exports = {
   addCourier,
   getCouriers,
   getCouriersAvailable,
+  getAvailableCouriersCount,
   getCouriersByFilter,
   getCourierById,
   deleteCourier,

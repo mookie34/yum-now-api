@@ -5,6 +5,7 @@ const authenticate = require("../middleware/authenticate");
 
 // Public - courier app reads
 router.get("/filter", courierController.getCouriersByFilter);
+router.get("/available/count", courierController.getAvailableCouriersCount);
 router.get("/available", courierController.getCouriersAvailable);
 router.get("/", courierController.getCouriers);
 router.get("/:id", courierController.getCourierById);

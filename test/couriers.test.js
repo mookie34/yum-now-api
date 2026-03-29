@@ -101,15 +101,70 @@ describe("POST /api/couriers", () => {
     expect(res.body.error).toContain("vehículo");
   });
 
-  it("should reject if license_plate is missing", async () => {
+  it("should reject if license_plate is missing for Moto", async () => {
     const res = await request(app).post("/api/couriers").send({
       name: "Juan Pérez",
       phone: "1234567890",
-      vehicle: "Bicicleta",
+      vehicle: "Moto",
     });
 
     expect(res.status).toBe(400);
     expect(res.body.error).toContain("placa");
+  });
+
+  it("should reject if license_plate is missing for Carro", async () => {
+    const res = await request(app).post("/api/couriers").send({
+      name: "Juan Pérez",
+      phone: "1234567890",
+      vehicle: "Carro",
+    });
+
+    expect(res.status).toBe(400);
+    expect(res.body.error).toContain("placa");
+  });
+
+  it("should create a Bicicleta courier without license_plate", async () => {
+    const mockCourier = {
+      id: 2,
+      name: "Carlos López",
+      phone: "3001234567",
+      vehicle: "Bicicleta",
+      license_plate: "",
+      available: true,
+    };
+
+    couriersRepository.create.mockResolvedValue(mockCourier);
+
+    const res = await request(app).post("/api/couriers").send({
+      name: "Carlos López",
+      phone: "3001234567",
+      vehicle: "Bicicleta",
+    });
+
+    expect(res.status).toBe(201);
+    expect(res.body.courier.vehicle).toBe("Bicicleta");
+  });
+
+  it("should create a Bicicleta eléctrica courier without license_plate", async () => {
+    const mockCourier = {
+      id: 3,
+      name: "Ana Torres",
+      phone: "3109876543",
+      vehicle: "Bicicleta eléctrica",
+      license_plate: "",
+      available: true,
+    };
+
+    couriersRepository.create.mockResolvedValue(mockCourier);
+
+    const res = await request(app).post("/api/couriers").send({
+      name: "Ana Torres",
+      phone: "3109876543",
+      vehicle: "Bicicleta eléctrica",
+    });
+
+    expect(res.status).toBe(201);
+    expect(res.body.courier.vehicle).toBe("Bicicleta eléctrica");
   });
 
   it("should reject if name exceeds 100 characters", async () => {
@@ -232,6 +287,40 @@ describe("GET /api/couriers", () => {
     couriersRepository.getAll.mockRejectedValue(new Error("DB error"));
 
     const res = await request(app).get("/api/couriers");
+
+    expect(res.status).toBe(500);
+    expect(res.body.error).toBe("Error interno del servidor");
+  });
+});
+
+describe("GET /api/couriers/available/count", () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it("should return the count of available couriers", async () => {
+    couriersRepository.countAvailable.mockResolvedValue(3);
+
+    const res = await request(app).get("/api/couriers/available/count");
+
+    expect(res.status).toBe(200);
+    expect(res.body.count).toBe(3);
+    expect(couriersRepository.countAvailable).toHaveBeenCalled();
+  });
+
+  it("should return 0 when no couriers are available", async () => {
+    couriersRepository.countAvailable.mockResolvedValue(0);
+
+    const res = await request(app).get("/api/couriers/available/count");
+
+    expect(res.status).toBe(200);
+    expect(res.body.count).toBe(0);
+  });
+
+  it("should handle database errors", async () => {
+    couriersRepository.countAvailable.mockRejectedValue(new Error("DB error"));
+
+    const res = await request(app).get("/api/couriers/available/count");
 
     expect(res.status).toBe(500);
     expect(res.body.error).toBe("Error interno del servidor");
@@ -531,6 +620,41 @@ describe("PUT /api/couriers/:id", () => {
     });
 
     expect(res.status).toBe(400);
+  });
+
+  it("should reject if license_plate is missing when updating to Carro", async () => {
+    const res = await request(app).put("/api/couriers/1").send({
+      name: "Juan Pérez",
+      phone: "1112223333",
+      vehicle: "Carro",
+      available: true,
+    });
+
+    expect(res.status).toBe(400);
+    expect(res.body.error).toContain("placa");
+  });
+
+  it("should update a courier to Bicicleta without license_plate", async () => {
+    const mockUpdated = {
+      id: 1,
+      name: "Juan Pérez",
+      phone: "1112223333",
+      vehicle: "Bicicleta",
+      license_plate: "",
+      available: true,
+    };
+
+    couriersRepository.update.mockResolvedValue(mockUpdated);
+
+    const res = await request(app).put("/api/couriers/1").send({
+      name: "Juan Pérez",
+      phone: "1112223333",
+      vehicle: "Bicicleta",
+      available: true,
+    });
+
+    expect(res.status).toBe(200);
+    expect(res.body.courier.vehicle).toBe("Bicicleta");
   });
 
   it("should handle database errors", async () => {

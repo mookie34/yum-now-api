@@ -27,6 +27,13 @@ class CouriersRepository {
     return result.rows;
   }
 
+  async countAvailable() {
+    const result = await db.query(
+      `SELECT COUNT(*) AS count FROM ${this.tableName} WHERE available = true`
+    );
+    return parseInt(result.rows[0].count, 10);
+  }
+
   async getForFilter(filters) {
     const { name, phone, license_plate } = filters;
     const params = [];
